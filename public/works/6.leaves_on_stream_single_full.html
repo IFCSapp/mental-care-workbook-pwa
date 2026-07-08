@@ -546,6 +546,36 @@
             font-weight: bold;
         }
 
+
+
+        /* 横向きで眺めるモード */
+        .viewing-mode .main-layout { position: relative; }
+        .viewing-mode .river-area { flex: 1 1 auto; min-height: 0; }
+        .viewing-mode .ui-area {
+            position: absolute; right: 16px; bottom: 76px;
+            width: min(360px, calc(100vw - 32px)); max-height: calc(100vh - 116px);
+            overflow-y: auto; padding: 14px; border: 1px solid rgba(196, 205, 192, 0.78);
+            border-radius: 18px; background: rgba(250, 252, 247, 0.78);
+            backdrop-filter: blur(10px); box-shadow: 0 12px 36px rgba(43, 68, 54, 0.16);
+        }
+        .viewing-mode .guide-text { min-height: 0; margin-bottom: 10px; font-size: 14px; line-height: 1.55; }
+        .watch-entry-note { font-size: 13px; line-height: 1.6; margin: 6px 0 0; opacity: 0.78; }
+        .watch-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+        .watch-controls button { margin: 0; }
+        .viewing-mode .control-bar { position: relative; background: rgba(255, 255, 255, 0.78); backdrop-filter: blur(10px); }
+        @media (orientation: landscape) and (max-height: 560px) {
+            #screen-main.viewing-mode .main-layout { flex: 1 1 auto; }
+            #screen-main.viewing-mode .river-area { height: auto; }
+            #screen-main.viewing-mode .ui-area { right: 12px; bottom: 70px; width: min(340px, 44vw); max-height: calc(100vh - 92px); }
+            #screen-main.viewing-mode .control-bar { height: 56px; }
+        }
+        @media (max-width: 768px) {
+            #screen-main.viewing-mode .main-layout { flex-direction: column; }
+            #screen-main.viewing-mode .river-area { height: calc(100vh - 64px); flex: none; }
+            #screen-main.viewing-mode .ui-area { left: 12px; right: 12px; bottom: 72px; width: auto; max-height: min(56vh, 320px); }
+            #screen-main.viewing-mode:not(.input-panel-open) .ui-area { width: auto; max-height: 170px; }
+        }
+
         /* =========================================
            レスポンシブ (スマホ対応)
         ========================================= */
@@ -778,11 +808,17 @@
             <!-- 右側(スマホでは下側)UI領域 -->
             <div class="ui-area" id="main-ui-area">
                 <div id="main-guide" class="guide-text"></div>
+                <div class="watch-controls" aria-label="眺める操作">
+                    <button id="btn-watch-landscape" class="primary">横向きで眺める</button>
+                    <button id="btn-open-input-panel">言葉をのせる</button>
+                    <button id="btn-close-viewing-mode" style="display: none;">通常表示に戻る</button>
+                </div>
+                <p id="watch-orientation-note" class="watch-entry-note">スマホを横向きにすると、流れが見やすくなります。縦向きのままでも使えます。</p>
                 
                 <div id="input-container">
                     <label for="leaf-input" class="input-label">今、頭の中に浮かんでいる言葉を短く書きます</label>
                     <input type="text" id="leaf-input" placeholder="短く書きます..." autocomplete="off">
-                    <button id="btn-add-leaf" class="primary" style="width: 100%; margin-right: 0;">葉に乗せて流す</button>
+                    <button id="btn-add-leaf" class="primary" style="width: 100%; margin-right: 0;">葉に乗せる</button>
                 </div>
 
                 <!-- グラウンディングセクション（入力欄の下に移動） -->
@@ -883,6 +919,8 @@
                 riverW: 0,           // 川領域サイズのキャッシュ（毎フレームのlayout readを避ける）
                 riverH: 0,
                 isReducedMotion: false,
+                isViewingMode: false,
+                isInputPanelOpen: false,
             },
 
             updateRiverSize() {
@@ -1017,6 +1055,7 @@
                     toggleBtn.classList.remove('active');
                 }
 
+                this.applyViewingModeState();
                 this.updateRiverPausedState();
             },
 
@@ -1430,6 +1469,82 @@
             },
 
             // ==========================================
+            // 横向きで眺めるモード
+            // ==========================================
+            async enterViewingMode() {
+                this.state.isViewingMode = true;
+                this.state.isInputPanelOpen = false;
+                this.applyViewingModeState();
+                const mainScreen = document.getElementById('screen-main');
+                try {
+                    if (mainScreen && !document.fullscreenElement && mainScreen.requestFullscreen) await mainScreen.requestFullscreen();
+                } catch (err) {}
+                try {
+                    if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
+                } catch (err) {}
+                const note = document.getElementById('watch-orientation-note');
+                if (note) note.textContent = 'スマホを横向きにすると、流れが見やすくなります。縦向きのままでも使えます。';
+                this.updateRiverSize();
+            },
+
+            async exitViewingMode() {
+                this.state.isViewingMode = false;
+                this.state.isInputPanelOpen = false;
+                this.applyViewingModeState();
+                const input = document.getElementById('leaf-input');
+                if (input) input.blur();
+                try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (err) {}
+                try { if (document.fullscreenElement && document.exitFullscreen) await document.exitFullscreen(); } catch (err) {}
+                this.updateRiverSize();
+            },
+
+            openInputPanel() {
+                this.state.isInputPanelOpen = true;
+                if (!this.state.isViewingMode) {
+                    const modeBtn = document.querySelector('.mode-selector .mode-btn[data-mode="input"]');
+                    if (modeBtn) modeBtn.click();
+                }
+                this.applyViewingModeState();
+                const input = document.getElementById('leaf-input');
+                if (input) input.focus();
+            },
+
+            closeInputPanel() {
+                this.state.isInputPanelOpen = false;
+                this.applyViewingModeState();
+                const input = document.getElementById('leaf-input');
+                if (input) input.blur();
+            },
+
+            applyViewingModeState() {
+                const mainScreen = document.getElementById('screen-main');
+                if (mainScreen) {
+                    mainScreen.classList.toggle('viewing-mode', this.state.isViewingMode);
+                    mainScreen.classList.toggle('input-panel-open', this.state.isInputPanelOpen);
+                }
+                const closeBtn = document.getElementById('btn-close-viewing-mode');
+                if (closeBtn) closeBtn.style.display = this.state.isViewingMode ? 'inline-flex' : 'none';
+                const inputBtn = document.getElementById('btn-open-input-panel');
+                if (inputBtn) inputBtn.textContent = this.state.isInputPanelOpen ? '入力を閉じる' : '言葉をのせる';
+                const inputContainer = document.getElementById('input-container');
+                if (inputContainer && this.state.isViewingMode) {
+                    inputContainer.style.display = this.state.isInputPanelOpen ? 'block' : 'none';
+                } else if (inputContainer && !this.state.isViewingMode) {
+                    inputContainer.style.display = (this.state.currentMode === 'watch') ? 'none' : 'block';
+                }
+
+                const grounding = document.getElementById('grounding-section');
+                if (grounding) {
+                    grounding.classList.toggle('is-open', this.state.isGroundingOpen);
+                    if (this.state.isViewingMode) {
+                        grounding.style.display = this.state.isGroundingOpen ? 'block' : 'none';
+                    } else {
+                        grounding.style.display = 'block';
+                    }
+                }
+            },
+
+            // ==========================================
             // イベントバインドと画面遷移
             // ==========================================
             bindEvents() {
@@ -1462,6 +1577,14 @@
                     this.resetReflectForm();
                     this.showScreen('screen-intro');
                 });
+
+                // 横向きで眺める / 入力パネル
+                document.getElementById('btn-watch-landscape').addEventListener('click', () => this.enterViewingMode());
+                document.getElementById('btn-open-input-panel').addEventListener('click', () => {
+                    if (this.state.isInputPanelOpen) this.closeInputPanel();
+                    else this.openInputPanel();
+                });
+                document.getElementById('btn-close-viewing-mode').addEventListener('click', () => this.exitViewingMode());
 
                 // 今ここに戻る (Grounding トグル)
                 document.getElementById('btn-toggle-grounding').addEventListener('click', () => this.toggleGrounding());
@@ -1602,6 +1725,7 @@
                     guideEl.textContent = "ただ、流れていくものを眺めます。";
                     inputEl.style.display = 'none';
                 }
+                this.applyViewingModeState();
             },
 
             startGuides() {
@@ -1668,12 +1792,13 @@
                 
                 this.createLeaf(text || "...");
                 input.value = '';
+                input.blur();
+                if (this.state.isViewingMode) this.closeInputPanel();
                 const guideEl = document.getElementById('main-guide');
                 if (guideEl && this.state.currentMode !== 'input') {
                     guideEl.textContent = '少しだけ、流れていく様子を眺めます。';
                     guideEl.style.opacity = 1;
                 }
-                input.focus();
             },
 
             createLeaf(text) {
