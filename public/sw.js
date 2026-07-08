@@ -1,12 +1,14 @@
 const CACHE_NAME = 'mental-care-workbook-pwa-v1';
+const APP_SCOPE = self.registration.scope;
 const APP_SHELL = [
-  '/',
-  '/index.html',
-  '/manifest.webmanifest',
-  '/icon.svg',
-  '/icon-192.png',
-  '/icon-512.png',
-];
+  '',
+  'index.html',
+  'manifest.webmanifest',
+  'icon.svg',
+  'icon-192.png',
+  'icon-512.png',
+].map((path) => new URL(path, APP_SCOPE).toString());
+const INDEX_URL = new URL('index.html', APP_SCOPE).toString();
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -41,7 +43,7 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(() => {
           if (event.request.mode === 'navigate') {
-            return caches.match('/index.html');
+            return caches.match(INDEX_URL);
           }
           return undefined;
         });

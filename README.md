@@ -47,9 +47,21 @@ npm run visual-check
 - Service Worker と manifest を追加し、ホーム画面追加と基本的なキャッシュ動作を試せる状態にしています。
 - 教材本文、設問文、保存キー、全体バックアップ構造、ワーク6 Leaves の物理挙動は、このPWA化では原則変更しません。
 
+## GitHub Pages
+
+このPWA実験版は、Cloudflareに載せる前の確認先として GitHub Pages でも見られるようにしています。
+
+- GitHub repo: `IFCSapp/mental-care-workbook-pwa`
+- GitHub Pages URL: https://ifcsapp.github.io/mental-care-workbook-pwa/
+- Deploy workflow: `.github/workflows/pages.yml`
+- Build command: `npm run build`
+- Output directory: `dist`
+
+GitHub Pages は公開URLです。Cloudflare Access のような利用者制限はかかりません。
+
 ## Cloudflare Pages 試験設定
 
-Cloudflare 側のアカウント、Pages、Access 設定はこのリポジトリではまだ実行していません。公開する場合は、GitHub の公開リポジトリを作成してから Cloudflare Pages に接続します。
+Cloudflare 側のアカウント、Pages、Access 設定はこのリポジトリではまだ実行していません。Cloudflareに載せる場合は、このGitHub repoをCloudflare Pagesに接続します。
 
 - 想定GitHubリポジトリ: `IFCSapp/mental-care-workbook-pwa`
 - Build command: `npm run build`
