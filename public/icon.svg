@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="こころの立て直しワークブック">
+  <rect width="512" height="512" rx="112" fill="#f5f0eb"/>
+  <circle cx="256" cy="256" r="166" fill="#dce8dc"/>
+  <path d="M155 286c58-118 153-143 231-122-12 92-73 164-180 166-24 0-42-14-51-44Z" fill="#6f9875"/>
+  <path d="M191 292c48-45 100-73 157-87" fill="none" stroke="#f9fbf6" stroke-width="22" stroke-linecap="round"/>
+  <path d="M224 342c-21-38-25-77-12-117" fill="none" stroke="#386747" stroke-width="18" stroke-linecap="round"/>
+</svg>

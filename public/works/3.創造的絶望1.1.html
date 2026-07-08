@@ -1,0 +1,1620 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>コントロールとの関わりを見る｜創造的絶望</title>
+  <style>
+    /* -------------------------------------
+       1. Variables & Base Styles
+    ------------------------------------- */
+    :root {
+      --slate-50: #f8fafc;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-300: #cbd5e1;
+      --slate-400: #94a3b8;
+      --slate-500: #64748b;
+      --slate-600: #475569;
+      --slate-700: #334155;
+      --slate-800: #1e293b;
+      --blue-50: #eff6ff;
+      --blue-200: #bfdbfe;
+      --blue-500: #3b82f6;
+      --blue-600: #2563eb;
+      --blue-700: #1d4ed8;
+    }
+
+    body {
+      background-color: var(--slate-100);
+      min-height: 100vh;
+      margin: 0;
+      padding: 3rem 1rem;
+      font-family: sans-serif;
+      color: var(--slate-800);
+    }
+
+    ::selection {
+      background-color: var(--blue-200);
+    }
+
+    /* -------------------------------------
+       2. Layout & Typography
+    ------------------------------------- */
+    .app-wrapper {
+      max-width: 42rem;
+      margin: 0 auto;
+    }
+
+    .main-card {
+      background-color: #fff;
+      border-radius: 1rem;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      padding: 1.5rem;
+    }
+    @media (min-width: 768px) {
+      .main-card {
+        padding: 2rem;
+      }
+    }
+
+    .hidden { display: none !important; }
+    .text-center { text-align: center; }
+    
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--slate-800);
+      margin: 0 0 0.5rem 0;
+    }
+    .page-title-sm {
+      font-size: 1.25rem;
+    }
+    .page-desc {
+      color: var(--slate-600);
+      margin: 0;
+    }
+    .page-desc-sm {
+      font-size: 0.875rem;
+      line-height: 1.625;
+    }
+
+    /* -------------------------------------
+       3. Components
+    ------------------------------------- */
+    /* Navigation */
+    .top-nav {
+      margin-bottom: 1rem;
+    }
+    .btn-back-top {
+      display: flex;
+      align-items: center;
+      color: var(--slate-500);
+      font-weight: 500;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 1rem;
+      transition: color 0.2s;
+    }
+    .btn-back-top:hover {
+      color: var(--blue-700);
+    }
+    .icon-small {
+      width: 1.25rem;
+      height: 1.25rem;
+      margin-right: 0.25rem;
+    }
+
+    /* Containers */
+    .section-content {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    .box-panel {
+      background-color: #fff;
+      padding: 1.5rem;
+      border-radius: 0.75rem;
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--slate-200);
+    }
+    .box-panel-padded {
+      padding-top: 2.5rem;
+      padding-bottom: 2.5rem;
+    }
+    .box-panel-light {
+      background-color: var(--slate-50);
+      padding: 1.5rem;
+      border-radius: 0.75rem;
+      border: 1px solid var(--slate-200);
+    }
+    .box-panel-inner {
+      background-color: #fff;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--slate-200);
+      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      margin-bottom: 1.5rem;
+    }
+
+    /* Menu specific */
+    .menu-header { margin-bottom: 2rem; text-align: center; }
+    .menu-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    @media (min-width: 768px) {
+      .menu-grid { grid-template-columns: repeat(2, 1fr); }
+      .col-span-2 { grid-column: span 2 / span 2; }
+    }
+    .menu-item {
+      border: 2px solid var(--slate-200);
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .menu-item:hover {
+      border-color: var(--blue-500);
+      background-color: var(--blue-50);
+    }
+    .menu-item-title {
+      font-size: 1.125rem;
+      font-weight: bold;
+      color: var(--slate-800);
+      margin: 0 0 0.5rem 0;
+      transition: color 0.2s;
+    }
+    .menu-item:hover .menu-item-title { color: var(--blue-700); }
+    .menu-item-desc { font-size: 0.875rem; color: var(--slate-600); margin: 0; }
+
+    /* Forms */
+    .options-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .options-list-spaced { margin-bottom: 1.5rem; }
+    .options-list-wide { display: flex; flex-direction: column; gap: 0.75rem; }
+    
+    .form-label {
+      display: flex;
+      align-items: center;
+      padding: 0.75rem;
+      border: 1px solid var(--slate-200);
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .form-label:hover { background-color: var(--slate-50); }
+    .form-label-start {
+      display: flex;
+      align-items: flex-start;
+      padding: 0.75rem;
+      border: 1px solid var(--slate-200);
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .form-radio, .form-checkbox {
+      width: 1rem;
+      height: 1rem;
+      accent-color: var(--blue-600);
+      border: 1px solid var(--slate-300);
+      flex-shrink: 0;
+    }
+    .form-checkbox {
+      margin-top: 0.25rem;
+      border-radius: 0.25rem;
+    }
+    .form-text {
+      margin-left: 0.75rem;
+      color: var(--slate-700);
+    }
+    .form-text-block {
+      margin-left: 0.75rem;
+    }
+    .form-text-block span {
+      display: block;
+      color: var(--slate-700);
+    }
+
+    .text-input-wrap { margin-top: 1rem; }
+    .text-input-wrap-indent { margin-top: 1rem; padding-left: 2rem; }
+    .text-input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--slate-300);
+      border-radius: 0.5rem;
+      outline: none;
+      box-sizing: border-box;
+      font-size: 1rem;
+    }
+    .text-input:focus {
+      border-color: var(--blue-500);
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+    }
+
+    /* Buttons */
+    .btn-group { display: flex; gap: 0.75rem; }
+    @media (max-width: 639px) {
+      .btn-group { flex-direction: column; }
+      .btn-group .btn { width: 100%; }
+    }
+    .btn-group-responsive {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+    @media (min-width: 640px) {
+      .btn-group-responsive { flex-direction: row; }
+    }
+    
+    .btn {
+      font-weight: 600;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      transition: background-color 0.2s;
+      cursor: pointer;
+      border: none;
+      text-align: center;
+      font-size: 1rem;
+    }
+    .btn-px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+    .btn-action-submit { margin-top: 1rem; }
+    
+    .btn-primary { background-color: var(--blue-600); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background-color: var(--blue-700); }
+    .btn-primary:disabled { background-color: var(--slate-300); cursor: not-allowed; }
+    
+    .btn-secondary { background-color: var(--slate-200); color: var(--slate-800); }
+    .btn-secondary:hover { background-color: var(--slate-300); }
+
+    .w-1-3 { width: 33.333333%; }
+    .w-2-3 { width: 66.666667%; }
+    .w-full { width: 100%; }
+    .btn-responsive-primary { width: 100%; }
+    .btn-responsive-secondary { width: 100%; }
+    @media (min-width: 640px) {
+      .btn-responsive-primary { width: 66.666667%; }
+      .btn-responsive-secondary { width: 33.333333%; }
+    }
+
+    /* Info & Texts */
+    .safety-notice {
+      font-size: 0.75rem;
+      color: var(--slate-500);
+      margin: 1rem 0 0 0;
+      background-color: var(--slate-50);
+      padding: 0.5rem;
+      border-radius: 0.25rem;
+      border: 1px solid var(--slate-200);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .safety-icon { width: 1rem; height: 1rem; margin-right: 0.25rem; color: var(--slate-400); }
+    
+    .question-title { font-weight: 500; color: var(--slate-800); margin: 0 0 1rem 0; }
+    .question-title-sm { margin-bottom: 0.5rem; }
+    .question-title-divider {
+      margin-bottom: 0.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--slate-200);
+    }
+
+    .section-title {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--slate-800);
+      margin: 0 0 0.75rem 0;
+      border-bottom: 1px solid var(--slate-200);
+      padding-bottom: 0.5rem;
+    }
+    .section-title-mt { margin-top: 1.5rem; }
+    
+    .text-body { color: var(--slate-700); line-height: 1.625; margin: 0; }
+    .text-body-mb { margin-bottom: 1rem; }
+    .text-body-strong { font-weight: 500; }
+    
+    .highlight-box { background-color: var(--blue-50); padding: 1rem; border-radius: 0.5rem; margin-top: 1.5rem; }
+    .highlight-text { color: var(--slate-800); font-weight: 500; text-align: center; margin: 0; }
+    
+    .alert-info {
+      background-color: var(--blue-50);
+      border-left: 4px solid var(--blue-500);
+      padding: 1rem;
+      margin-bottom: 1rem;
+      color: var(--slate-700);
+      font-size: 0.875rem;
+    }
+    .alert-info-last { margin-bottom: 0; }
+
+    .list-bullet { list-style-type: disc; list-style-position: inside; color: var(--slate-700); padding: 0; margin: 0 0 1.5rem 0; }
+    .list-bullet li { margin-bottom: 0.75rem; }
+    .list-desc { margin-left: 1.25rem; display: inline-block; margin-top: 0.25rem; }
+    
+    .citation { margin-top: 1.5rem; font-size: 0.75rem; color: var(--slate-500); text-align: right; }
+    .citation p { margin: 0; }
+    .citation p + p { margin-top: 0.25rem; }
+    .citation a { color: var(--blue-500); text-decoration: none; }
+    .citation a:hover { text-decoration: underline; }
+
+    /* Exercise Specifics */
+    .instruction-text { font-size: 1.25rem; font-weight: 500; color: var(--slate-800); margin: 0 0 1rem 0; line-height: 1.5; }
+    .instruction-highlight { font-size: 1.5rem; font-weight: bold; color: var(--blue-700); }
+    .instruction-highlight-sm { font-size: 1.125rem; }
+    .instruction-sub { color: var(--slate-500); margin: 0; }
+    .instruction-sub-detail { margin-top: 0.25rem; }
+    
+    .slider-val-container { margin-bottom: 2rem; }
+    .val-container-spaced { margin-bottom: 1rem; }
+    .slider-val { font-size: 3rem; font-weight: bold; color: var(--blue-600); }
+    .slider-val-sm { font-size: 2.25rem; font-weight: bold; color: var(--blue-600); }
+    .slider-max { color: var(--slate-500); margin-left: 0.5rem; }
+    .slider-input {
+      width: 100%; height: 0.5rem; background-color: var(--slate-200); border-radius: 0.5rem;
+      appearance: none; cursor: pointer; accent-color: var(--blue-600);
+    }
+    .slider-labels { display: flex; justify-content: space-between; font-size: 0.875rem; color: var(--slate-500); margin-top: 0.5rem; }
+    
+    .dots-item { padding: 0.75rem; background-color: #fff; border: 1px solid var(--slate-200); border-radius: 0.5rem; }
+    .dots-title { font-weight: bold; color: var(--blue-700); font-size: 1.125rem; }
+    .dots-desc { font-size: 0.875rem; color: var(--slate-600); margin: 0.25rem 0 0 0; }
+
+    /* Timer */
+    .timer-container { text-align: center; padding: 2rem 0; }
+    .timer-title { font-size: 1.25rem; font-weight: 500; color: var(--slate-800); margin: 0 0 1rem 0; line-height: 1.5; }
+    .timer-desc { color: var(--slate-500); margin: 0; }
+    .timer-wrapper { position: relative; width: 12rem; height: 12rem; margin: 2rem auto; }
+    .timer-svg { width: 100%; height: 100%; }
+    .timer-circle-bg { color: var(--slate-100); stroke: currentColor; }
+    .timer-circle-fg { color: var(--blue-600); stroke: currentColor; transition: all 1s linear; }
+    .timer-text-wrapper { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+    .timer-text { font-size: 2.25rem; font-weight: bold; color: var(--slate-800); }
+    .timer-finish-text { font-size: 1.125rem; font-weight: 500; color: var(--slate-700); margin: 0; }
+
+    /* -------------------------------------
+       4. Animations
+    ------------------------------------- */
+    .animate-fadeIn { animation: fadeIn 0.5s ease-in-out; }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .animate-pulse-slow { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .5; }
+    }
+
+    /* =========================================================
+       全体CSS統一パス: 見た目のみの低リスク調整
+       ========================================================= */
+    :where(button, .btn, .btn-primary, .btn-secondary, .btn-outline, .btn-dark, .btn-main, .btn-text, .btn-action, .btn-action-primary, .btn-nav-next, .btn-nav-prev, .btn-add, .btn-focus, .btn-reset, .chip, .menu-item, .radio-btn, .mode-btn) {
+      min-height: 44px;
+      border-radius: 12px;
+      font-family: inherit;
+      line-height: 1.35;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :where(button, .btn, .btn-primary, .btn-secondary, .btn-outline, .btn-dark, .btn-main, .btn-text, .btn-action, .btn-action-primary, .btn-nav-next, .btn-nav-prev, .btn-add, .btn-focus, .btn-reset, .chip, .menu-item, .radio-btn, .mode-btn):focus-visible {
+      outline: 3px solid rgba(37, 99, 235, 0.32);
+      outline-offset: 3px;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.18);
+    }
+
+    :where(input[type="text"], input[type="date"], input[type="number"], textarea, select, .form-input, .form-textarea, .input-text) {
+      min-height: 44px;
+      border-radius: 12px;
+      border-color: #cbd5e1;
+      background-color: #ffffff;
+      line-height: 1.55;
+      font-family: inherit;
+    }
+
+    :where(input[type="text"], input[type="date"], input[type="number"], textarea, select, .form-input, .form-textarea, .input-text):focus-visible {
+      outline: 3px solid rgba(37, 99, 235, 0.24);
+      outline-offset: 1px;
+      border-color: #3b82f6;
+    }
+
+    :where(.card, .section, .main-card, .box-panel, .box-panel-light, .info-box, .feedback-box, .form-section, .status, .modal-content, .step-container) {
+      border-radius: 16px;
+    }
+
+    :where(.info-box, .notice-text, .message-box-primary, .feedback-box) {
+      line-height: 1.7;
+    }
+
+    :where(.action-buttons, .modal-actions, .footer-actions, .btn-group, .header-actions, .control-actions) {
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 640px) {
+      html, body { overflow-x: hidden; }
+      :where(.app-wrapper, .app-container, #app-container, main, .content-wrapper, .wide-wrapper, .container, .main-card, .card, .section, .panel) { max-width: 100%; }
+      :where(.action-buttons, .modal-actions, .footer-actions, .btn-group, .header-actions, .control-actions) { flex-direction: column; align-items: stretch; }
+      :where(button, .btn, .btn-primary, .btn-secondary, .btn-outline, .btn-dark, .btn-main, .btn-text, .btn-action, .btn-action-primary, .btn-nav-next, .btn-nav-prev, .btn-add, .btn-focus, .btn-reset, .mode-btn) { width: 100%; justify-content: center; white-space: normal; }
+      :where(input, textarea, select) { max-width: 100%; }
+    }
+
+    .btn { border-radius: 12px; padding-top: 0.72rem; padding-bottom: 0.72rem; }
+    .btn-primary, .btn-secondary { box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08); }
+    .box-panel, .box-panel-padded, .box-panel-light, .box-panel-inner, .menu-item { border-radius: 16px; }
+    .menu-item { min-height: auto; }
+    textarea, input[type="text"], input[type="range"] { border-radius: 12px; }
+    @media (max-width: 640px) { .main-card { padding-inline: 1rem; } .btn-group-responsive { flex-direction: column; } }
+</style>
+</head>
+<body>
+  <div class="app-wrapper">
+    <!-- 常に左上に表示されるワーク選択へ戻るボタン -->
+    <div id="top-nav" class="top-nav hidden">
+      <button onclick="resetToMenu()" class="btn-back-top">
+        <svg class="icon-small" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+        </svg>
+        ワーク選択に戻る
+      </button>
+    </div>
+
+    <div id="app-container" class="main-card">
+      <!-- ここに各画面が動的に描画されます -->
+    </div>
+  </div>
+
+  <script>
+    // アプリケーションの状態管理
+    const state = {
+      step: 'menu',
+      exerciseId: null,
+      
+      // 1. 感情エクササイズ用
+      targetEmotion: '不安',
+      customEmotion: '',
+      intensity: '',
+      experiences: {
+        moreAware: false,
+        checking: false,
+        otherEmotions: false,
+        nothing: false,
+      },
+      
+      // 2. 白くまエクササイズ用
+      bearCount: '',
+      bearActions: {
+        distract: false,
+        suppress: false,
+        giveup: false,
+        other: false,
+      },
+
+      // 3. 感情スライダー用
+      sliderEmotion: '不安',
+      customSliderEmotion: '',
+      sliderInitial: 5,
+      sliderFinal: 5,
+      sliderActions: {
+        distraction: false,
+        optingOut: false,
+        thinking: false,
+        substances: false,
+        other: false,
+      },
+      sliderShortTerm: '',
+      sliderLongTerm: '',
+
+      // 4. 感情コントロール作戦会議用
+      strategyTheme: '課題や仕事の前の不安',
+      customStrategyTheme: '',
+      strategies: {
+        rethink: false,
+        positive: false,
+        prepare: false,
+        distract: false,
+        analyze: false,
+        other: false,
+      },
+      customStrategy: '',
+      strategyFrequency: '',
+      problemPersists: '',
+
+      // 5. 天気ワーク用
+      weatherType: '曇り（モヤモヤ・気が晴れない）',
+      customWeather: '',
+      weatherStopResult: '',
+      weatherAction: '',
+      customWeatherAction: '',
+
+      // 共通タイマー
+      timeLeft: 0,
+      totalTime: 0,
+    };
+
+    let timerInterval = null;
+
+    // --- 安全確保のための共通メッセージ ---
+    const safetyNoticeHtml = `
+      <p class="safety-notice">
+        <svg class="safety-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        しんどくなったら途中でやめて大丈夫です。上の「ワーク選択に戻る」から、ほかの実験を選び直せます。
+      </p>
+    `;
+
+    // ユーティリティ関数
+    function getDisplayEmotion() { return state.targetEmotion === 'その他' ? state.customEmotion : state.targetEmotion; }
+    function getDisplaySliderEmotion() { return state.sliderEmotion === 'その他' ? state.customSliderEmotion : state.sliderEmotion; }
+    function getDisplayStrategyTheme() { return state.strategyTheme === 'その他' ? state.customStrategyTheme : state.strategyTheme; }
+    function getDisplayWeather() { return state.weatherType === 'その他' ? state.customWeather : state.weatherType; }
+
+    // メインの描画ルーティング
+    function render() {
+      const container = document.getElementById('app-container');
+      const topNav = document.getElementById('top-nav');
+      container.innerHTML = ''; 
+
+      if (state.step === 'menu') {
+        topNav.classList.add('hidden');
+      } else {
+        topNav.classList.remove('hidden');
+      }
+
+      if (state.step === 'menu') {
+        container.innerHTML = renderMenu();
+        attachMenuListeners();
+      } else if (state.exerciseId === 'emotion') {
+        if (state.step === 'select') {
+          container.innerHTML = renderSelectEmotion();
+          attachSelectEmotionListeners();
+        } else if (state.step === 'timer') {
+          container.innerHTML = renderTimer();
+          if (state.timeLeft === state.totalTime) startTimerProcess();
+        } else if (state.step === 'reflection') {
+          container.innerHTML = renderReflectionEmotion();
+          attachReflectionEmotionListeners();
+        } else if (state.step === 'result_summary') {
+          container.innerHTML = renderResultSummaryEmotion();
+        } else if (state.step === 'result_detail') {
+          container.innerHTML = renderResultDetailEmotion();
+        }
+      } else if (state.exerciseId === 'whitebear') {
+        if (state.step === 'instruction') {
+          container.innerHTML = renderInstructionBear();
+          attachInstructionBearListeners();
+        } else if (state.step === 'timer') {
+          container.innerHTML = renderTimer();
+          if (state.timeLeft === state.totalTime) startTimerProcess();
+        } else if (state.step === 'reflection') {
+          container.innerHTML = renderReflectionBear();
+          attachReflectionBearListeners();
+        } else if (state.step === 'result_summary') {
+          container.innerHTML = renderResultSummaryBear();
+        } else if (state.step === 'result_detail') {
+          container.innerHTML = renderResultDetailBear();
+        }
+      } else if (state.exerciseId === 'slider') {
+        if (state.step === 'select_emotion') {
+          container.innerHTML = renderSelectSliderEmotion();
+          attachSelectSliderEmotionListeners();
+        } else if (state.step === 'slider_initial') {
+          container.innerHTML = renderSliderInitial();
+          attachSliderInitialListeners();
+        } else if (state.step === 'timer') {
+          container.innerHTML = renderTimer();
+          if (state.timeLeft === state.totalTime) startTimerProcess();
+        } else if (state.step === 'reflection') {
+          container.innerHTML = renderReflectionSlider();
+          attachReflectionSliderListeners();
+        } else if (state.step === 'result_summary') {
+          container.innerHTML = renderResultSummarySlider();
+        } else if (state.step === 'result_detail') {
+          container.innerHTML = renderResultDetailSlider();
+        }
+      } else if (state.exerciseId === 'strategy') {
+        if (state.step === 'select_theme') {
+          container.innerHTML = renderSelectStrategyTheme();
+          attachSelectStrategyThemeListeners();
+        } else if (state.step === 'brainstorm') {
+          container.innerHTML = renderBrainstormStrategies();
+          attachBrainstormStrategiesListeners();
+        } else if (state.step === 'reflection') {
+          container.innerHTML = renderReflectionStrategy();
+          attachReflectionStrategyListeners();
+        } else if (state.step === 'result_summary') {
+          container.innerHTML = renderResultSummaryStrategy();
+        } else if (state.step === 'result_detail') {
+          container.innerHTML = renderResultDetailStrategy();
+        }
+      } else if (state.exerciseId === 'weather') {
+        if (state.step === 'select_weather') {
+          container.innerHTML = renderSelectWeather();
+          attachSelectWeatherListeners();
+        } else if (state.step === 'question_stop') {
+          container.innerHTML = renderWeatherQuestionStop();
+          attachWeatherQuestionStopListeners();
+        } else if (state.step === 'question_action') {
+          container.innerHTML = renderWeatherQuestionAction();
+          attachWeatherQuestionActionListeners();
+        } else if (state.step === 'result_summary') {
+          container.innerHTML = renderResultSummaryWeather();
+        } else if (state.step === 'result_detail') {
+          container.innerHTML = renderResultDetailWeather();
+        }
+      }
+    }
+
+    // --- 0. メニュー画面 ---
+    function renderMenu() {
+      return `
+        <div class="section-content animate-fadeIn">
+          <div class="menu-header">
+            <h2 class="page-title">コントロールとの関わりを見る</h2>
+            <p class="page-desc">創造的絶望 — 実践するエクササイズを選択してください。</p>
+          </div>
+
+          <div class="menu-grid">
+            <div id="btn-emotion" class="menu-item">
+              <h3 class="menu-item-title">1. 感情のコントロール実験</h3>
+              <p class="menu-item-desc">「不安」などをあえて感じないようにする定番のエクササイズです。（所要時間：約1分）</p>
+            </div>
+
+            <div id="btn-whitebear" class="menu-item">
+              <h3 class="menu-item-title">2. 白くまエクササイズ</h3>
+              <p class="menu-item-desc">「思考」すら思い通りにはコントロールできないことを体験するエクササイズです。（所要時間：約2分）</p>
+            </div>
+            
+            <div id="btn-slider" class="menu-item">
+              <h3 class="menu-item-title">3. 感情スライダー・エクササイズ</h3>
+              <p class="menu-item-desc">感情を「数値化して下げようとする」努力がどのような結果をもたらすかを体験します。（所要時間：約4分）</p>
+            </div>
+
+            <div id="btn-strategy" class="menu-item">
+              <h3 class="menu-item-title">4. 感情コントロール作戦会議</h3>
+              <p class="menu-item-desc">これまで行ってきた「感情をなくすための努力」が機能しているか検証します。（所要時間：約3分）</p>
+            </div>
+
+            <div id="btn-weather" class="menu-item col-span-2">
+              <h3 class="menu-item-title">5. 感情を天気として扱う</h3>
+              <p class="menu-item-desc">コントロールを手放し、今できる行動を選ぶ感覚を短時間で体験するワークです。（所要時間：約2分）</p>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function attachMenuListeners() {
+      document.getElementById('btn-emotion').addEventListener('click', () => { state.exerciseId = 'emotion'; state.step = 'select'; render(); });
+      document.getElementById('btn-whitebear').addEventListener('click', () => { state.exerciseId = 'whitebear'; state.step = 'instruction'; render(); });
+      document.getElementById('btn-slider').addEventListener('click', () => { state.exerciseId = 'slider'; state.step = 'select_emotion'; render(); });
+      document.getElementById('btn-strategy').addEventListener('click', () => { state.exerciseId = 'strategy'; state.step = 'select_theme'; render(); });
+      document.getElementById('btn-weather').addEventListener('click', () => { state.exerciseId = 'weather'; state.step = 'select_weather'; render(); });
+    }
+
+    // ==========================================
+    // 1. 感情のコントロール実験
+    // ==========================================
+
+    function renderSelectEmotion() {
+      const emotions = ['不安', '焦り', '緊張', 'やる気が出ない感じ', '集中できない感じ', 'その他'];
+      let optionsHtml = emotions.map(emotion => `
+        <label class="form-label">
+          <input type="radio" name="emotion" value="${emotion}" ${state.targetEmotion === emotion ? 'checked' : ''} class="emotion-radio form-radio">
+          <span class="form-text">${emotion}</span>
+        </label>
+      `).join('');
+
+      const customInputHtml = state.targetEmotion === 'その他' ? `
+        <div class="text-input-wrap"><input type="text" id="custom-emotion-input" placeholder="ご自身の言葉で入力してください" value="${state.customEmotion}" class="text-input"></div>
+      ` : '';
+      const isNextDisabled = state.targetEmotion === 'その他' && state.customEmotion.trim() === '';
+
+      return `
+        <div class="section-content animate-fadeIn">
+          <div class="text-center">
+            <h2 class="page-title">「感じないようにする」実験</h2>
+            <p class="page-desc">まずは、これから扱うテーマ（感情や感覚）を選択してください。</p>
+            ${safetyNoticeHtml}
+          </div>
+          <div class="box-panel">
+            <div class="options-list-wide">${optionsHtml}</div>
+            ${customInputHtml}
+          </div>
+          <div class="btn-group">
+            <button id="start-emotion-btn" ${isNextDisabled ? 'disabled' : ''} class="btn btn-primary btn-px-6 w-2-3">次へ進む</button>
+            <button onclick="resetToMenu()" class="btn btn-secondary w-1-3">ワーク選択に戻る</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function attachSelectEmotionListeners() {
+      document.querySelectorAll('.emotion-radio').forEach(r => r.addEventListener('change', (e) => { state.targetEmotion = e.target.value; render(); }));
+      const customInput = document.getElementById('custom-emotion-input');
+      if (customInput) customInput.addEventListener('input', (e) => { state.customEmotion = e.target.value; document.getElementById('start-emotion-btn').disabled = state.customEmotion.trim() === ''; });
+      document.getElementById('start-emotion-btn').addEventListener('click', () => { state.step = 'timer'; state.totalTime = 30; state.timeLeft = 30; render(); });
+    }
+
+    function renderReflectionEmotion() {
+      const displayEmotion = getDisplayEmotion();
+      const intensityOptions = ['ゼロになった', '少し減った', '変わらなかった', '逆に強くなった'];
+      let intensityHtml = intensityOptions.map(option => `
+        <label class="form-label">
+          <input type="radio" name="intensity" value="${option}" ${state.intensity === option ? 'checked' : ''} class="intensity-radio form-radio">
+          <span class="form-text">${option}</span>
+        </label>
+      `).join('');
+
+      return `
+        <div class="section-content animate-fadeIn">
+          <div class="text-center">
+            <h2 class="page-title">振り返り</h2>
+            <p class="page-desc">30秒間が経過しました。ご自身の体験について教えてください。</p>
+          </div>
+          <div class="section-content">
+            <div class="box-panel">
+              <p class="question-title">質問1: 「${displayEmotion}」はゼロになりましたか？</p>
+              <div class="options-list">${intensityHtml}</div>
+            </div>
+            <div class="box-panel">
+              <p class="question-title">質問2: 途中でどのようなことが起きましたか？（複数選択可）</p>
+              <div class="options-list-wide">
+                <label class="form-label-start">
+                  <input type="checkbox" id="chk-moreAware" ${state.experiences.moreAware ? 'checked' : ''} class="form-checkbox">
+                  <span class="form-text">余計に「${displayEmotion}」が意識に上がった</span>
+                </label>
+                <label class="form-label-start">
+                  <input type="checkbox" id="chk-checking" ${state.experiences.checking ? 'checked' : ''} class="form-checkbox">
+                  <span class="form-text">「${displayEmotion}を感じていないか」を常に確認してしまった</span>
+                </label>
+                <label class="form-label-start">
+                  <input type="checkbox" id="chk-otherEmotions" ${state.experiences.otherEmotions ? 'checked' : ''} class="form-checkbox">
+                  <span class="form-text">別の感情（焦り・緊張など）が出てきた</span>
+                </label>
+                <label class="form-label-start">
+                  <input type="checkbox" id="chk-nothing" ${state.experiences.nothing ? 'checked' : ''} class="form-checkbox">
+                  <span class="form-text">特に何も起きなかった</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          <button id="result-btn" ${state.intensity === '' ? 'disabled' : ''} class="btn btn-primary btn-px-6 w-full btn-action-submit">体験を振り返る</button>
+        </div>
+      `;
+    }
+
+    function attachReflectionEmotionListeners() {
+      document.querySelectorAll('.intensity-radio').forEach(r => r.addEventListener('change', (e) => { state.intensity = e.target.value; document.getElementById('result-btn').disabled = false; }));
+      document.getElementById('chk-moreAware').addEventListener('change', (e) => state.experiences.moreAware = e.target.checked);
+      document.getElementById('chk-checking').addEventListener('change', (e) => state.experiences.checking = e.target.checked);
+      document.getElementById('chk-otherEmotions').addEventListener('change', (e) => state.experiences.otherEmotions = e.target.checked);
+      document.getElementById('chk-nothing').addEventListener('change', (e) => state.experiences.nothing = e.target.checked);
+      document.getElementById('result-btn').addEventListener('click', () => { state.step = 'result_summary'; render(); });
+    }
+
+    // 感情コントロール実験：第1段階サマリー
+    function renderResultSummaryEmotion() {
+      return `
+        <div class="section-content animate-fadeIn">
+          <div class="text-center">
+            <h2 class="page-title">今回見えてきたこと</h2>
+          </div>
+          <div class="box-panel">
+            <p class="text-body text-body-mb">
+              「${getDisplayEmotion()}」を感じないようにしてみた結果、完全にゼロにはならない、または余計に意識に上がる体験が起きることがあります。<br>
+              今回の体験でも、そのような反応が見られたかもしれません。
+            </p>
+            <div class="highlight-box">
+              <p class="highlight-text">
+                このやり方で、気持ちに自由さは増えそうでしょうか？
+              </p>
+            </div>
+          </div>
+          <div class="btn-group-responsive">
+            <button onclick="resetToMenu()" class="btn btn-primary btn-px-6 btn-responsive-primary">ワーク選択に戻る</button>
+            <button onclick="state.step = 'result_detail'; render();" class="btn btn-secondary btn-responsive-secondary">もう少し詳しく見る</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // 感情コントロール実験：第2段階ディテール
+    function renderResultDetailEmotion() {
+      const hasParadoxicalEffect = state.experiences.moreAware || state.experiences.checking || state.intensity === '逆に強くなった';
+      const paradoxicalMessageHtml = hasParadoxicalEffect ? `
+        <div class="alert-info">多くの方が、あなたと同じように「余計に意識してしまう」「確認してしまう」「逆に強くなる」といった体験をします。これは多くの方に見られる自然な反応です。</div>
+      ` : '';
+
+      return `
+        <div class="section-content animate-fadeIn">
+          <div class="text-center">
+            <h2 class="page-title">もう少し詳しく見る</h2>
+          </div>
+          <div class="box-panel-light">
+            <h3 class="section-title">今回の体験を整理する</h3>
+            <p class="text-body text-body-mb">「${getDisplayEmotion()}」をゼロにしようとした結果、あなたは「${state.intensity}」と回答されました。</p>
+            ${paradoxicalMessageHtml}
+            <h3 class="section-title section-title-mt">この体験で起きやすいこと</h3>
+            <ul class="list-bullet">
+              <li><strong>「感じないようにするほど、感じてしまう」</strong><br /><span class="list-desc">人間の脳は、「〇〇を考えないようにしよう」と指示されると、皮肉なことにその「〇〇」を探し出しやすくなります。</span></li>
+              <li><strong>コントロールしようとする努力が、注意を向ける</strong><br /><span class="list-desc">感情を消そう、コントロールしようと努力すること自体が、かえってその感情にスポットライトを当て続ける結果につながることがあります。</span></li>
+            </ul>
+          </div>
+          <div class="btn-group">
+            <button onclick="resetToMenu()" class="btn btn-primary btn-px-6 w-2-3">ワーク選択に戻る</button>
+            <button onclick="state.step = 'result_summary'; render();" class="btn btn-secondary w-1-3">前へ戻る</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // ==========================================
+    // 2. 白くまエクササイズ
+    // ==========================================
+
+    function renderInstructionBear() {
+      return `
+        <div class="section-content animate-fadeIn">
+          <div class="text-center">
+            <h2 class="page-title">白くまエクササイズ</h2>
+            <p class="page-desc">これから、あなたの思考に関する簡単な実験を行います。</p>
+            ${safetyNoticeHtml}
+          </div>
+          <div class="box-panel text-center box-panel-padded">
+            <h3 class="instruction-text">次の画面に進んだら、<br>1分間<br><span class="instruction-highlight">「絶対に『白くま』を思い浮かべない」</span><br>ようにしてください。</h3>
+            <p class="instruction-sub">準備ができましたら、スタートボタンを押してください。</p>
+          </div>
+          <div class="btn-group">
+            <button id="start-bear-btn" class="btn btn-primary btn-px-6 w-2-3">スタート</button>
+            <button onclick="resetToMenu()" class="btn btn-secondary w-1-3">ワーク選択に戻る</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function attachInstructionBearListeners() {
+      document.getElementById('start-bear-btn').addEventListener('click', () => { state.step = 'timer'; state.totalTime = 60; state.timeLeft = 60; render(); });
+    }
+
+    function renderReflectionBear() {
+      const countOptions = ['全く浮かばなかった（0回）', '1〜3回くらい', '4〜10回くらい', 'それ以上（数え切れないほど）'];
+      let countHtml = countOptions.map(option => `
+        <label class="form-label">
+          <input type="radio" name="bearCount" value="${option}" ${state.bearCount === option ? 'checked' : ''} class="bear-count-radio form-radio">
+          <span class="form-text">${option}</span>
+        </label>
+      `).join('');
+
+      return `
+        <div class="section-content animate-fadeIn">
+          <div class="text-center">
+            <h2 class="page-title">振り返り</h2>
+            <p class="page-desc">1分間が経過しました。ご自身の体験について教えてください。</p>
+          </div>
+          <div class="section-content">
+            <div class="box-panel">
+              <p class="question-title">質問1: 1分間で「白くま」は何回くらい思い浮かびましたか？</p>
+              <div class="options-list">${countHtml}</div>
+            </div>
+            <div class="box-panel">
+              <p class="question-title">質問2: 浮かんでしまったとき、どのように対処しましたか？（複数選択可）</p>
+              <div class="options-list-wide">
+                <label class="form-label-start"><input type="checkbox" id="chk-bear-distract" ${state.bearActions.distract ? 'checked' : ''} class="form-checkbox"><span class="form-text">別のことを考えようと努力した</span></label>
+                <label class="form-label-start"><input type="checkbox" id="chk-bear-suppress" ${state.bearActions.suppress ? 'checked' : ''} class="form-checkbox"><span class="form-text">「考えちゃダメだ」と消そうと頑張った</span></label>
+                <label class="form-label-start"><input type="checkbox" id="chk-bear-giveup" ${state.bearActions.giveup ? 'checked' : ''} class="form-checkbox"><span class="form-text">諦めてそのままにした</span></label>
+                <label class="form-label-start"><input type="checkbox" id="chk-bear-other" ${state.bearActions.other ? 'checked' : ''} class="form-checkbox"><span class="form-text">その他</span></label>
+              </div>
+            </div>
+          </div>
+          <button id="result-bear-btn" ${state.bearCount === '' ? 'disabled' : ''} class="btn btn-primary btn-px-6 w-full btn-action-submit">体験を振り返る</button>
+        </div>
+      `;
+    }
+
+    function attachReflectionBearListeners() {
+      document.querySelectorAll('.bear-count-radio').forEach(r => r.addEventListener('change', (e) => { state.bearCount = e.target.value; document.getElementById('result-bear-btn').disabled = false; }));
+      document.getElementById('chk-bear-distract').addEventListener('change', (e) => state.bearActions.distract = e.target.checked);
+      document.getElementById('chk-bear-suppress').addEventListener('change', (e) => state.bearActions.suppress = e.target.checked);
+      document.getElementById('chk-bear-giveup').addEventListener('change', (e) => state.bearActions.giveup = e.target.checked);
+      document.getElementById('chk-bear-other').addEventListener('change', (e) => state.bearActions.other = e.target.checked);
+      document.getElementById('result-bear-btn').addEventListener('click', () => { state.step = 'result_summary'; render(); });
+    }
+
+    // 白くまエクササイズ：第1段階サマリー
+    function renderResultSummaryBear() {
+      return `
+        <div class="section-content animate-fadeIn">
+          <div class="text-center">
+            <h2 class="page-title">今回見えてきたこと</h2>
+          </div>
+          <div class="box-panel">
+            <p class="text-body text-body-mb">
+              思考を消そうとすると、かえって浮かびやすくなることがあります。<br>
+              1分間で何回浮かんだかは、問題ではありません。
+            </p>
+            <div class="highlight-box">
+              <p class="highlight-text">
+                思考を完全にコントロールするのは、思ったより難しいと感じましたか？
+              </p>
+            </div>
+          </div>
+          <div class="btn-group-responsive">
+            <button onclick="resetToMenu()" class="btn btn-primary btn-px-6 btn-responsive-primary">ワーク選択に戻る</button>
+            <button onclick="state.step = 'result_detail'; render();" class="btn btn-secondary btn-responsive-secondary">もう少し詳しく見る</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // 白くまエクササイズ：第2段階ディテール
+    function renderResultDetailBear() {
+      return `
+        <div class="section-content animate-fadeIn">
+          <div class="text-center">
+            <h2 class="page-title">もう少し詳しく見る</h2>
+          </div>
+          <div class="box-panel-light">
+            <h3 class="section-title">「${state.bearCount}」浮かんだ方へ</h3>
+            <div class="alert-info">
+              何回浮かんだとしても、それは<strong>全く問題ありません。</strong><br>
+              実は、ほとんどの人があなたと同じように「白くま」を思い浮かべてしまいます。
+            </div>
+            <p class="text-body text-body-mb">
+              これは、1987年に心理学者のウェグナー（Daniel Wegner）らが行った有名な実験で確認されている現象です。<br>
+              「ある思考を抑圧しようとすると、かえってその思考が頻繁に頭に浮かぶようになる」という客観的な傾向であり、<strong>「皮肉なリバウンド効果（Ironic processes of mental control）」</strong>と呼ばれています。
+            </p>
+            <h3 class="section-title section-title-mt">この体験で起きやすいこと</h3>
+            <ul class="list-bullet">
+              <li><strong>思考ですら、思い通りには消しにくい</strong><br /><span class="list-desc">「〇〇を考えないようにしよう」と努力するほど、脳は指示を守れているか確認するために、結果的にその「〇〇」を頻繁に監視し、思い浮かべやすくなります。</span></li>
+              <li><strong>感情だけが特別に難しいわけではない</strong><br /><span class="list-desc">目に見えない「思考」でさえコントロールが難しいのですから、不安や焦りといった「感情」を無理に消そうとすることが困難なのは、とても自然なことと言えます。</span></li>
+            </ul>
+            <div class="citation">
+              <p>出典: Wegner, D. M., Schneider, D. J., Carter, S. R., & White, T. L. (1987). Paradoxical effects of thought suppression. <em>Journal of Personality and Social Psychology, 53</em>(1), 5–13. <a href="https://doi.org/10.1037/0022-3514.53.1.5" target="_blank" rel="noopener noreferrer">Link</a></p>
+            </div>
+          </div>
+          <div class="btn-group">
+            <button onclick="resetToMenu()" class="btn btn-primary btn-px-6 w-2-3">ワーク選択に戻る</button>
+            <button onclick="state.step = 'result_summary'; render();" class="btn btn-secondary w-1-3">前へ戻る</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // ==========================================
+    // 3. 感情スライダー・エクササイズ
+    // ==========================================
+
+    function renderSelectSliderEmotion() {
+      const emotions = ['不安', 'イライラ', '落ち込み', '緊張', 'その他'];
+      let optionsHtml = emotions.map(emotion => `
+        <label class="form-label">
+          <input type="radio" name="sliderEmotion" value="${emotion}" ${state.sliderEmotion === emotion ? 'checked' : ''} class="slider-emotion-radio form-radio">
+          <span class="form-text">${emotion}</span>
+        </label>
+      `).join('');
+
+      const customInputHtml = state.sliderEmotion === 'その他' ? `<div class="text-input-wrap"><input type="text" id="custom-slider-emotion-input" placeholder="ご自身の言葉で入力してください" value="${state.customSliderEmotion}" class="text-input"></div>` : '';
+      const isNextDisabled = state.sliderEmotion === 'その他' && state.customSliderEmotion.trim() === '';
+
+      return `
+        <div class="section-content animate-fadeIn">
+          <div class="text-center">
+            <h2 class="page-title">感情スライダー</h2>
+            <p class="page-desc">これから数値化して観察する「感情」を一つ選んでください。</p>
+            ${safetyNoticeHtml}
+          </div>
+          <div class="box-panel">
+            <div class="options-list-wide">${optionsHtml}</div>
+            ${customInputHtml}
+          </div>
+          <div class="btn-group">
+            <button id="start-slider-btn" ${isNextDisabled ? 'disabled' : ''} class="btn btn-primary btn-px-6 w-2-3">次へ進む</button>
+            <button onclick="resetToMenu()" class="btn btn-secondary w-1-3">ワーク選択に戻る</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function attachSelectSliderEmotionListeners() {
+      document.querySelectorAll('.slider-emotion-radio').forEach(r => r.addEventListener('change', (e) => { state.sliderEmotion = e.target.value; render(); }));
+      const customInput = document.getElementById('custom-slider-emotion-input');
+      if (customInput) customInput.addEventListener('input', (e) => { state.customSliderEmotion = e.target.value; document.getElementById('start-slider-btn').disabled = state.customSliderEmotion.trim() === ''; });
+      document.getElementById('start-slider-btn').addEventListener('click', () => { state.step = 'slider_initial'; render(); });
+    }
+
+    function renderSliderInitial() {
+      return `
+        <div class="section-content animate-fadeIn">
+          <div class="text-center">
+            <h2 class="page-title">現在の強さを記録する</h2>
+            <p class="page-desc">今の「${getDisplaySliderEmotion()}」の強さは、0〜10でいうといくつですか？</p>
+          </div>
+          <div class="box-panel text-center">
+            <div class="slider-val-container"><span class="slider-val" id="initial-slider-val">${state.sliderInitial}</span><span class="slider-max">/ 10</span></div>
+            <input type="range" min="0" max="10" value="${state.sliderInitial}" id="initial-slider" class="slider-input">
+            <div class="slider-labels"><span>0 (全くない)</span><span>10 (最大)</span></div>
+          </div>
+          <button id="next-slider-initial-btn" class="btn btn-primary btn-px-6 w-full">記録して次へ</button>
+        </div>
+      `;
+    }
+
+    function attachSliderInitialListeners() {
+      const slider = document.getElementById('initial-slider');
+      const valDisplay = document.getElementById('initial-slider-val');
+      slider.addEventListener('input', (e) => { state.sliderInitial = parseInt(e.target.value, 10); valDisplay.textContent = state.sliderInitial; });
+      document.getElementById('next-slider-initial-btn').addEventListener('click', () => { state.step = 'timer'; state.totalTime = 180; state.timeLeft = 180; render(); });
+    }
+
+    function renderReflectionSlider() {
+      const shortTermHtml = ['すぐに下がった・楽になった', 'あまり変わらなかった', '逆にひどくなった・別の感情が出た'].map(o => `
+        <label class="form-label">
+          <input type="radio" name="sliderShortTerm" value="${o}" ${state.sliderShortTerm === o ? 'checked' : ''} class="short-term-radio form-radio"><span class="form-text">${o}</span>
+        </label>
+      `).join('');
+
+      const longTermHtml = ['完全に解決し、もう問題にならない', '一時的にマシになるが、結局戻ってくる', '徐々に悪化している、または生活を制限している'].map(o => `
+        <label class="form-label">
+          <input type="radio" name="sliderLongTerm" value="${o}" ${state.sliderLongTerm === o ? 'checked' : ''} class="long-term-radio form-radio"><span class="form-text">${o}</span>
+        </label>
+      `).join('');
+
+      const isReadyToProceed = state.sliderShortTerm !== '' && state.sliderLongTerm !== '';
+
+      return `
+        <div class="section-content animate-fadeIn">
+          <div class="text-center">
+            <h2 class="page-title">振り返り</h2>
+            <p class="page-desc">3分間お疲れ様でした。事実を振り返ってみましょう。</p>
+          </div>
+          <div class="section-content">
+            <div class="box-panel">
+              <p class="question-title">質問1: 今の「${getDisplaySliderEmotion()}」の強さはいくつですか？</p>
+              <div class="text-center val-container-spaced">
+                <span class="slider-val-sm" id="final-slider-val">${state.sliderFinal}</span><span class="slider-max">/ 10</span>
+                <div class="instruction-sub instruction-sub-detail">（開始前は ${state.sliderInitial} でした）</div>
+              </div>
+              <input type="range" min="0" max="10" value="${state.sliderFinal}" id="final-slider" class="slider-input">
+            </div>
+            <div class="box-panel">
+              <p class="question-title">質問2: 下げようとした行動は、どのようなものでしたか？（複数選択可）</p>
+              <div class="options-list-wide">
+                <label class="form-label-start"><input type="checkbox" id="chk-dots-d" ${state.sliderActions.distraction ? 'checked' : ''} class="form-checkbox"><div class="form-text-block"><span>気をそらす・別のことを考える</span></div></label>
+                <label class="form-label-start"><input type="checkbox" id="chk-dots-o" ${state.sliderActions.optingOut ? 'checked' : ''} class="form-checkbox"><div class="form-text-block"><span>その場から逃げる・関わるのをやめる</span></div></label>
+                <label class="form-label-start"><input type="checkbox" id="chk-dots-t" ${state.sliderActions.thinking ? 'checked' : ''} class="form-checkbox"><div class="form-text-block"><span>理由を分析する・自分に言い聞かせる</span></div></label>
+                <label class="form-label-start"><input type="checkbox" id="chk-dots-s" ${state.sliderActions.substances ? 'checked' : ''} class="form-checkbox"><div class="form-text-block"><span>飲食や気晴らしで感覚を麻痺させる</span></div></label>
+                <label class="form-label-start"><input type="checkbox" id="chk-dots-other" ${state.sliderActions.other ? 'checked' : ''} class="form-checkbox"><div class="form-text-block"><span>その他</span></div></label>
+              </div>
+            </div>
+            <div class="box-panel">
+              <p class="question-title question-title-sm">質問3: その行動は、「短期的（その瞬間）」にはどうでしたか？</p>
+              <div class="options-list options-list-spaced">${shortTermHtml}</div>
+              <p class="question-title question-title-divider">質問4: その行動を繰り返してきて、「長期的」にはどうなっていますか？</p>
+              <div class="options-list">${longTermHtml}</div>
+            </div>
+          </div>
+          <button id="result-slider-btn" ${!isReadyToProceed ? 'disabled' : ''} class="btn btn-primary btn-px-6 w-full btn-action-submit">体験を振り返る</button>
+        </div>
+      `;
+    }
+
+    function attachReflectionSliderListeners() {
+      const slider = document.getElementById('final-slider');
+      const valDisplay = document.getElementById('final-slider-val');
+      slider.addEventListener('input', (e) => { state.sliderFinal = parseInt(e.target.value, 10); valDisplay.textContent = state.sliderFinal; });
+      document.getElementById('chk-dots-d').addEventListener('change', (e) => state.sliderActions.distraction = e.target.checked);
+      document.getElementById('chk-dots-o').addEventListener('change', (e) => state.sliderActions.optingOut = e.target.checked);
+      document.getElementById('chk-dots-t').addEventListener('change', (e) => state.sliderActions.thinking = e.target.checked);
+      document.getElementById('chk-dots-s').addEventListener('change', (e) => state.sliderActions.substances = e.target.checked);
+      document.getElementById('chk-dots-other').addEventListener('change', (e) => state.sliderActions.other = e.target.checked);
+      const checkReady = () => document.getElementById('result-slider-btn').disabled = !(state.sliderShortTerm !== '' && state.sliderLongTerm !== '');
+      document.querySelectorAll('.short-term-radio').forEach(r => r.addEventListener('change', (e) => { state.sliderShortTerm = e.target.value; checkReady(); }));
+      document.querySelectorAll('.long-term-radio').forEach(r => r.addEventListener('change', (e) => { state.sliderLongTerm = e.target.value; checkReady(); }));
+      document.getElementById('result-slider-btn').addEventListener('click', () => { state.step = 'result_summary'; render(); });
+    }
+
+    // 感情スライダー：第1段階サマリー
+    function renderResultSummarySlider() {
+      return `
+        <div class="section-content animate-fadeIn">
+          <div class="text-center">
+            <h2 class="page-title">今回見えてきたこと</h2>
+          </div>
+          <div class="box-panel">
+            <p class="text-body text-body-mb">
+              数値を動かそうとするほど、かえってその数値を気にし続けることがあります。<br>
+              感情は、思ったほど自由には上下しないことがあるかもしれません。
+            </p>
+            <div class="highlight-box">
+              <p class="highlight-text">
+                感情の数字を動かすことと、生活を進めることは、同じでしょうか？
+              </p>
+            </div>
+          </div>
+          <div class="btn-group-responsive">
+            <button onclick="resetToMenu()" class="btn btn-primary btn-px-6 btn-responsive-primary">ワーク選択に戻る</button>
+            <button onclick="state.step = 'result_detail'; render();" class="btn btn-secondary btn-responsive-secondary">もう少し詳しく見る</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // 感情スライダー：第2段階ディテール
+    function renderResultDetailSlider() {
+      const isFailedToDrop = state.sliderFinal > 2;
+      return `
+        <div class="section-content animate-fadeIn">
+          <div class="text-center">
+            <h2 class="page-title">もう少し詳しく見る</h2>
+          </div>
+          <div class="box-panel-light">
+            <h3 class="section-title">「下がらない」という事実</h3>
+            <p class="text-body text-body-mb">あなたの感情の数値は、開始前の「${state.sliderInitial}」から「${state.sliderFinal}」に変化しました。</p>
+            ${isFailedToDrop ? `
+              <div class="alert-info">目標とした「2」まで下がらなかったり、逆に上がってしまったりしたとしても、それはあなたの能力不足ではありません。<strong>「感情は意志の力では直接コントロールしにくい」という起きやすい傾向</strong>が現れただけです。</div>
+            ` : `
+              <div class="alert-info">今回は数値が下がりましたが、重要なのは「長期的」な結果です。</div>
+            `}
+            <h3 class="section-title section-title-mt">点と点をつなぐ（Join the D.O.T.S.）</h3>
+            <p class="text-body text-body-mb">不快な感情を下げるために私たちが用いる行動戦略は、頭文字をとって<strong>D.O.T.S.</strong>と呼ばれます。これらは「短期的」には効くように見えても、「長期的」にはうまくいきにくいばかりか、人生の可能性を狭めてしまうことがあります。</p>
+            <div class="options-list-wide options-list-spaced">
+              <div class="dots-item"><span class="dots-title">D</span>istraction（気をそらす）<p class="dots-desc">スマホやテレビなどで気を紛らわせる。根本的な変化にはつながりにくいことがあります。</p></div>
+              <div class="dots-item"><span class="dots-title">O</span>pting out（身を引く）<p class="dots-desc">不安を感じる場所に行かない、挑戦をやめる。生活範囲が狭まりやすくなります。</p></div>
+              <div class="dots-item"><span class="dots-title">T</span>hinking（思考）<p class="dots-desc">「なぜこうなったのか」と理屈をこねたり、過度に心配したりする。結果として感情に注意が向き続けやすくなります。</p></div>
+              <div class="dots-item"><span class="dots-title">S</span>ubstances, Self-harm（物質等）<p class="dots-desc">アルコール、過食などで感覚を麻痺させる。二次的な問題を引き起こすことがあります。</p></div>
+            </div>
+            <p class="text-body text-body-strong">感情のスライダーを無理に下げようとする努力（経験的回避）が、長期的に「${state.sliderLongTerm}」という結果を招いているかもしれないという事実に気づくことが、次のステップへ進むための大切な鍵となります。</p>
+            <div class="citation">
+              <p>出典: Harris, R. (2009). <em>ACT Made Simple: An Easy-To-Read Primer on Acceptance and Commitment Therapy.</em> New Harbinger Publications. <a href="https://www.newharbinger.com/9781684033010/act-made-simple/" target="_blank" rel="noopener noreferrer">Link</a></p>
+            </div>
+          </div>
+          <div class="btn-group">
+            <button onclick="resetToMenu()" class="btn btn-primary btn-px-6 w-2-3">ワーク選択に戻る</button>
+            <button onclick="state.step = 'result_summary'; render();" class="btn btn-secondary w-1-3">前へ戻る</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // ==========================================
+    // 4. 感情コントロール作戦会議
+    // ==========================================
+
+    function renderSelectStrategyTheme() {
+      const themes = ['課題や仕事の前の不安', '対人関係の緊張', '失敗した時の落ち込み', 'その他'];
+      let optionsHtml = themes.map(theme => `
+        <label class="form-label">
+          <input type="radio" name="strategyTheme" value="${theme}" ${state.strategyTheme === theme ? 'checked' : ''} class="strategy-theme-radio form-radio">
+          <span class="form-text">${theme}</span>
+        </label>
+      `).join('');
+
+      const customInputHtml = state.strategyTheme === 'その他' ? `<div class="text-input-wrap"><input type="text" id="custom-strategy-theme-input" placeholder="ご自身の言葉で入力してください" value="${state.customStrategyTheme}" class="text-input"></div>` : '';
+      const isNextDisabled = state.strategyTheme === 'その他' && state.customStrategyTheme.trim() === '';
+
+      return `
+        <div class="section-content animate-fadeIn">
+          <div class="text-center">
+            <h2 class="page-title">感情コントロール作戦会議</h2>
+            <p class="page-desc">あなたがよく直面する問題（テーマ）を一つ選んでください。</p>
+            ${safetyNoticeHtml}
+          </div>
+          <div class="box-panel">
+            <div class="options-list-wide">${optionsHtml}</div>
+            ${customInputHtml}
+          </div>
+          <div class="btn-group">
+            <button id="start-strategy-btn" ${isNextDisabled ? 'disabled' : ''} class="btn btn-primary btn-px-6 w-2-3">次へ進む</button>
+            <button onclick="resetToMenu()" class="btn btn-secondary w-1-3">ワーク選択に戻る</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function attachSelectStrategyThemeListeners() {
+      document.querySelectorAll('.strategy-theme-radio').forEach(r => r.addEventListener('change', (e) => { state.strategyTheme = e.target.value; render(); }));
+      const customInput = document.getElementById('custom-strategy-theme-input');
+      if (customInput) customInput.addEventListener('input', (e) => { state.customStrategyTheme = e.target.value; document.getElementById('start-strategy-btn').disabled = state.customStrategyTheme.trim() === ''; });
+      document.getElementById('start-strategy-btn').addEventListener('click', () => { state.step = 'brainstorm'; render(); });
+    }
+
+    function renderBrainstormStrategies() {
+      const hasSelectedStrategy = Object.values(state.strategies).some(v => v) || (state.strategies.other && state.customStrategy.trim() !== '');
+      return `
+        <div class="section-content animate-fadeIn">
+          <div class="text-center">
+            <h2 class="page-title page-title-sm">完璧な作戦を考える</h2>
+            <p class="page-desc page-desc-sm"><span class="instruction-highlight instruction-highlight-sm">「${getDisplayStrategyTheme()}」</span><br>をなくすための完璧な作戦を考えるとしたら、あなたは何をしますか？<br>これまでやってきたこと、思いつくものをすべて選んでください。</p>
+          </div>
+          <div class="box-panel">
+            <div class="options-list-wide">
+              <label class="form-label-start"><input type="checkbox" id="chk-strat-rethink" ${state.strategies.rethink ? 'checked' : ''} class="form-checkbox"><span class="form-text">考え直す（「大丈夫だ」と自分に言い聞かせる）</span></label>
+              <label class="form-label-start"><input type="checkbox" id="chk-strat-positive" ${state.strategies.positive ? 'checked' : ''} class="form-checkbox"><span class="form-text">ポジティブに考える</span></label>
+              <label class="form-label-start"><input type="checkbox" id="chk-strat-prepare" ${state.strategies.prepare ? 'checked' : ''} class="form-checkbox"><span class="form-text">準備を完璧にする</span></label>
+              <label class="form-label-start"><input type="checkbox" id="chk-strat-distract" ${state.strategies.distract ? 'checked' : ''} class="form-checkbox"><span class="form-text">気をそらす（別のことをして紛らわせる）</span></label>
+              <label class="form-label-start"><input type="checkbox" id="chk-strat-analyze" ${state.strategies.analyze ? 'checked' : ''} class="form-checkbox"><span class="form-text">理由を徹底的に分析する</span></label>
+              <label class="form-label-start"><input type="checkbox" id="chk-strat-other" ${state.strategies.other ? 'checked' : ''} class="form-checkbox"><span class="form-text">その他</span></label>
+            </div>
+            ${state.strategies.other ? `<div class="text-input-wrap-indent"><input type="text" id="custom-strategy-input" placeholder="具体的な作戦を入力してください" value="${state.customStrategy}" class="text-input"></div>` : ''}
+          </div>
+          <button id="next-brainstorm-btn" ${!hasSelectedStrategy ? 'disabled' : ''} class="btn btn-primary btn-px-6 w-full btn-action-submit">次の質問へ</button>
+        </div>
+      `;
+    }
+
+    function attachBrainstormStrategiesListeners() {
+      const updateButtonState = () => {
+        const hasSelection = Object.values(state.strategies).some(v => v);
+        const customValid = !state.strategies.other || (state.strategies.other && state.customStrategy.trim() !== '');
+        document.getElementById('next-brainstorm-btn').disabled = !(hasSelection && customValid);
+      };
+      ['rethink', 'positive', 'prepare', 'distract', 'analyze', 'other'].forEach(key => {
+        const el = document.getElementById(`chk-strat-${key}`);
+        if (el) el.addEventListener('change', (e) => { 
+          state.strategies[key] = e.target.checked; 
+          if(key === 'other') render();
+          else updateButtonState(); 
+        });
+      });
+      const customInput = document.getElementById('custom-strategy-input');
+      if (customInput) customInput.addEventListener('input', (e) => { state.customStrategy = e.target.value; updateButtonState(); });
+      document.getElementById('next-brainstorm-btn').addEventListener('click', () => { state.step = 'reflection'; render(); });
+    }
+
+    function renderReflectionStrategy() {
+      const freqHtml = ['1〜5回くらい', '10回くらい', '数え切れないほど（何十回、何百回）'].map(o => `
+        <label class="form-label">
+          <input type="radio" name="strategyFrequency" value="${o}" ${state.strategyFrequency === o ? 'checked' : ''} class="strat-freq-radio form-radio"><span class="form-text">${o}</span>
+        </label>
+      `).join('');
+      const persistsHtml = ['完全に解決し、二度と現れない', '一時は良くなるが、また戻ってくる', '変わらない、あるいはひどくなっている'].map(o => `
+        <label class="form-label">
+          <input type="radio" name="problemPersists" value="${o}" ${state.problemPersists === o ? 'checked' : ''} class="strat-persist-radio form-radio"><span class="form-text">${o}</span>
+        </label>
+      `).join('');
+      const isReadyToProceed = state.strategyFrequency !== '' && state.problemPersists !== '';
+
+      return `
+        <div class="section-content animate-fadeIn">
+          <div class="text-center">
+            <h2 class="page-title">振り返り</h2>
+            <p class="page-desc">あなたが選んだ「作戦」について、事実を確認します。</p>
+          </div>
+          <div class="section-content">
+            <div class="box-panel">
+              <p class="question-title">質問1: それらの作戦を、これまで何回くらい実行しましたか？</p>
+              <div class="options-list">${freqHtml}</div>
+            </div>
+            <div class="box-panel">
+              <p class="question-title">質問2: 今現在も、同じ問題（${getDisplayStrategyTheme()}）は存在していますか？</p>
+              <div class="options-list">${persistsHtml}</div>
+            </div>
+          </div>
+          <button id="result-strategy-btn" ${!isReadyToProceed ? 'disabled' : ''} class="btn btn-primary btn-px-6 w-full btn-action-submit">体験を振り返る</button>
+        </div>
+      `;
+    }
+
+    function attachReflectionStrategyListeners() {
+      const checkReady = () => document.getElementById('result-strategy-btn').disabled = !(state.strategyFrequency !== '' && state.problemPersists !== '');
+      document.querySelectorAll('.strat-freq-radio').forEach(r => r.addEventListener('change', (e) => { state.strategyFrequency = e.target.value; checkReady(); }));
+      document.querySelectorAll('.strat-persist-radio').forEach(r => r.addEventListener('change', (e) => { state.problemPersists = e.target.value; checkReady(); }));
+      document.getElementById('result-strategy-btn').addEventListener('click', () => { state.step = 'result_summary'; render(); });
+    }
+
+    // 感情コントロール作戦会議：第1段階サマリー
+    function renderResultSummaryStrategy() {
+      return `
+        <div class="section-content animate-fadeIn">
+          <div class="text-center">
+            <h2 class="page-title">今回見えてきたこと</h2>
+          </div>
+          <div class="box-panel">
+            <p class="text-body text-body-mb">
+              これまで「${getDisplayStrategyTheme()}」に対して、たくさん工夫されてきたことがわかります。<br>
+              しかし、一時的に楽になっても、問題が戻ってきやすいという側面があったかもしれません。<br>
+              それは、決してあなたの努力不足とは限りません。
+            </p>
+            <div class="highlight-box">
+              <p class="highlight-text">
+                少し別のやり方を試す余地はありそうですか？
+              </p>
+            </div>
+          </div>
+          <div class="btn-group-responsive">
+            <button onclick="resetToMenu()" class="btn btn-primary btn-px-6 btn-responsive-primary">ワーク選択に戻る</button>
+            <button onclick="state.step = 'result_detail'; render();" class="btn btn-secondary btn-responsive-secondary">もう少し詳しく見る</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // 感情コントロール作戦会議：第2段階ディテール
+    function renderResultDetailStrategy() {
+      return `
+        <div class="section-content animate-fadeIn">
+          <div class="text-center">
+            <h2 class="page-title">もう少し詳しく見る</h2>
+          </div>
+          <div class="box-panel-light">
+            <h3 class="section-title">今回の体験を整理する</h3>
+            <div class="box-panel-inner">
+              <p class="text-body">あなたはこれまで、<strong>「${state.strategyFrequency}」</strong>もの回数、理屈では正しそうな努力を重ねてきました。<br>しかし現在、問題は<strong>「${state.problemPersists}」</strong>という状況にあります。</p>
+            </div>
+            <p class="text-body text-body-mb text-body-strong">これは、<strong>「あなたのやる気が足りなかった」わけではありません。あなたの「努力は十分だった」のです。</strong><br>あなたは既に、十分に、一生懸命に戦ってこられました。</p>
+            
+            <h3 class="section-title section-title-mt">この体験で起きやすいこと</h3>
+            <ul class="list-bullet">
+              <li><strong>方略（作戦）自体の限界</strong><br /><span class="list-desc">感情や思考をコントロールして「なくそう」とする作戦は、長期的には機能しにくいという側面があるかもしれません。</span></li>
+              <li><strong>別の方向性が必要かもしれない</strong><br /><span class="list-desc">穴に落ちた時、必死に「穴を掘る（コントロールする）」努力を続けても、穴は深くなるばかりです。スコップを置き、別の行動をとる時期が来ているのかもしれません。</span></li>
+            </ul>
+            <div class="alert-info alert-info-last">ご自身を責める必要は全くありません。このワークは、これまでの努力が「長期的にはうまくいきにくかったかもしれない」という事実に気づき、新しいアプローチ（受容とコミットメント）へ向かうための大切な第一歩（創造的絶望）です。</div>
+            <div class="citation">
+              <p>出典: Hayes, S. C., Strosahl, K. D., & Wilson, K. G. (2011). <br><em>Acceptance and Commitment Therapy, Second Edition: The Process and Practice of Mindful Change.</em> Guilford Press.</p>
+            </div>
+          </div>
+          <div class="btn-group">
+            <button onclick="resetToMenu()" class="btn btn-primary btn-px-6 w-2-3">ワーク選択に戻る</button>
+            <button onclick="state.step = 'result_summary'; render();" class="btn btn-secondary w-1-3">前へ戻る</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // ==========================================
+    // 5. 感情を天気として扱う
+    // ==========================================
+
+    function renderSelectWeather() {
+      const weathers = ['曇り（モヤモヤ・気が晴れない）', '雨（悲しみ・落ち込み）', '強風（焦り・混乱）', '雷雨（怒り・強い不安）', 'その他'];
+      let optionsHtml = weathers.map(w => `
+        <label class="form-label">
+          <input type="radio" name="weatherType" value="${w}" ${state.weatherType === w ? 'checked' : ''} class="weather-type-radio form-radio">
+          <span class="form-text">${w}</span>
+        </label>
+      `).join('');
+
+      const customInputHtml = state.weatherType === 'その他' ? `<div class="text-input-wrap"><input type="text" id="custom-weather-input" placeholder="どのような天気か入力してください" value="${state.customWeather}" class="text-input"></div>` : '';
+      const isNextDisabled = state.weatherType === 'その他' && state.customWeather.trim() === '';
+
+      return `
+        <div class="section-content animate-fadeIn">
+          <div class="text-center">
+            <h2 class="page-title">感情を「天気」に例える</h2>
+            <p class="page-desc">今のあなたの心の中は、どのような天気に近いですか？</p>
+            ${safetyNoticeHtml}
+          </div>
+          <div class="box-panel">
+            <div class="options-list-wide">${optionsHtml}</div>
+            ${customInputHtml}
+          </div>
+          <div class="btn-group">
+            <button onclick="resetToMenu()" class="btn btn-secondary w-1-3">ワーク選択に戻る</button>
+            <button id="next-weather-btn" ${isNextDisabled ? 'disabled' : ''} class="btn btn-primary btn-px-6 w-2-3">次へ進む</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function attachSelectWeatherListeners() {
+      document.querySelectorAll('.weather-type-radio').forEach(r => r.addEventListener('change', (e) => { state.weatherType = e.target.value; render(); }));
+      const customInput = document.getElementById('custom-weather-input');
+      if (customInput) customInput.addEventListener('input', (e) => { state.customWeather = e.target.value; document.getElementById('next-weather-btn').disabled = state.customWeather.trim() === ''; });
+      document.getElementById('next-weather-btn').addEventListener('click', () => { state.step = 'question_stop'; render(); });
+    }
+
+    function renderWeatherQuestionStop() {
+      const optionsHtml = ['どうにもならないし、疲れるだけ', '「なぜ晴れないのか」と余計にイライラする', '天気を気にするあまり、他のことが手につかなくなる'].map(o => `
+        <label class="form-label">
+          <input type="radio" name="weatherStopResult" value="${o}" ${state.weatherStopResult === o ? 'checked' : ''} class="weather-stop-radio form-radio"><span class="form-text">${o}</span>
+        </label>
+      `).join('');
+
+      return `
+        <div class="section-content animate-fadeIn">
+          <div class="text-center">
+            <h2 class="page-title page-title-sm">天気をコントロールする？</h2>
+            <p class="page-desc">今のあなたは<span class="instruction-highlight instruction-highlight-sm">「${getDisplayWeather()}」</span>の中にいます。<br>もし、あなたが自分の意志の力だけで、この天気を「止めよう」「変えよう」としたら、何が起きるでしょうか？</p>
+          </div>
+          <div class="box-panel"><div class="options-list-wide">${optionsHtml}</div></div>
+          <button id="next-weather-stop-btn" ${state.weatherStopResult === '' ? 'disabled' : ''} class="btn btn-primary btn-px-6 w-full btn-action-submit">次の質問へ</button>
+        </div>
+      `;
+    }
+
+    function attachWeatherQuestionStopListeners() {
+      document.querySelectorAll('.weather-stop-radio').forEach(r => r.addEventListener('change', (e) => { state.weatherStopResult = e.target.value; document.getElementById('next-weather-stop-btn').disabled = false; }));
+      document.getElementById('next-weather-stop-btn').addEventListener('click', () => { state.step = 'question_action'; render(); });
+    }
+
+    function renderWeatherQuestionAction() {
+      const optionsHtml = ['傘をさして（準備をして）、目の前の小さな作業を進める', '雨宿りをして（自分の意志で休んで）、体力を温存する', '長靴を履いて、外の空気を吸う（気分転換をする）', 'その他'].map(o => `
+        <label class="form-label">
+          <input type="radio" name="weatherAction" value="${o}" ${state.weatherAction === o ? 'checked' : ''} class="weather-action-radio form-radio"><span class="form-text">${o}</span>
+        </label>
+      `).join('');
+      const customInputHtml = state.weatherAction === 'その他' ? `<div class="text-input-wrap-indent"><input type="text" id="custom-action-input" placeholder="具体的な行動を入力してください" value="${state.customWeatherAction}" class="text-input"></div>` : '';
+      const isNextDisabled = state.weatherAction === '' || (state.weatherAction === 'その他' && state.customWeatherAction.trim() === '');
+
+      return `
+        <div class="section-content animate-fadeIn">
+          <div class="text-center">
+            <h2 class="page-title page-title-sm">天気のままで、何をする？</h2>
+            <p class="page-desc">天気を止めることはできません。<br>では、<span class="instruction-highlight instruction-highlight-sm">「${getDisplayWeather()}」</span>のままでも、今ここからあなたができる「行動」は何でしょうか？</p>
+          </div>
+          <div class="box-panel">
+            <div class="options-list-wide">${optionsHtml}</div>
+            ${customInputHtml}
+          </div>
+          <button id="result-weather-btn" ${isNextDisabled ? 'disabled' : ''} class="btn btn-primary btn-px-6 w-full btn-action-submit">体験を振り返る</button>
+        </div>
+      `;
+    }
+
+    function attachWeatherQuestionActionListeners() {
+      document.querySelectorAll('.weather-action-radio').forEach(r => r.addEventListener('change', (e) => { state.weatherAction = e.target.value; render(); }));
+      const customInput = document.getElementById('custom-action-input');
+      if (customInput) customInput.addEventListener('input', (e) => { state.customWeatherAction = e.target.value; document.getElementById('result-weather-btn').disabled = state.customWeatherAction.trim() === ''; });
+      document.getElementById('result-weather-btn').addEventListener('click', () => { state.step = 'result_summary'; render(); });
+    }
+
+    // 天気：第1段階サマリー
+    function renderResultSummaryWeather() {
+      return `
+        <div class="section-content animate-fadeIn">
+          <div class="text-center">
+            <h2 class="page-title">今回見えてきたこと</h2>
+          </div>
+          <div class="box-panel">
+            <p class="text-body text-body-mb">
+              天気そのものは、自分の意志で選びにくいものです。<br>
+              しかし、その天気の中での「行動」は選べることがあります。
+            </p>
+            <div class="highlight-box">
+              <p class="highlight-text">
+                今の天気のままでも、できる小さな行動はありそうですか？
+              </p>
+            </div>
+          </div>
+          <div class="btn-group-responsive">
+            <button onclick="resetToMenu()" class="btn btn-primary btn-px-6 btn-responsive-primary">ワーク選択に戻る</button>
+            <button onclick="state.step = 'result_detail'; render();" class="btn btn-secondary btn-responsive-secondary">もう少し詳しく見る</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // 天気：第2段階ディテール
+    function renderResultDetailWeather() {
+      const actionText = state.weatherAction === 'その他' ? state.customWeatherAction : state.weatherAction;
+      return `
+        <div class="section-content animate-fadeIn">
+          <div class="text-center">
+            <h2 class="page-title">もう少し詳しく見る</h2>
+          </div>
+          <div class="box-panel-light">
+            <h3 class="section-title">今回の体験を整理する</h3>
+            <div class="text-body-mb">
+              <p class="text-body">あなたは、「${getDisplayWeather()}」を無理に止めようとすると「${state.weatherStopResult}」という事実に気づき、<br>天気がそのままであっても<strong>「${actionText}」</strong>という行動がとれることを選択しました。</p>
+            </div>
+            
+            <h3 class="section-title section-title-mt">この体験で起きやすいこと</h3>
+            <ul class="list-bullet">
+              <li><strong>感情は「天気」のようなもの</strong><br /><span class="list-desc">天気は私たちの意思に関係なく現れ、そして去っていきます。感情も同じような性質を持ちます。コントロールしにくいものを無理に変えようとすることは、雨に向かって「降るな」と怒鳴り続けるようなもので、ただエネルギーを消耗してしまうことがあります。</span></li>
+              <li><strong>天気は変えられなくても、行動は選べる</strong><br /><span class="list-desc">雨を止めることはできなくても、「傘をさして歩き出す」ことはできます。感情がどのような状態であっても、私たちが「自分の手足をどう動かすか」という行動は、自分で選び取ることができるかもしれません。</span></li>
+            </ul>
+            <div class="alert-info alert-info-last">ACTでは、このように表現することがあります。こう捉えると、すこし違ってみえるかもしれません。<br>あなたは天気そのものではなく、天気が移り変わるのを包み込んでいる「空」のような存在かもしれません。雨の日も、嵐の日も、空そのものが傷つくことはありません。</div>
+            <div class="citation">
+              <p>出典1: Harris, R. (2009). <em>ACT Made Simple: An Easy-To-Read Primer on Acceptance and Commitment Therapy.</em> New Harbinger Publications. <a href="https://www.newharbinger.com/9781684033010/act-made-simple/" target="_blank" rel="noopener noreferrer">Link</a></p>
+              <p>出典2: Hayes, S. C., Strosahl, K. D., & Wilson, K. G. (2011). <em>Acceptance and Commitment Therapy, Second Edition.</em> Guilford Press. <a href="https://www.guilford.com/books/Acceptance-and-Commitment-Therapy/Hayes-Strosahl-Wilson/9781609189624" target="_blank" rel="noopener noreferrer">Link</a></p>
+            </div>
+          </div>
+          <div class="btn-group">
+            <button onclick="resetToMenu()" class="btn btn-primary btn-px-6 w-2-3">ワーク選択に戻る</button>
+            <button onclick="state.step = 'result_summary'; render();" class="btn btn-secondary w-1-3">前へ戻る</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // ==========================================
+    // 共通タイマー関数
+    // ==========================================
+
+    function renderTimer() {
+      let instructionText = '';
+      if (state.exerciseId === 'whitebear') {
+        instructionText = `<span class="instruction-highlight">「絶対に『白くま』を思い浮かべない」</span><br />ようにしてください。`;
+      } else if (state.exerciseId === 'slider') {
+        instructionText = `<span class="instruction-highlight">「${getDisplaySliderEmotion()}」</span>の数値を、<br />意志の力だけで<span class="instruction-highlight">「2まで下げよう」</span>と努力してみてください。`;
+      } else {
+        instructionText = `<span class="instruction-highlight">「${getDisplayEmotion()}」</span><br />を感じないようにしてください。`;
+      }
+      
+      const progress = ((state.totalTime - state.timeLeft) / state.totalTime) * 100;
+      const circumference = 251.2; // 2 * pi * r (r=40)
+      const offset = circumference - (circumference * progress) / 100;
+      const finishedText = state.timeLeft === 0 ? `<p class="timer-finish-text animate-pulse-slow">終了です。お疲れ様でした。</p>` : '';
+
+      return `
+        <div class="timer-container animate-fadeIn">
+          <div>
+            <h2 class="timer-title">それでは、これから${state.totalTime}秒間、<br />${instructionText}</h2>
+            <p class="timer-desc">リラックスして、そのままお過ごしください。</p>
+          </div>
+          <div class="timer-wrapper">
+            <svg class="timer-svg" viewBox="0 0 100 100">
+              <circle class="timer-circle-bg" stroke-width="8" cx="50" cy="50" r="40" fill="transparent"></circle>
+              <circle id="progress-circle" class="timer-circle-fg" stroke-width="8" stroke-linecap="round" cx="50" cy="50" r="40" fill="transparent" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" transform="rotate(-90 50 50)"></circle>
+            </svg>
+            <div class="timer-text-wrapper"><span id="time-display" class="timer-text">${state.timeLeft}</span></div>
+          </div>
+          ${finishedText}
+        </div>
+      `;
+    }
+
+    function startTimerProcess() {
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        if (state.timeLeft > 0) {
+          state.timeLeft -= 1;
+          const timeDisplay = document.getElementById('time-display');
+          const progressCircle = document.getElementById('progress-circle');
+          if (timeDisplay && progressCircle) {
+            timeDisplay.textContent = state.timeLeft;
+            const progress = ((state.totalTime - state.timeLeft) / state.totalTime) * 100;
+            progressCircle.setAttribute('stroke-dashoffset', 251.2 - (251.2 * progress) / 100);
+          }
+          if (state.timeLeft === 0) {
+            clearInterval(timerInterval);
+            render();
+            setTimeout(() => { state.step = 'reflection'; render(); }, 1500);
+          }
+        }
+      }, 1000);
+    }
+
+    // アプリケーション管理
+    window.resetToMenu = function() {
+      state.step = 'menu';
+      state.exerciseId = null;
+      
+      // 状態の初期化
+      state.targetEmotion = '不安'; state.customEmotion = ''; state.intensity = ''; state.experiences = { moreAware: false, checking: false, otherEmotions: false, nothing: false };
+      state.bearCount = ''; state.bearActions = { distract: false, suppress: false, giveup: false, other: false };
+      state.sliderEmotion = '不安'; state.customSliderEmotion = ''; state.sliderInitial = 5; state.sliderFinal = 5; state.sliderActions = { distraction: false, optingOut: false, thinking: false, substances: false, other: false }; state.sliderShortTerm = ''; state.sliderLongTerm = '';
+      state.strategyTheme = '課題や仕事の前の不安'; state.customStrategyTheme = ''; state.strategies = { rethink: false, positive: false, prepare: false, distract: false, analyze: false, other: false }; state.customStrategy = ''; state.strategyFrequency = ''; state.problemPersists = '';
+      state.weatherType = '曇り（モヤモヤ・気が晴れない）'; state.customWeather = ''; state.weatherStopResult = ''; state.weatherAction = ''; state.customWeatherAction = '';
+
+      if (timerInterval) clearInterval(timerInterval);
+      render();
+    };
+
+    // 初期描画
+    document.addEventListener('DOMContentLoaded', () => { render(); });
+    function completeMentalCareFinish() {
+      try {
+        if (typeof saveToStorage === 'function') saveToStorage();
+        if (typeof saveState === 'function') saveState();
+        if (typeof saveAppState === 'function') saveAppState();
+      } catch (err) {
+        console.warn('終了時の保存処理に失敗しました', err);
+      }
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'mental-care-finish-complete' }, window.location.origin);
+      }
+    }
+
+    window.addEventListener('message', (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== 'mental-care-finish') return;
+      completeMentalCareFinish();
+    });
+</script>
+</body>
+</html>

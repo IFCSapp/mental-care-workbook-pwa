@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>つらさへの対処を振り返る｜DOTS</title>
+  <style>
+    /* --- 変数定義 (Tailwindの色合いを再現) --- */
+    :root {
+      --primary: #475569;
+      --primary-light: #f1f5f9;
+      --primary-dark: #334155;
+      --text-main: #334155;
+      --text-muted: #64748b;
+      --text-light: #94a3b8;
+      --bg-main: #f8fafc;
+      --bg-white: #ffffff;
+      --bg-hover: #f1f5f9;
+      --border-color: #e2e8f0;
+      --border-light: #f1f5f9;
+      --border-dark: #cbd5e1;
+      --danger: #dc2626;
+      --danger-light: #fef2f2;
+      --danger-hover: #b91c1c;
+      --success: #2dd4bf;
+
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      --radius-sm: 0.25rem;
+      --radius: 0.5rem;
+      --radius-lg: 0.75rem;
+      --radius-xl: 1rem;
+    }
+
+    /* --- リセット & 基本スタイル --- */
+    body {
+      margin: 0;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+      line-height: 1.5;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    * { box-sizing: border-box; }
+    h1, h2, h3, h4, p, ul { margin: 0; padding: 0; }
+    button { cursor: pointer; border: none; background: none; font: inherit; }
+    input, textarea { font: inherit; }
+    .hidden { display: none !important; }
+    svg { width: 1.25rem; height: 1.25rem; }
+    .icon-sm { width: 1rem; height: 1rem; }
+
+    /* --- スクロールバー --- */
+    .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    /* --- ユーティリティ --- */
+    .text-center { text-align: center; }
+    .text-left { text-align: left; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+    .mb-1 { margin-bottom: 0.25rem; }
+    .mb-2 { margin-bottom: 0.5rem; }
+    .mb-3 { margin-bottom: 0.75rem; }
+    .mb-4 { margin-bottom: 1rem; }
+    .mb-5 { margin-bottom: 1.25rem; }
+    .mb-6 { margin-bottom: 1.5rem; }
+    .mb-8 { margin-bottom: 2rem; }
+    .mb-10 { margin-bottom: 2.5rem; }
+    .mt-8 { margin-top: 2rem; }
+    .pb-2 { padding-bottom: 0.5rem; }
+    .pb-4 { padding-bottom: 1rem; }
+    .pb-6 { padding-bottom: 1.5rem; }
+    .pb-8 { padding-bottom: 2rem; }
+    .pt-4 { padding-top: 1rem; }
+    .pt-8 { padding-top: 2rem; }
+    .pl-3 { padding-left: 0.75rem; }
+    .gap-2 { gap: 0.5rem; }
+    .gap-3 { gap: 0.75rem; }
+    .gap-5 { gap: 1.25rem; }
+    .border-bottom { border-bottom: 1px solid var(--border-color); }
+    .border-top { border-top: 1px solid var(--border-color); }
+    .flex-center { display: flex; align-items: center; }
+    .flex-grow { flex-grow: 1; }
+    .items-start { align-items: flex-start; }
+    .items-stretch { align-items: stretch; }
+    .font-medium { font-weight: 500; }
+    .text-primary { color: var(--primary); }
+    .max-w-2xl { max-width: 42rem; }
+
+    /* --- レイアウト --- */
+    .app-header {
+      background-color: var(--bg-white);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      box-shadow: var(--shadow-sm);
+    }
+    .header-inner {
+      max-width: 72rem;
+      margin: 0 auto;
+      padding: 0 1rem;
+      height: 4rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .header-title-group { display: flex; align-items: center; gap: 1rem; }
+    .header-title { font-size: 1.25rem; font-weight: 500; color: var(--text-main); }
+    .header-badge {
+      font-size: 0.75rem; color: var(--text-muted); background-color: var(--bg-hover);
+      padding: 0.25rem 0.5rem; border-radius: var(--radius-sm);
+    }
+    .header-actions { display: flex; align-items: center; gap: 0.5rem; }
+    .progress-track { height: 0.25rem; background-color: var(--primary-light); width: 100%; }
+    #progress-bar { height: 100%; background-color: var(--primary); transition: width 0.3s ease; width: 16.66%; }
+
+    .app-main { flex-grow: 1; padding: 1.5rem; }
+    @media (min-width: 768px) { .app-main { padding: 2.5rem; } }
+
+    .app-footer {
+      background-color: var(--bg-white); border-top: 1px solid var(--border-color);
+      padding: 1.5rem 0; margin-top: auto;
+    }
+    .footer-inner {
+      max-width: 72rem; margin: 0 auto; padding: 0 1rem;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    /* --- ボタン --- */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 0.5rem 1rem; border-radius: var(--radius);
+      transition: background-color 0.2s, color 0.2s; font-size: 0.875rem; text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn-header-finish { color: var(--text-muted); padding: 0.375rem 0.75rem; }
+    .btn-header-finish:hover { color: var(--text-main); background-color: var(--bg-hover); }
+    .btn-coffee-finish {
+      display: none; align-items: center; gap: 0.35rem;
+      border: 1px solid var(--border-color); border-radius: 999px;
+      background-color: var(--bg-white); color: var(--text-muted);
+      min-width: 2.25rem; min-height: 2.25rem; justify-content: center;
+    }
+    .btn-coffee-finish .coffee-icon { font-size: 1.05rem; line-height: 1; }
+    .btn-coffee-finish .coffee-label { font-size: 0.75rem; }
+    .btn-header-clear { color: var(--text-light); padding: 0.375rem 0.75rem; }
+    .btn-header-clear:hover { color: var(--danger); background-color: var(--danger-light); }
+    .btn-nav-prev { padding: 0.625rem 1.5rem; color: var(--text-muted); background-color: var(--primary-light); font-size: 1rem; }
+    .btn-nav-prev:hover { background-color: var(--border-color); }
+    .btn-nav-next { padding: 0.625rem 2rem; color: var(--bg-white); background-color: var(--primary); box-shadow: var(--shadow-sm); font-size: 1rem; }
+    .btn-nav-next:hover { background-color: var(--primary-dark); }
+    .btn-action { background-color: var(--primary-light); color: var(--text-main); }
+    .btn-action:hover { background-color: var(--border-color); }
+    .btn-action-primary { background-color: var(--primary-dark); color: var(--bg-white); }
+    .btn-action-primary:hover { background-color: #1e293b; }
+    .btn-link { color: var(--text-muted); text-decoration: underline; text-underline-offset: 4px; }
+    .btn-link:hover { color: var(--text-main); }
+
+    /* --- モーダル・トースト --- */
+    #modal-backdrop {
+      position: fixed; inset: 0; background-color: rgba(15, 23, 42, 0.4);
+      z-index: 50; display: none; align-items: center; justify-content: center;
+    }
+    #modal-backdrop.modal-visible { display: flex; }
+    .modal-content {
+      background-color: var(--bg-white); border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg); padding: 1.5rem; width: 100%; max-width: 28rem; margin: 0 1rem;
+    }
+    .modal-title { font-size: 1.25rem; font-weight: 500; margin-bottom: 0.75rem; }
+    .modal-message { color: var(--text-muted); margin-bottom: 2rem; line-height: 1.6; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 0.75rem; }
+    .btn-modal-cancel { padding: 0.5rem 1.25rem; background-color: var(--primary-light); color: var(--text-muted); border-radius: var(--radius); }
+    .btn-modal-cancel:hover { background-color: var(--border-color); }
+    .btn-modal-confirm-primary { padding: 0.5rem 1.25rem; background-color: var(--primary); color: var(--bg-white); border-radius: var(--radius); }
+    .btn-modal-confirm-primary:hover { background-color: var(--primary-dark); }
+    .btn-modal-confirm-danger { padding: 0.5rem 1.25rem; background-color: var(--danger); color: var(--bg-white); border-radius: var(--radius); }
+    .btn-modal-confirm-danger:hover { background-color: var(--danger-hover); }
+
+    #toast {
+      position: fixed; top: 1.25rem; left: 50%;
+      width: min(92vw, 34rem);
+      background-color: #312e81; color: #f8fafc; border: 1px solid rgba(199, 210, 254, 0.55);
+      padding: 0.75rem 1.25rem; border-radius: 9999px; box-shadow: 0 16px 34px -14px rgba(49,46,129,0.65);
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem; z-index: 50;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s, transform 0.3s;
+      transform: translate(-50%, -14px); line-height: 1.5; text-align: center;
+    }
+    #toast.toast-visible { opacity: 1; transform: translate(-50%, 0); }
+    #toast.toast-error { background-color: #fff7ed; color: #7c2d12; border-color: #fed7aa; box-shadow: 0 16px 34px -14px rgba(124,45,18,0.35); }
+    #toast svg { color: #ddd6fe; flex-shrink: 0; }
+    #toast.toast-error svg { color: #c2410c; }
+
+    /* --- コンポーネント (Step用) --- */
+    .step-card {
+      max-width: 48rem; margin: 0 auto; background-color: var(--bg-white);
+      padding: 2rem; border-radius: 1rem; box-shadow: var(--shadow-sm); border: 1px solid var(--border-light);
+    }
+    @media (min-width: 768px) { .step-card { padding: 3rem; } }
+    .step-container-wide { max-width: 64rem; margin: 0 auto; }
+    .step-container-print { max-width: 56rem; margin: 0 auto; }
+
+    .welcome-header { text-align: center; margin-bottom: 2.5rem; }
+    .title-lg { font-size: 1.875rem; font-weight: 500; color: var(--text-main); margin-bottom: 1rem; }
+    .title-md { font-size: 1.5rem; font-weight: 500; color: var(--text-main); }
+    .title-sm { font-size: 1.125rem; font-weight: 500; color: var(--text-main); }
+    .text-muted { color: var(--text-muted); }
+    .text-desc { color: var(--text-muted); font-size: 0.875rem; line-height: 1.5; }
+    .text-body { color: var(--text-muted); line-height: 1.6; }
+    .text-lead { font-size: 1.125rem; color: var(--text-main); line-height: 1.6; }
+
+    .icon-circle {
+      display: inline-flex; align-items: center; justify-content: center;
+      border-radius: 9999px; background-color: var(--primary-light); color: var(--primary);
+    }
+    .icon-lg { width: 4rem; height: 4rem; }
+    .icon-lg svg { width: 2rem; height: 2rem; }
+    .icon-md { width: 2.5rem; height: 2.5rem; }
+    .icon-md svg { width: 1.5rem; height: 1.5rem; }
+    .icon-square {
+      width: 2rem; height: 2rem; border-radius: 0.25rem;
+      background-color: var(--primary-light); color: var(--primary);
+      display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.125rem;
+    }
+
+    .content-space-y > * + * { margin-top: 1.5rem; }
+    .content-space-y-lg > * + * { margin-top: 2rem; }
+    .content-px { padding: 0; }
+    @media (min-width: 768px) { .content-px { padding: 0 1.5rem; } }
+
+    .info-box {
+      background-color: var(--bg-hover); padding: 1.5rem;
+      border-radius: var(--radius-xl); border: 1px solid var(--border-light);
+    }
+    .list-space-y > * + * { margin-top: 0.75rem; }
+    .list-item { display: flex; align-items: flex-start; gap: 0.5rem; }
+    .list-bullet { color: var(--primary); margin-top: 0.25rem; }
+
+    .grid-2col { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+    @media (min-width: 768px) { .grid-2col { grid-template-columns: repeat(2, 1fr); } }
+
+    .form-label { display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-muted); margin-bottom: 0.5rem; }
+    .form-control {
+      width: 100%; padding: 0.625rem; background-color: var(--bg-white);
+      border: 1px solid var(--border-dark); border-radius: var(--radius);
+      outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary-light); }
+    .textarea-md { resize: vertical; min-height: 100px; }
+    .textarea-lg { resize: vertical; min-height: 120px; }
+    .textarea-xl { resize: vertical; min-height: 200px; }
+    .textarea-sm { resize: vertical; min-height: 60px; font-size: 0.875rem; }
+    .bg-light { background-color: var(--bg-hover); }
+
+    /* --- チェックボックスリスト --- */
+    .checkbox-card {
+      background-color: var(--bg-white); padding: 1.5rem;
+      border-radius: var(--radius-xl); border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm); display: flex; flex-direction: column; height: 100%;
+    }
+    .fixed-h { height: 2.5rem; }
+    .checkbox-list {
+      display: flex; flex-direction: column; gap: 0.5rem;
+      flex-grow: 1; overflow-y: auto; padding-right: 0.5rem; margin-bottom: 1rem;
+    }
+    .checkbox-item {
+      display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.625rem;
+      border-radius: var(--radius); cursor: pointer;
+      transition: background-color 0.2s, border-color 0.2s; border: 1px solid transparent;
+    }
+    .checkbox-item:hover { background-color: var(--bg-hover); border-color: var(--border-light); }
+    .checkbox-input { margin-top: 0.25rem; width: 1rem; height: 1rem; accent-color: var(--primary); }
+    .checkbox-text { color: var(--text-main); line-height: 1.4; }
+    .checkbox-footer { margin-top: auto; }
+
+    /* --- 影響ステップ --- */
+    .flex-col-gap6 { display: flex; flex-direction: column; gap: 1.5rem; }
+    .step-header-box { background-color: var(--bg-white); padding: 1.5rem; border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); }
+    .impact-card { background-color: var(--bg-white); padding: 2rem; border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); display: flex; flex-direction: column; }
+    .impact-list { display: flex; flex-direction: column; gap: 1rem; }
+
+    /* --- メッセージ --- */
+    .message-box-primary { background-color: var(--primary-light); padding: 1.5rem; border-radius: var(--radius-xl); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); }
+    @media (min-width: 768px) { .message-box-primary { padding: 2rem; } }
+    .message-box-secondary { background-color: var(--bg-hover); padding: 1.5rem; border-radius: var(--radius-xl); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); }
+
+    /* --- 印刷/結果UI --- */
+    .action-bar { display: flex; flex-direction: column; gap: 1rem; align-items: center; background-color: var(--bg-white); padding: 1rem; border-radius: var(--radius-xl); box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); }
+    .action-bar-text { color: var(--text-muted); font-weight: 500; text-align: center; }
+    .action-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; }
+    .print-card-main { background-color: var(--bg-white); padding: 2.5rem; border-radius: 1rem; box-shadow: var(--shadow-sm); border: 1px solid var(--border-light); }
+    @media (min-width: 768px) { .print-card-main { padding: 3rem; } }
+    .print-title { font-size: 1.5rem; font-weight: 500; color: var(--text-main); }
+    .print-basic-info { display: grid; grid-template-columns: repeat(2, 1fr); column-gap: 2rem; row-gap: 1rem; font-size: 0.875rem; color: var(--text-main); }
+    .print-info-row { display: flex; }
+    .print-info-label { width: 6rem; color: var(--text-muted); }
+    .print-info-value { font-weight: 500; }
+    .print-section-title { font-size: 1.125rem; font-weight: 500; color: var(--primary); border-left: 4px solid var(--primary); }
+    .print-box { background-color: var(--bg-hover); padding: 1rem; border-radius: var(--radius); }
+    @media (min-width: 768px) { .print-box { padding: 1.25rem; } }
+    .print-item-label { font-size: 0.875rem; color: var(--text-muted); }
+    .print-item-value { color: var(--text-main); white-space: pre-wrap; line-height: 1.6; }
+    .dots-key { display: inline-block; width: 1.5rem; font-weight: bold; color: var(--primary); }
+    .dots-label { color: var(--text-muted); font-size: 0.875rem; margin-right: 0.5rem; }
+    .dots-value { color: var(--text-main); }
+    .print-sub-title { font-size: 0.875rem; font-weight: 500; color: var(--text-main); }
+    .print-impact-item { background-color: var(--bg-white); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-light); }
+    .print-impact-label { display: block; color: var(--text-muted); font-size: 0.75rem; font-weight: 500; margin-bottom: 0.375rem; }
+    .print-impact-value { display: block; color: var(--text-main); font-size: 0.875rem; line-height: 1.6; white-space: pre-wrap; }
+
+    /* --- 印刷用メディアクエリ --- */
+    @media print {
+      body { background-color: white !important; }
+      .no-print { display: none !important; }
+      .print-area {
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+      }
+      .page-break-inside-avoid { break-inside: avoid; }
+      .print-border { border: 1px solid #e2e8f0 !important; }
+      .print-card {
+        border: 1px solid #cbd5e1 !important;
+        box-shadow: none !important;
+        background-color: #f8fafc !important;
+      }
+    }
+
+    /* =========================================================
+       全体CSS統一パス: 見た目のみの低リスク調整
+       ========================================================= */
+    :where(button, .btn, .btn-primary, .btn-secondary, .btn-outline, .btn-dark, .btn-main, .btn-text, .btn-action, .btn-action-primary, .btn-nav-next, .btn-nav-prev, .btn-add, .btn-focus, .btn-reset, .chip, .menu-item, .radio-btn, .mode-btn) {
+      min-height: 44px;
+      border-radius: 12px;
+      font-family: inherit;
+      line-height: 1.35;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :where(button, .btn, .btn-primary, .btn-secondary, .btn-outline, .btn-dark, .btn-main, .btn-text, .btn-action, .btn-action-primary, .btn-nav-next, .btn-nav-prev, .btn-add, .btn-focus, .btn-reset, .chip, .menu-item, .radio-btn, .mode-btn):focus-visible {
+      outline: 3px solid rgba(37, 99, 235, 0.32);
+      outline-offset: 3px;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.18);
+    }
+
+    :where(input[type="text"], input[type="date"], input[type="number"], textarea, select, .form-input, .form-textarea, .input-text) {
+      min-height: 44px;
+      border-radius: 12px;
+      border-color: #cbd5e1;
+      background-color: #ffffff;
+      line-height: 1.55;
+      font-family: inherit;
+    }
+
+    :where(input[type="text"], input[type="date"], input[type="number"], textarea, select, .form-input, .form-textarea, .input-text):focus-visible {
+      outline: 3px solid rgba(37, 99, 235, 0.24);
+      outline-offset: 1px;
+      border-color: #3b82f6;
+    }
+
+    :where(.card, .section, .main-card, .box-panel, .box-panel-light, .info-box, .feedback-box, .form-section, .status, .modal-content, .step-container) {
+      border-radius: 16px;
+    }
+
+    :where(.info-box, .notice-text, .message-box-primary, .feedback-box) {
+      line-height: 1.7;
+    }
+
+    :where(.action-buttons, .modal-actions, .footer-actions, .btn-group, .header-actions, .control-actions) {
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 640px) {
+      html, body { overflow-x: hidden; }
+      :where(.app-wrapper, .app-container, #app-container, main, .content-wrapper, .wide-wrapper, .container, .main-card, .card, .section, .panel) { max-width: 100%; }
+      :where(.action-buttons, .modal-actions, .footer-actions, .btn-group, .header-actions, .control-actions) { flex-direction: column; align-items: stretch; }
+      :where(button, .btn, .btn-primary, .btn-secondary, .btn-outline, .btn-dark, .btn-main, .btn-text, .btn-action, .btn-action-primary, .btn-nav-next, .btn-nav-prev, .btn-add, .btn-focus, .btn-reset, .mode-btn) { width: 100%; justify-content: center; white-space: normal; }
+      :where(input, textarea, select) { max-width: 100%; }
+    }
+
+    .btn { border-radius: 12px; }
+    .btn-header-clear { color: #991b1b; background: #fff1f2; border-color: #fecdd3; }
+    .message-box-primary, .info-card, .step-card, .section-card { border-radius: 16px; }
+    .support-note { margin-top: 0.75rem; color: var(--text-muted); font-size: 0.92rem; line-height: 1.7; }
+    .supplement-details { margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color); color: var(--text-muted); }
+    .supplement-details summary { cursor: pointer; font-weight: 700; color: var(--primary); }
+    .supplement-details p { margin-top: 0.75rem; }
+    textarea, input, select { border-radius: 12px; }
+    @media (max-width: 640px) { #app-container { padding-inline: 0.85rem; } .action-bar { align-items: stretch; } }
+</style>
+</head>
+<body>
+
+  <!-- ヘッダー (印刷時は非表示) -->
+  <header class="app-header no-print">
+    <div class="header-inner">
+      <div class="header-title-group">
+        <h1 class="header-title">つらさへの対処を振り返る</h1>
+        <span class="header-badge">この端末に自動保存中</span>
+      </div>
+      <div class="header-actions">
+        <button id="btn-finish" class="btn btn-header-finish btn-coffee-finish" aria-label="今日はここまで" title="今日はここまで">
+          <span class="coffee-icon" aria-hidden="true">☕</span><span class="coffee-label" aria-hidden="true">今日はここまで</span>
+        </button>
+        <button id="btn-clear" class="btn btn-header-clear">
+          入力内容を消去
+        </button>
+      </div>
+    </div>
+    <!-- 進捗バー -->
+    <div class="progress-track">
+      <div id="progress-bar"></div>
+    </div>
+  </header>
+
+  <!-- メインコンテンツ領域 -->
+  <main class="app-main">
+    <div id="app-container">
+      <!-- JSでコンテンツを描画 -->
+    </div>
+  </main>
+
+  <!-- フッター -->
+  <footer class="app-footer no-print">
+    <div class="footer-inner">
+      <button id="btn-prev" class="btn btn-nav-prev hidden">
+        前へ戻る
+      </button>
+      <div class="flex-grow"></div>
+      <button id="btn-next" class="btn btn-nav-next">
+        はじめる
+      </button>
+    </div>
+  </footer>
+
+  <!-- カスタムモーダル (確認ダイアログ用) -->
+  <div id="modal-backdrop" class="no-print">
+    <div class="modal-content">
+      <h3 id="modal-title" class="modal-title"></h3>
+      <p id="modal-message" class="modal-message"></p>
+      <div class="modal-actions">
+        <button id="modal-cancel" class="btn btn-modal-cancel">キャンセル</button>
+        <button id="modal-confirm" class="btn"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- トースト通知 -->
+  <div id="toast" class="no-print">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+    <span id="toast-message">メッセージ</span>
+  </div>
+
+  <!-- ファイル選択用 (非表示) -->
+  <input type="file" id="json-import" class="hidden" accept=".json">
+
+  <script>
+    // --- 定数データ ---
+    const TOTAL_STEPS = 6;
+    const STORAGE_KEY = 'dots_work_state_v3';
+
+    const DOTS_OPTIONS = {
+      D: [
+        "動画", "ネット", "ゲーム", "読書", "音楽", "食べる", "運動", "寝る"
+      ],
+      O: [
+        "通所を休む", "課題に手をつけない", "相談しない", "人との関わりを減らす", "応募準備を後回しにする", "面接や実習を避ける"
+      ],
+      T: [
+        "なぜこうなったのかを考え続ける", "自分を責める", "相手や状況を責める", "大丈夫と言い聞かせる", "前向きに考えようとする", "問題を分析し続ける", "計画を立て続ける", "やることリストを作り続ける", "ネガティブな考えに反論する"
+      ],
+      S: [
+        "甘いもの", "カフェイン", "横になる", "寝る", "運動", "瞑想", "祈る", "だらだら過ごす"
+      ]
+    };
+
+    // --- 状態管理 ---
+    const initialState = {
+      basic: { name: "", date: "", staff: "", count: "" },
+      feelings: { unwanted: "", details: "" },
+      dots: {
+        D: { checks: [], other: "" },
+        O: { checks: [], other: "" },
+        T: { checks: [], other: "" },
+        S: { checks: [], other: "" }
+      },
+      impact: {
+        shortTermHelp: "",
+        longTermImpact: {
+          health: "",
+          work: "",
+          relationships: "",
+          resources: "",
+          importantDirection: "" // 行動指針
+        }
+      }
+    };
+
+    let state = JSON.parse(JSON.stringify(initialState));
+    let currentStep = 1;
+    const BACKUP_META = { app: 'mental-care-workbook', workId: 2, schemaVersion: 1 };
+    const BACKUP_ERROR_MESSAGE = 'このワークで保存したバックアップファイルを選んでください。';
+
+    function isValidWorkbookBackup(imported) {
+      const meta = imported?._workbookBackup;
+      return meta?.app === BACKUP_META.app && meta?.workId === BACKUP_META.workId && meta?.schemaVersion === BACKUP_META.schemaVersion;
+    }
+
+    function stripBackupMeta(imported) {
+      const { _workbookBackup, ...content } = imported;
+      return content;
+    }
+
+    // --- ユーティリティ関数 ---
+    function getNestedValue(obj, path) {
+      return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+    }
+
+    function setNestedValue(obj, path, value) {
+      const parts = path.split('.');
+      const last = parts.pop();
+      const target = parts.reduce((acc, part) => {
+        if (!acc[part]) acc[part] = {};
+        return acc[part];
+      }, obj);
+      target[last] = value;
+    }
+
+    function saveToStorage() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    // データの安全なマージと旧バージョンからの移行処理を行う共通関数
+    function mergeData(imported) {
+      let newState = JSON.parse(JSON.stringify(initialState));
+      if (!imported) return newState;
+
+      if (imported.basic) newState.basic = { ...newState.basic, ...imported.basic };
+      if (imported.feelings) newState.feelings = { ...newState.feelings, ...imported.feelings };
+      if (imported.dots) {
+        ['D','O','T','S'].forEach(k => {
+          if (imported.dots[k]) newState.dots[k] = { ...newState.dots[k], ...imported.dots[k] };
+        });
+      }
+      if (imported.impact) {
+        newState.impact = { ...newState.impact, ...imported.impact };
+        if (imported.impact.longTermImpact) {
+           newState.impact.longTermImpact = { ...newState.impact.longTermImpact, ...imported.impact.longTermImpact };
+           // 旧バージョン(v2等)からの移行処理: values -> importantDirection
+           if (imported.impact.longTermImpact.values !== undefined && !newState.impact.longTermImpact.importantDirection) {
+             newState.impact.longTermImpact.importantDirection = imported.impact.longTermImpact.values;
+           }
+        }
+      }
+      return newState;
+    }
+
+    function loadFromStorage() {
+      const storedV3 = localStorage.getItem(STORAGE_KEY);
+      const storedV2 = localStorage.getItem('dots_work_state_v2');
+      let stored = storedV3 || storedV2;
+
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          state = mergeData(parsed);
+        } catch (e) {
+          console.error("データの読み込みに失敗しました", e);
+        }
+      } else {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        state.basic.date = `${yyyy}-${mm}-${dd}`;
+      }
+    }
+
+    function applyCoverProfile(profile) {
+      const name = profile?.name || '';
+      if (state.basic.name === name) return;
+      state.basic.name = name;
+      saveToStorage();
+      render();
+    }
+
+    // --- UI制御 ---
+    function getToastType(message) {
+      return /ではありません|できません|失敗|読み込めません|バックアップファイル/.test(message) ? 'error' : 'success';
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-message').textContent = message;
+      toast.classList.toggle('toast-error', getToastType(message) === 'error');
+      toast.classList.add('toast-visible');
+      window.clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => {
+        toast.classList.remove('toast-visible');
+      }, 3000);
+    }
+
+    function showModal({ title, message, confirmText, confirmClass, onConfirm }) {
+      const backdrop = document.getElementById('modal-backdrop');
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('modal-message').innerHTML = message.replace(/\n/g, '<br>');
+
+      const confirmBtn = document.getElementById('modal-confirm');
+      confirmBtn.textContent = confirmText;
+      confirmBtn.className = `btn ${confirmClass}`;
+
+      backdrop.classList.add('modal-visible');
+
+      const cleanup = () => {
+        backdrop.classList.remove('modal-visible');
+        confirmBtn.replaceWith(confirmBtn.cloneNode(true)); // リスナー削除
+        document.getElementById('modal-cancel').replaceWith(document.getElementById('modal-cancel').cloneNode(true));
+      };
+
+      document.getElementById('modal-confirm').addEventListener('click', () => {
+        onConfirm();
+        cleanup();
+      });
+      document.getElementById('modal-cancel').addEventListener('click', cleanup);
+    }
+
+    function updateNavButtons() {
+      const btnPrev = document.getElementById('btn-prev');
+      const btnNext = document.getElementById('btn-next');
+      const progressBar = document.getElementById('progress-bar');
+
+      progressBar.style.width = `${(currentStep / TOTAL_STEPS) * 100}%`;
+
+      if (currentStep === 1) {
+        btnPrev.classList.add('hidden');
+        btnNext.classList.remove('hidden');
+        btnNext.textContent = 'ワークをはじめる';
+      } else {
+        btnPrev.classList.remove('hidden');
+        if (currentStep === TOTAL_STEPS) {
+          btnNext.classList.add('hidden');
+        } else {
+          btnNext.classList.remove('hidden');
+          btnNext.textContent = currentStep === TOTAL_STEPS - 1 ? 'まとめを見る' : '次へ進む';
+        }
+      }
+    }
+
+    // --- 描画ロジック ---
+    function render() {
+      const container = document.getElementById('app-container');
+      container.innerHTML = '';
+
+      switch (currentStep) {
+        case 1: container.appendChild(createStep1()); break;
+        case 2: container.appendChild(createStep2()); break;
+        case 3: container.appendChild(createStep3()); break;
+        case 4: container.appendChild(createStep4()); break;
+        case 5: container.appendChild(createStep5()); break;
+        case 6: container.appendChild(createStep6()); break;
+      }
+
+      updateNavButtons();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // --- HTML生成テンプレート ---
+    function createStep1() {
+      const div = document.createElement('div');
+      div.className = 'step-card';
+      div.innerHTML = `
+        <div class="welcome-header">
+          <div class="icon-circle icon-lg mx-auto mb-6">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+          </div>
+          <h2 class="title-lg">つらさへの対処を振り返る</h2>
+          <p class="text-muted">DOTS — これまでの工夫を振り返り、これからの行動指針を探る</p>
+        </div>
+
+        <div class="content-space-y">
+          <p class="text-body">このワークでは、つらい気持ちや考えに対して、これまで使ってきた工夫を整理します。</p>
+
+          <div class="info-box">
+            <h3 class="title-sm flex-center gap-2 mb-3">
+              <svg class="text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              大切にしていただきたいこと
+            </h3>
+            <ul class="list-space-y">
+              <li class="list-item">
+                <span class="list-bullet">•</span>
+                <span class="text-body"><strong>良い・悪いを決めるものではありません。</strong>その時をしのぐための、ご自身なりの大切な工夫だったという視点で振り返ります。</span>
+              </li>
+              <li class="list-item">
+                <span class="list-bullet">•</span>
+                <span class="text-body"><strong>しんどくなったら、いつでも途中でやめて大丈夫です。</strong>無理に進める必要はありません。</span>
+              </li>
+              <li class="list-item">
+                <span class="list-bullet">•</span>
+                <span class="text-body"><strong>空欄があっても構いません。</strong>思いつく範囲でご記入ください。</span>
+              </li>
+              <li class="list-item">
+                <span class="list-bullet">•</span>
+                <span class="text-body">入力内容はこの端末に自動保存されます。外部には送信されません。</span>
+              </li>
+            </ul>
+            <p class="support-note">思いつくところだけで大丈夫です。あとで戻って書き足せます。</p>
+            <details class="supplement-details">
+              <summary>くわしい説明を見る</summary>
+              <p>つらいお気持ちや考えを何とかしようとして、ご自身が試行錯誤されてきた工夫を振り返ります。その場で助かった面と、長い目で見た影響の両方を、責めずに整理するためのワークです。</p>
+            </details>
+          </div>
+
+          <p class="text-center pt-4 text-muted">準備ができたら、下の「ワークをはじめる」ボタンを押してください。</p>
+        </div>
+      `;
+      return div;
+    }
+
+    function createStep2() {
+      const div = document.createElement('div');
+      div.className = 'step-card';
+      div.innerHTML = `
+        <h2 class="title-md border-bottom pb-4 mb-8">1. まず整理する</h2>
+
+        <div class="content-space-y-lg">
+          <div class="grid-2col info-box">
+            <div>
+              <label class="form-label">名前</label>
+              <input type="text" data-model="basic.name" value="${escapeHtml(state.basic.name)}" class="form-control" readonly placeholder="表紙で入力">
+              <p class="text-sm text-muted mt-1">表紙から反映されます</p>
+            </div>
+            <div>
+              <label class="form-label">記入日</label>
+              <input type="date" data-model="basic.date" value="${escapeHtml(state.basic.date)}" class="form-control">
+            </div>
+            <div>
+              <label class="form-label">担当職員</label>
+              <input type="text" data-model="basic.staff" value="${escapeHtml(state.basic.staff)}" class="form-control">
+            </div>
+            <div>
+              <label class="form-label">実施回数</label>
+              <input type="text" data-model="basic.count" value="${escapeHtml(state.basic.count)}" placeholder="例: 1回目" class="form-control">
+            </div>
+          </div>
+
+          <div class="content-space-y mt-8">
+            <h3 class="title-sm">感じたくないものを整理する</h3>
+            <p class="text-desc">できれば感じたくない、避けたいと思うものを書いてみましょう。</p>
+            <p class="support-note">ひとことだけでも大丈夫です。言葉にしにくいときは、空欄のまま次へ進めます。</p>
+
+            <div>
+              <label class="form-label">今、できるだけ感じたくないものは何ですか？</label>
+              <textarea data-model="feelings.unwanted" class="form-control textarea-md" placeholder="例: 不安、焦り、失敗への恐怖など">${escapeHtml(state.feelings.unwanted)}</textarea>
+            </div>
+
+            <div>
+              <label class="form-label">具体的に、どんな考え、気持ち、身体感覚、記憶、イメージが浮かびますか？</label>
+              <textarea data-model="feelings.details" class="form-control textarea-lg" placeholder="例: 「また失敗するに決まっている」という考え、胸のモヤモヤ、過去の失敗の記憶など">${escapeHtml(state.feelings.details)}</textarea>
+            </div>
+          </div>
+        </div>
+      `;
+      return div;
+    }
+
+    function createCheckboxList(type, title, description, icon, otherPlaceholder = "その他のご自身なりの工夫") {
+      const options = DOTS_OPTIONS[type];
+      const selected = state.dots[type].checks;
+
+      let html = `
+        <div class="checkbox-card">
+          <div class="flex-center gap-3 mb-2">
+            <div class="icon-square">
+              ${type}
+            </div>
+            <h3 class="title-sm">${title}</h3>
+          </div>
+          <p class="text-desc mb-4 fixed-h">${description}</p>
+
+          <div class="checkbox-list custom-scrollbar">
+      `;
+
+      options.forEach(opt => {
+        const isChecked = selected.includes(opt) ? 'checked' : '';
+        html += `
+          <label class="checkbox-item">
+            <input type="checkbox" data-array="dots.${type}.checks" value="${escapeHtml(opt)}" ${isChecked} class="checkbox-input">
+            <span class="checkbox-text">${escapeHtml(opt)}</span>
+          </label>
+        `;
+      });
+
+      html += `
+          </div>
+          <div class="checkbox-footer border-top pt-4">
+            <textarea data-model="dots.${type}.other" class="form-control textarea-sm bg-light" placeholder="${otherPlaceholder}">${escapeHtml(state.dots[type].other)}</textarea>
+          </div>
+        </div>
+      `;
+      return html;
+    }
+
+    function createStep3() {
+      const div = document.createElement('div');
+      div.className = 'step-container-wide';
+      div.innerHTML = `
+        <div class="step-header-box mb-6">
+          <h2 class="title-md mb-2">2. どのような工夫をしてきましたか</h2>
+          <p class="text-body">先ほど挙げた「感じたくないもの」に対処するため、これまでに使ってきたご自身なりのやり方をチェックしてみましょう。（D.O.T.S.の整理）</p>
+        </div>
+
+        <div class="grid-2col items-stretch">
+          <div class="flex-col-gap6">
+            ${createCheckboxList('D', '気をそらす', '不快な感覚から気をそらすためにしてきたこと', 'D')}
+            ${createCheckboxList('O', '身を引く・避ける', '本当は大切だと思っていることなのに、しんどさのために避けたり、先のばしにしたりしたことはありますか。', 'O')}
+          </div>
+          <div class="flex-col-gap6">
+            ${createCheckboxList('T', '考えることで何とかしようとする', '頭の中で問題を解決したり、納得させようとしてきたこと', 'T', 'その他のご自身なりの工夫（頭の中で繰り返していたことがあれば、ここへ書いてみてください）')}
+            ${createCheckboxList('S', '少し楽にするために使ってきたもの', '一時的に気分を落ち着かせるために使ってきたものや行動', 'S')}
+          </div>
+        </div>
+      `;
+      return div;
+    }
+
+    function createStep4() {
+      const div = document.createElement('div');
+      div.className = 'step-container-wide';
+      div.innerHTML = `
+        <div class="step-header-box mb-6">
+          <h2 class="title-md mb-2">3. そのやり方は、どう影響しましたか？</h2>
+          <p class="text-body">これまでに使ってきた工夫について、その場での助けと、長い目で見た時の影響を整理してみましょう。</p>
+        </div>
+
+        <div class="grid-2col items-stretch">
+          <!-- 短期 -->
+          <div class="impact-card">
+            <div class="flex-center gap-3 border-bottom pb-4 mb-6">
+              <div class="icon-circle icon-md">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              </div>
+              <h3 class="title-md">その場では、どう助かりましたか？</h3>
+            </div>
+
+            <p class="text-desc mb-4">
+              ご自身なりの工夫を使ったとき、その瞬間や直後は、何が少し楽になっていましたか？どんなしんどさを「しのげて」いましたか？
+            </p>
+
+            <textarea data-model="impact.shortTermHelp" class="form-control textarea-xl bg-light flex-grow" placeholder="例：一時的に不安を忘れられた、その日の通所のプレッシャーから解放された、ホッとしたなど">${escapeHtml(state.impact.shortTermHelp)}</textarea>
+          </div>
+
+          <!-- 長期 -->
+          <div class="impact-card">
+             <div class="flex-center gap-3 border-bottom pb-4 mb-6">
+              <div class="icon-circle icon-md">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+              </div>
+              <h3 class="title-md">長い目で見ると、どうでしたか？</h3>
+            </div>
+
+            <p class="text-desc mb-4">
+              そのやり方を長く続けた結果、生活にどんな影響がありましたか？ 観点ごとに整理してみましょう。
+            </p>
+
+            <div class="impact-list custom-scrollbar flex-grow">
+              <div>
+                <label class="form-label">体調・生活</label>
+                <textarea data-model="impact.longTermImpact.health" class="form-control textarea-sm bg-light" placeholder="例：生活リズムが崩れた、疲れが取れないなど">${escapeHtml(state.impact.longTermImpact.health)}</textarea>
+              </div>
+              <div>
+                <label class="form-label">通所・学習・就職準備</label>
+                <textarea data-model="impact.longTermImpact.work" class="form-control textarea-sm bg-light" placeholder="例：準備が遅れて焦りが出た、通所がおっくうになったなど">${escapeHtml(state.impact.longTermImpact.work)}</textarea>
+              </div>
+              <div>
+                <label class="form-label">人間関係</label>
+                <textarea data-model="impact.longTermImpact.relationships" class="form-control textarea-sm bg-light" placeholder="例：人と話さなくなった、相談できずに孤立したなど">${escapeHtml(state.impact.longTermImpact.relationships)}</textarea>
+              </div>
+              <div>
+                <label class="form-label">時間・気力・お金</label>
+                <textarea data-model="impact.longTermImpact.resources" class="form-control textarea-sm bg-light" placeholder="例：ゲームに時間を使いすぎた、気力が湧かなくなったなど">${escapeHtml(state.impact.longTermImpact.resources)}</textarea>
+              </div>
+              <div>
+                <label class="form-label">本当は大切にしたかったこと</label>
+                <textarea data-model="impact.longTermImpact.importantDirection" class="form-control textarea-sm bg-light" placeholder="例：体調を整えて少しずつ進みたかったのにできなかったなど">${escapeHtml(state.impact.longTermImpact.importantDirection)}</textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      return div;
+    }
+
+    function createStep5() {
+      const div = document.createElement('div');
+      div.className = 'step-card text-center';
+      div.innerHTML = `
+        <div class="icon-circle icon-lg mx-auto mb-6">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+        </div>
+        <h2 class="title-md border-bottom pb-6 mb-8">今回見えてきたこと</h2>
+
+        <div class="content-space-y text-left content-px">
+          <p class="text-body">ここまで振り返ってみて、いかがだったでしょうか。</p>
+
+          <div class="message-box-primary text-body">
+            <p class="mb-5">今回整理したこれまでのやり方は、決して怠けや悪いことではなく、その時のしんどさをしのぐための、<strong>ご自身なりの精一杯の工夫</strong>だったのではないでしょうか。</p>
+
+            <p class="mb-5">こうしたやり方は、特別なことではありません。<strong>多くの人が、つらい気持ちを何とかしようとして、似た工夫を使います。</strong>短期的には、少し楽になったり、その場をやり過ごせたりと、確かに助かっていた面があったかと思います。その時は、そうするしかなかったのかもしれません。</p>
+
+            <p>一方で、長い目で見ると、同じしんどさが戻ってきたり、少しずつ生活の幅が狭まってしまったりすることも見えてきたかもしれません。</p>
+          </div>
+
+          <!-- 悪循環の説明ボックス -->
+          <div class="message-box-secondary text-body">
+            <p class="mb-2 font-medium" style="color: var(--text-main);">よくある流れ：</p>
+            <p>
+              つらさが出る → 何とかしようとして工夫を使う → その場では少し楽になる → でも長い目では同じしんどさが戻りやすい → さらに同じ工夫を増やしてしまう、という流れが起きることがあります。
+            </p>
+          </div>
+
+          <div class="border-top pt-4 mt-8">
+            <p class="text-lead text-left">
+              もし少し心に余裕ができたら、次は「しんどい気持ちをなくすこと」にエネルギーを使う代わりに、<strong>自分がどんな行動指針に向かいたいのか</strong>を見ていくことができるかもしれません。
+            </p>
+          </div>
+        </div>
+      `;
+      return div;
+    }
+
+    function createStep6() {
+      const div = document.createElement('div');
+      div.className = 'step-container-print';
+
+      const renderDotsSummary = () => {
+        let html = '';
+        ['D', 'O', 'T', 'S'].forEach(key => {
+          const items = [...state.dots[key].checks];
+          if (state.dots[key].other.trim()) items.push(`その他: ${state.dots[key].other}`);
+          if (items.length > 0) {
+            const labels = {D: '気をそらす', O: '身を引く・避ける', T: '考えることで何とかしようとする', S: '少し楽にするために使ってきたもの'};
+            html += `<div class="mb-3">
+              <span class="dots-key">${key}</span>
+              <span class="dots-label">${labels[key]}</span>:
+              <span class="dots-value">${escapeHtml(items.join(' / '))}</span>
+            </div>`;
+          }
+        });
+        return html || '<p class="text-muted" style="font-style: italic;">特に記入なし</p>';
+      };
+
+      div.innerHTML = `
+        <div class="no-print action-bar mb-6">
+          <p class="action-bar-text">まとめを残せます。見返し用のコピー・印刷/PDF保存ができます。</p>
+          <div class="action-buttons">
+            <button id="btn-copy" class="btn btn-action gap-2">
+              <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+              まとめをコピー
+            </button>
+            <button onclick="window.print()" class="btn btn-action-primary gap-2">
+              <svg class="icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+              印刷・PDF保存
+            </button>
+          </div>
+        </div>
+
+        <div id="print-content" class="print-area print-card-main">
+          <h2 class="print-title border-bottom pb-6 mb-8 text-center">つらさへの対処を振り返る</h2>
+
+          <div class="print-basic-info mb-8">
+            <div class="print-info-row border-bottom pb-2"><span class="print-info-label">名前:</span> <span class="print-info-value">${escapeHtml(state.basic.name) || '未記入'}</span></div>
+            <div class="print-info-row border-bottom pb-2"><span class="print-info-label">記入日:</span> <span class="print-info-value">${escapeHtml(state.basic.date) || '未記入'}</span></div>
+            <div class="print-info-row border-bottom pb-2"><span class="print-info-label">担当職員:</span> <span class="print-info-value">${escapeHtml(state.basic.staff) || '未記入'}</span></div>
+            <div class="print-info-row border-bottom pb-2"><span class="print-info-label">実施回数:</span> <span class="print-info-value">${escapeHtml(state.basic.count) || '未記入'}</span></div>
+          </div>
+
+          <div class="content-space-y-lg">
+            <section class="page-break-inside-avoid">
+              <h3 class="print-section-title pl-3 mb-4">1. 感じたくないもの</h3>
+              <div class="print-box print-border">
+                <p class="print-item-label mb-1">今、できるだけ感じたくないもの</p>
+                <p class="print-item-value mb-4">${escapeHtml(state.feelings.unwanted) || '（未記入）'}</p>
+                <p class="print-item-label mb-1">具体的な考え、気持ち、身体感覚など</p>
+                <p class="print-item-value">${escapeHtml(state.feelings.details) || '（未記入）'}</p>
+              </div>
+            </section>
+
+            <section class="page-break-inside-avoid">
+              <h3 class="print-section-title pl-3 mb-4">2. これまでのご自身なりの工夫（D.O.T.S.）</h3>
+              <div class="print-box print-border">
+                ${renderDotsSummary()}
+              </div>
+            </section>
+
+            <section class="page-break-inside-avoid">
+              <h3 class="print-section-title pl-3 mb-4">3. そのやり方の影響</h3>
+              <div class="grid-2col gap-5 items-start">
+                <div class="print-box print-border">
+                  <p class="print-sub-title border-bottom pb-2 mb-4">その場での助け（短期）</p>
+                  <p class="print-item-value">${escapeHtml(state.impact.shortTermHelp) || '（未記入）'}</p>
+                </div>
+                <div class="print-box print-border">
+                  <p class="print-sub-title border-bottom pb-2 mb-4">長い目で見た影響（長期）</p>
+                  <div class="content-space-y" style="margin-top:0; gap: 1rem; display:flex; flex-direction:column;">
+                    <div class="print-impact-item print-card">
+                      <span class="print-impact-label">体調・生活</span>
+                      <span class="print-impact-value">${escapeHtml(state.impact.longTermImpact.health) || '-'}</span>
+                    </div>
+                    <div class="print-impact-item print-card">
+                      <span class="print-impact-label">通所・学習・就職準備</span>
+                      <span class="print-impact-value">${escapeHtml(state.impact.longTermImpact.work) || '-'}</span>
+                    </div>
+                    <div class="print-impact-item print-card">
+                      <span class="print-impact-label">人間関係</span>
+                      <span class="print-impact-value">${escapeHtml(state.impact.longTermImpact.relationships) || '-'}</span>
+                    </div>
+                    <div class="print-impact-item print-card">
+                      <span class="print-impact-label">時間・気力・お金</span>
+                      <span class="print-impact-value">${escapeHtml(state.impact.longTermImpact.resources) || '-'}</span>
+                    </div>
+                    <div class="print-impact-item print-card">
+                      <span class="print-impact-label">本当は大切にしたかったこと</span>
+                      <span class="print-impact-value">${escapeHtml(state.impact.longTermImpact.importantDirection) || '-'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="page-break-inside-avoid border-top pt-8 mt-8 text-center">
+              <h3 class="title-sm mb-4">これからの行動指針へ</h3>
+              <p class="text-body max-w-2xl mx-auto">
+                これまでのやり方は、その時のしんどさをしのぐための精一杯の工夫でした。<br>
+                次は、しんどさをなくすことではなく、<br>
+                <strong style="color: var(--text-main);">自分がどんな行動指針に向かいたいのか</strong>を見ていくことができるかもしれません。
+              </p>
+            </section>
+          </div>
+        </div>
+
+        <div class="no-print text-center pt-4 pb-8">
+           <button onclick="currentStep=1; render();" class="btn-link">
+             最初から見直す
+           </button>
+        </div>
+      `;
+
+      // イベントリスナーの追加
+      setTimeout(() => {
+        const btnCopy = document.getElementById('btn-copy');
+
+        if(btnCopy) btnCopy.addEventListener('click', handleCopyText);
+      }, 0);
+
+      return div;
+    }
+
+    // --- 各種ハンドラ ---
+    function handleCopyText() {
+      const getArrayText = (key) => {
+        const items = [...state.dots[key].checks];
+        if (state.dots[key].other.trim()) items.push(`その他: ${state.dots[key].other}`);
+        return items.length > 0 ? items.join(' / ') : 'なし';
+      };
+
+      const text = `【つらさへの対処を振り返る】
+■基本情報
+記入日: ${state.basic.date}
+名前: ${state.basic.name}
+担当職員: ${state.basic.staff}
+実施回数: ${state.basic.count}
+
+■1. 感じたくないもの
+[今、できるだけ感じたくないもの]
+${state.feelings.unwanted}
+
+[具体的な考え、気持ち、身体感覚など]
+${state.feelings.details}
+
+■2. これまでのご自身なりの工夫（D.O.T.S.）
+D (気をそらす): ${getArrayText('D')}
+O (身を引く・避ける): ${getArrayText('O')}
+T (考えることで何とかしようとする): ${getArrayText('T')}
+S (少し楽にするために使ってきたもの): ${getArrayText('S')}
+
+■3. そのやり方の影響
+[その場での助け（短期）]
+${state.impact.shortTermHelp}
+
+[長い目で見た影響（長期）]
+・体調・生活: ${state.impact.longTermImpact.health || '-'}
+・通所・学習・就職準備: ${state.impact.longTermImpact.work || '-'}
+・人間関係: ${state.impact.longTermImpact.relationships || '-'}
+・時間・気力・お金: ${state.impact.longTermImpact.resources || '-'}
+・本当は大切にしたかったこと: ${state.impact.longTermImpact.importantDirection || '-'}
+`;
+
+      // テキストエリアを作ってコピー (クリップボードAPIのフォールバック)
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-9999px";
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        showToast("まとめをコピーしました");
+      } catch (err) {
+        console.error('コピー失敗', err);
+        showToast("コピーに失敗しました");
+      }
+      document.body.removeChild(textArea);
+    }
+
+    function handleExportJSON() {
+      const backupState = { ...state, _workbookBackup: BACKUP_META };
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupState, null, 2));
+      const downloadAnchorNode = document.createElement('a');
+      const dateStr = state.basic.date.replace(/-/g, '') || 'date';
+      const nameStr = state.basic.name || 'name';
+      downloadAnchorNode.setAttribute("href", dataStr);
+      downloadAnchorNode.setAttribute("download", `dots_work_${dateStr}_${nameStr}.json`);
+      document.body.appendChild(downloadAnchorNode);
+      downloadAnchorNode.click();
+      downloadAnchorNode.remove();
+      showToast("入力内容のバックアップを保存しました");
+    }
+
+    function handleImportJSON(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (!isValidWorkbookBackup(imported)) {
+            showModal({
+              title: "バックアップを読み込めませんでした",
+              message: BACKUP_ERROR_MESSAGE,
+              confirmText: "閉じる",
+              confirmClass: "btn-modal-confirm-danger",
+              onConfirm: () => {}
+            });
+            return;
+          }
+          // mergeData を通して互換性を維持しながら安全にstateを更新
+          state = mergeData(stripBackupMeta(imported));
+          saveToStorage();
+          currentStep = 6; // インポート後は結果画面を表示
+          render();
+          showToast("バックアップを読み込みました");
+        } catch (err) {
+          console.error("JSON解析エラー", err);
+          showModal({
+            title: "バックアップを読み込めませんでした",
+            message: "保存したバックアップファイルか確認してください。",
+            confirmText: "閉じる",
+            confirmClass: "btn-modal-confirm-danger",
+            onConfirm: () => {}
+          });
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = ''; // Reset input
+    }
+
+    // --- イベント委譲による入力バインディング ---
+    document.addEventListener('input', (e) => {
+      if (e.target.hasAttribute('data-model')) {
+        setNestedValue(state, e.target.getAttribute('data-model'), e.target.value);
+        saveToStorage();
+      }
+    });
+
+    document.addEventListener('change', (e) => {
+      if (e.target.type === 'checkbox' && e.target.hasAttribute('data-array')) {
+        const path = e.target.getAttribute('data-array');
+        const val = e.target.value;
+        let arr = getNestedValue(state, path) || [];
+
+        if (e.target.checked) {
+          if (!arr.includes(val)) arr.push(val);
+        } else {
+          arr = arr.filter(item => item !== val);
+        }
+
+        setNestedValue(state, path, arr);
+        saveToStorage();
+      }
+    });
+
+    // --- 初期化とナビゲーション ---
+    window.addEventListener('message', (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== 'mental-care-profile') return;
+      applyCoverProfile(event.data.profile);
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadFromStorage();
+      render();
+
+      document.getElementById('btn-next').addEventListener('click', () => {
+        if (currentStep < TOTAL_STEPS) {
+          currentStep++;
+          render();
+        }
+      });
+
+      document.getElementById('btn-prev').addEventListener('click', () => {
+        if (currentStep > 1) {
+          currentStep--;
+          render();
+        }
+      });
+
+      // ヘッダーボタンのイベントリスナー設定
+      document.getElementById('btn-finish').addEventListener('click', () => {
+        showModal({
+          title: "今日はここまでにする",
+          message: "入力内容はこの端末に自動保存されています。\nここで終えても大丈夫です。続きは、また余裕のあるときに開けます。",
+          confirmText: "わかりました",
+          confirmClass: "btn-modal-confirm-primary",
+          onConfirm: () => {
+            showToast("入力内容は保存されています");
+          }
+        });
+      });
+
+      document.getElementById('btn-clear').addEventListener('click', () => {
+        showModal({
+          title: "入力内容を消去して最初に戻りますか？",
+          message: "これまでの入力内容はすべて消去されます。\n本当によろしいですか？",
+          confirmText: "入力内容を消去",
+          confirmClass: "btn-modal-confirm-danger",
+          onConfirm: () => {
+            localStorage.removeItem(STORAGE_KEY);
+            state = JSON.parse(JSON.stringify(initialState));
+            currentStep = 1;
+            loadFromStorage(); // 日付再設定のため
+            render();
+            showToast("入力内容を消去しました");
+          }
+        });
+      });
+    });
+
+    // --- XSS対策ユーティリティ ---
+    function escapeHtml(unsafe) {
+      if (!unsafe) return '';
+      return String(unsafe)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+    function completeMentalCareFinish() {
+      try {
+        if (typeof saveToStorage === 'function') saveToStorage();
+        if (typeof saveState === 'function') saveState();
+        if (typeof saveAppState === 'function') saveAppState();
+      } catch (err) {
+        console.warn('終了時の保存処理に失敗しました', err);
+      }
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'mental-care-finish-complete' }, window.location.origin);
+      }
+    }
+
+    window.addEventListener('message', (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== 'mental-care-finish') return;
+      completeMentalCareFinish();
+    });
+</script>
+</body>
+</html>

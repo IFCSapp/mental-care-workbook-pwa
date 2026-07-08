@@ -1,0 +1,2394 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>大事にしたい方向を見つける｜心のコンパス</title>
+
+  <!-- React & ReactDOM (動的UI構築用: UMD版 / バージョン固定) -->
+  <!-- ※不一致による実行エラーを防ぐため、integrity属性は実環境での計算・付与をお願いいたします -->
+  <script crossorigin="anonymous" src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+  <script crossorigin="anonymous" src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+
+  <style>
+    /* CSS変数 (テーマカラー・フォント設定) */
+    :root {
+      --bg-color: #FDFBF7;
+
+      --emerald-50: #ecfdf5;
+      --emerald-100: #d1fae5;
+      --emerald-200: #a7f3d0;
+      --emerald-300: #6ee7b7;
+      --emerald-500: #10b981;
+      --emerald-600: #059669;
+      --emerald-700: #047857;
+      --emerald-800: #065f46;
+      --emerald-900: #064e3b;
+
+      --stone-50: #fafaf9;
+      --stone-100: #f5f5f4;
+      --stone-200: #e7e5e4;
+      --stone-300: #d6d3d1;
+      --stone-400: #a8a29e;
+      --stone-500: #78716c;
+      --stone-600: #57534e;
+      --stone-700: #44403c;
+      --stone-800: #292524;
+      --stone-900: #1c1917;
+
+      --rose-50: #fff1f2;
+      --rose-200: #fecdd3;
+      --rose-600: #e11d48;
+      --rose-700: #be123c;
+
+      --orange-50: #fff7ed;
+      --orange-100: #ffedd5;
+      --orange-900: #7c2d12;
+
+      --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    /* 全体リセット */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--stone-800);
+      font-family: var(--font-sans);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    button {
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      font-family: inherit;
+    }
+
+    input, textarea {
+      font-family: inherit;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    /* アニメーション */
+    .fade-in { animation: fadeIn 0.3s ease-in-out; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* 基本レイアウト */
+    .app-wrapper {
+      min-height: 100vh;
+      padding: 1.5rem;
+    }
+    @media (min-width: 768px) {
+      .app-wrapper { padding: 3rem; }
+    }
+    .container {
+      max-width: 48rem;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    /* Intro画面 */
+    .intro-header {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding-top: 3rem;
+    }
+    .intro-title {
+      font-size: 1.875rem;
+      font-weight: 300;
+      color: var(--stone-700);
+      letter-spacing: 0.025em;
+    }
+    @media (min-width: 768px) {
+      .intro-title { font-size: 2.25rem; }
+    }
+    .intro-subtitle { color: var(--stone-500); }
+
+    .main-card {
+      background-color: #fff;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      border: 1px solid var(--stone-100);
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      line-height: 1.625;
+    }
+
+    .text-group {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .text-large { font-size: 1.125rem; font-weight: 500; color: var(--stone-700); }
+    .text-body { color: var(--stone-600); }
+
+    .info-box {
+      background-color: #F0F7F4;
+      padding: 1.5rem;
+      border-radius: 0.75rem;
+      border: 1px solid var(--emerald-100);
+      color: var(--emerald-900);
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .info-box-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 500;
+      font-size: 1rem;
+      border-bottom: 1px solid var(--emerald-200);
+      padding-bottom: 0.5rem;
+    }
+    .info-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--emerald-800);
+    }
+    .info-list-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    .info-bullet { color: var(--emerald-500); margin-top: 0.125rem; }
+
+    .action-area {
+      text-align: center;
+      padding-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    /* 共通ボタン */
+    .btn-primary {
+      background-color: var(--emerald-600);
+      color: #fff;
+      padding: 0.75rem 2rem;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background-color 0.2s;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .btn-primary:hover { background-color: var(--emerald-700); }
+
+    .btn-dark {
+      background-color: var(--stone-800);
+      color: #fff;
+      padding: 0.75rem 2rem;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background-color 0.2s;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .btn-dark:hover { background-color: var(--stone-900); }
+
+    .btn-outline {
+      background-color: #fff;
+      border: 1px solid var(--stone-300);
+      color: var(--stone-700);
+      padding: 0.5rem 1.5rem;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      transition: background-color 0.2s;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .btn-outline:hover { background-color: var(--stone-50); }
+
+    .btn-secondary {
+      background-color: var(--emerald-50);
+      border: 1px solid var(--emerald-200);
+      color: var(--emerald-800);
+      padding: 0.5rem 1.5rem;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      transition: background-color 0.2s;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .btn-secondary:hover { background-color: var(--emerald-100); }
+
+    .btn-ghost {
+      color: var(--stone-500);
+      padding: 0.5rem 1rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      transition: color 0.2s;
+    }
+    .btn-ghost:hover { color: var(--stone-700); }
+
+    .btn-text-danger {
+      color: var(--stone-400);
+      padding: 0.5rem 1rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      transition: color 0.2s;
+    }
+    .btn-text-danger:hover { color: var(--rose-600); }
+
+    .upload-label {
+      color: var(--stone-500);
+      font-size: 0.875rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+      border-bottom: 1px solid transparent;
+      padding-bottom: 0.125rem;
+    }
+    .upload-label:hover {
+      color: var(--stone-700);
+      border-color: var(--stone-400);
+    }
+
+    /* アイコン共通 */
+    .icon { display: block; }
+    .icon-emerald { color: var(--emerald-600); }
+    .icon-stone { color: var(--stone-500); }
+    .icon-stone-light { color: var(--stone-300); }
+
+    /* 領域選択画面 */
+    .page-title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .page-title {
+      font-size: 1.5rem;
+      font-weight: 300;
+      color: var(--stone-700);
+    }
+    .page-desc { color: var(--stone-600); line-height: 1.625; }
+
+    .domain-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+    }
+    @media (min-width: 768px) {
+      .domain-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    .domain-btn {
+      padding: 1rem;
+      border-radius: 0.75rem;
+      border: 1px solid var(--stone-200);
+      background-color: #fff;
+      color: var(--stone-700);
+      text-align: left;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.2s;
+    }
+    .domain-btn:hover { background-color: var(--stone-50); }
+    .domain-btn.is-selected {
+      border-color: var(--emerald-500);
+      background-color: var(--emerald-50);
+      color: var(--emerald-900);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .add-domain-box {
+      background-color: #fff;
+      padding: 1.5rem;
+      border-radius: 0.75rem;
+      border: 1px solid var(--stone-100);
+      display: flex;
+      align-items: flex-end;
+      gap: 0.75rem;
+    }
+    .input-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .input-label { font-size: 0.875rem; color: var(--stone-600); }
+    .input-field {
+      width: 100%;
+      border: 1px solid var(--stone-300);
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+      outline: none;
+      transition: all 0.2s;
+      box-sizing: border-box;
+    }
+    .input-field:focus {
+      border-color: var(--emerald-500);
+      box-shadow: 0 0 0 1px var(--emerald-500);
+    }
+    .btn-add {
+      background-color: var(--stone-100);
+      color: var(--stone-700);
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      transition: background-color 0.2s;
+    }
+    .btn-add:hover:not(:disabled) { background-color: var(--stone-200); }
+    .btn-add:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .nav-buttons {
+      display: flex;
+      justify-content: space-between;
+      padding-top: 2rem;
+      border-top: 1px solid var(--stone-200);
+    }
+
+    /* 質問入力画面 */
+    .input-app-wrapper {
+      min-height: 100vh;
+      color: var(--stone-800);
+      padding-bottom: 1.5rem;
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+    @media (min-width: 768px) {
+      .input-app-wrapper { padding-bottom: 3rem; padding-left: 3rem; padding-right: 3rem; }
+    }
+    .input-container {
+      max-width: 48rem;
+      margin: 0 auto;
+      position: relative;
+    }
+    .sticky-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background-color: rgba(253, 251, 247, 0.95);
+      backdrop-filter: blur(4px);
+      padding-top: 1.5rem;
+      padding-bottom: 1rem;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--stone-200);
+    }
+    @media (min-width: 768px) {
+      .sticky-header { padding-top: 3rem; }
+    }
+    .header-status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.875rem;
+      color: var(--stone-500);
+      margin-bottom: 0.75rem;
+    }
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .header-domain-name {
+      font-size: 1.875rem;
+      font-weight: 700;
+      color: var(--emerald-900);
+    }
+
+    .content-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+    }
+
+    .hint-box {
+      background-color: rgba(245, 245, 244, 0.7);
+      padding: 1rem;
+      border-radius: 0.75rem;
+      font-size: 0.875rem;
+      color: var(--stone-700);
+      border: 1px solid var(--stone-200);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .hint-title {
+      font-weight: 500;
+      color: var(--stone-800);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .hint-list {
+      list-style-type: disc;
+      list-style-position: inside;
+      padding-left: 0.25rem;
+      color: var(--stone-600);
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .hint-desc {
+      padding-top: 0.25rem;
+      color: var(--stone-500);
+    }
+    .support-note { color: var(--stone-600); font-size: 0.9rem; line-height: 1.65; }
+    .supplement-details { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--stone-200); color: var(--stone-600); font-size: 0.9rem; line-height: 1.65; }
+    .supplement-details summary { cursor: pointer; font-weight: 600; color: var(--emerald-800); }
+    .supplement-details p { margin-top: 0.6rem; }
+
+    .question-block {
+      background-color: #fff;
+      padding: 1.5rem;
+      border-radius: 1rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      border: 1px solid var(--stone-100);
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    @media (min-width: 768px) {
+      .question-block { padding: 2rem; }
+    }
+    .question-title {
+      font-size: 1.125rem;
+      font-weight: 500;
+      color: var(--stone-800);
+      border-left: 4px solid var(--emerald-300);
+      padding-left: 0.75rem;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .form-label {
+      display: block;
+      color: var(--stone-700);
+    }
+    .form-label-bold { font-weight: 500; color: var(--emerald-800); }
+    .textarea-field {
+      width: 100%;
+      border: 1px solid var(--stone-300);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      min-height: 100px;
+      outline: none;
+      transition: all 0.2s;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+    .textarea-field:focus {
+      border-color: var(--emerald-500);
+      box-shadow: 0 0 0 1px var(--emerald-500);
+    }
+
+    .past-work-block {
+      background-color: rgba(245, 245, 244, 0.5);
+      padding: 1.5rem;
+      border-radius: 1rem;
+      border: 1px solid var(--stone-200);
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    @media (min-width: 768px) {
+      .past-work-block { padding: 2rem; }
+    }
+    .past-work-header {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .past-work-title {
+      font-size: 1.125rem;
+      font-weight: 500;
+      color: var(--stone-800);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .past-work-desc {
+      font-size: 0.875rem;
+      color: var(--stone-600);
+      line-height: 1.625;
+    }
+
+    .tab-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+    }
+    @media (min-width: 768px) {
+      .tab-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    .tab-btn {
+      padding: 1rem;
+      border-radius: 0.75rem;
+      border: 1px solid var(--stone-200);
+      background-color: #fff;
+      color: var(--stone-700);
+      text-align: left;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover { border-color: var(--stone-400); }
+    .tab-btn.is-active {
+      background-color: var(--stone-700);
+      color: #fff;
+      border-color: var(--stone-700);
+    }
+
+    .past-work-content {
+      background-color: #fff;
+      padding: 1.5rem;
+      border-radius: 0.75rem;
+      border: 1px solid var(--stone-200);
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    @media (min-width: 768px) {
+      .past-work-content { padding: 2rem; }
+    }
+    .past-work-content-title {
+      font-weight: 500;
+      color: var(--emerald-800);
+      border-bottom: 1px solid var(--emerald-100);
+      padding-bottom: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .past-work-content-desc {
+      font-size: 0.875rem;
+      color: var(--stone-600);
+      margin-bottom: 1.5rem;
+      line-height: 1.625;
+    }
+    .form-group-sm {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .form-label-sm {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--stone-700);
+    }
+    .form-hint {
+      font-size: 0.75rem;
+      color: var(--stone-500);
+    }
+    .form-hint-box {
+      font-size: 0.75rem;
+      color: var(--stone-500);
+      background-color: var(--stone-50);
+      padding: 0.625rem;
+      border-radius: 0.25rem;
+      border: 1px solid var(--stone-100);
+    }
+    .form-hint-box-bold { font-weight: 500; }
+    .textarea-field-sm {
+      width: 100%;
+      border: 1px solid var(--stone-300);
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+      min-height: 80px;
+      font-size: 0.875rem;
+      outline: none;
+      transition: all 0.2s;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+    .textarea-field-sm:focus {
+      border-color: var(--emerald-500);
+      box-shadow: 0 0 0 1px var(--emerald-500);
+    }
+    .input-field-sm {
+      width: 100%;
+      border: 1px solid var(--stone-300);
+      border-radius: 0.5rem;
+      padding: 0.75rem;
+      font-size: 0.875rem;
+      outline: none;
+      transition: all 0.2s;
+      box-sizing: border-box;
+    }
+    .input-field-sm:focus {
+      border-color: var(--emerald-500);
+      box-shadow: 0 0 0 1px var(--emerald-500);
+    }
+
+    .past-work-footer {
+      margin-top: 2rem;
+      background-color: var(--stone-50);
+      padding: 1.25rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--stone-200);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      font-size: 0.875rem;
+      color: var(--stone-600);
+    }
+    .footer-section { display: flex; flex-direction: column; gap: 0.25rem; }
+    .footer-title { font-weight: 500; color: var(--stone-700); margin-bottom: 0.25rem; }
+    .footer-list { list-style-type: disc; list-style-position: inside; display: flex; flex-direction: column; gap: 0.25rem; }
+    .footer-divider { border-top: 1px solid var(--stone-200); padding-top: 0.75rem; }
+
+    .keyword-block {
+      background-color: #fff;
+      padding: 1.5rem;
+      border-radius: 1rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      border: 1px solid var(--stone-100);
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    @media (min-width: 768px) {
+      .keyword-block { padding: 2rem; }
+    }
+    .keyword-header {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .keyword-title {
+      font-size: 1.125rem;
+      font-weight: 500;
+      color: var(--stone-800);
+      border-left: 4px solid var(--emerald-300);
+      padding-left: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .keyword-count {
+      font-size: 0.875rem;
+      font-weight: 400;
+      color: var(--stone-500);
+      background-color: var(--stone-100);
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+    }
+    .keyword-desc { font-size: 0.875rem; color: var(--stone-600); }
+
+    .alert-warning {
+      background-color: var(--rose-50);
+      border: 1px solid var(--rose-200);
+      color: var(--rose-700);
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .keyword-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      padding-top: 0.5rem;
+    }
+    .keyword-tag {
+      padding: 0.5rem 1rem;
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      transition: all 0.2s;
+      border: 1px solid var(--stone-200);
+      background-color: var(--stone-50);
+      color: var(--stone-600);
+    }
+    .keyword-tag:hover { background-color: var(--stone-100); border-color: var(--stone-300); }
+    .keyword-tag.is-selected {
+      background-color: var(--emerald-600);
+      color: #fff;
+      border-color: var(--emerald-600);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .keyword-add-group { display: flex; gap: 0.5rem; padding-top: 0.5rem; }
+    .input-field-inline {
+      flex: 1;
+      border: 1px solid var(--stone-300);
+      border-radius: 0.5rem;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .input-field-inline:focus { border-color: var(--emerald-500); }
+    .btn-add-keyword {
+      background-color: var(--stone-100);
+      color: var(--stone-700);
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      transition: background-color 0.2s;
+      font-size: 0.875rem;
+    }
+    .btn-add-keyword:hover:not(:disabled) { background-color: var(--stone-200); }
+    .btn-add-keyword:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .deepen-block {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--stone-100);
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .deepen-title {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--stone-700);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .selected-keyword-box {
+      background-color: rgba(236, 253, 245, 0.5);
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--emerald-100);
+    }
+    .selected-keyword-label { font-size: 0.75rem; color: var(--stone-500); margin-bottom: 0.5rem; }
+    .selected-keyword-grid { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+    .keyword-display-tag {
+      background-color: #fff;
+      color: var(--emerald-700);
+      border: 1px solid var(--emerald-200);
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .status-block {
+      background-color: #fff;
+      padding: 1.5rem;
+      border-radius: 1rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      border: 1px solid var(--stone-100);
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+    @media (min-width: 768px) {
+      .status-block { padding: 2rem; }
+    }
+    .status-title-group { display: flex; flex-direction: column; gap: 0.25rem; }
+    .status-title {
+      font-size: 1.125rem;
+      font-weight: 500;
+      color: var(--stone-800);
+      border-left: 4px solid var(--emerald-300);
+      padding-left: 0.75rem;
+    }
+    .status-desc { font-size: 0.875rem; color: var(--stone-500); padding-left: 1rem; }
+
+    .status-group { display: flex; flex-direction: column; gap: 1rem; }
+    .status-group-divider { border-top: 1px solid var(--stone-100); padding-top: 1.5rem; }
+    .status-header { display: flex; justify-content: space-between; align-items: flex-end; }
+    .status-label { color: var(--stone-700); font-weight: 500; }
+    .status-value { font-size: 1.5rem; font-weight: 300; color: var(--emerald-700); }
+    .status-note {
+      font-size: 0.75rem;
+      color: var(--emerald-700);
+      background-color: var(--emerald-50);
+      padding: 0.5rem;
+      border-radius: 0.25rem;
+    }
+    .range-slider {
+      width: 100%;
+      height: 0.5rem;
+      background-color: var(--stone-200);
+      border-radius: 0.5rem;
+      appearance: none;
+      cursor: pointer;
+      accent-color: var(--emerald-600);
+    }
+    .range-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--stone-500);
+    }
+
+    .barriers-block {
+      background-color: #fff;
+      padding: 1.5rem;
+      border-radius: 1rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      border: 1px solid var(--stone-100);
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    @media (min-width: 768px) {
+      .barriers-block { padding: 2rem; }
+    }
+    .barriers-title-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    .barriers-title {
+      font-size: 1.125rem;
+      font-weight: 500;
+      color: var(--stone-800);
+      border-left: 4px solid var(--emerald-300);
+      padding-left: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .barriers-desc { font-size: 0.875rem; color: var(--stone-600); line-height: 1.625; }
+
+    .step-block {
+      background-color: rgba(236, 253, 245, 0.5);
+      padding: 1.5rem;
+      border-radius: 1rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      border: 1px solid var(--emerald-100);
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    @media (min-width: 768px) {
+      .step-block { padding: 2rem; }
+    }
+    .step-title-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    .step-title {
+      font-size: 1.125rem;
+      font-weight: 500;
+      color: var(--emerald-900);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .step-desc { font-size: 0.875rem; color: var(--stone-600); line-height: 1.625; }
+
+    .textarea-field-white {
+      width: 100%;
+      border: 1px solid var(--emerald-200);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      min-height: 80px;
+      background-color: #fff;
+      outline: none;
+      transition: all 0.2s;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+    .textarea-field-white:focus {
+      border-color: var(--emerald-500);
+      box-shadow: 0 0 0 1px var(--emerald-500);
+    }
+
+    .nav-buttons-input {
+      display: flex;
+      justify-content: space-between;
+      padding-top: 1.5rem;
+      padding-bottom: 3rem;
+      border-top: 1px solid var(--stone-200);
+    }
+    .btn-nav-prev {
+      color: var(--stone-500);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.5rem 1rem;
+      transition: color 0.2s;
+    }
+    .btn-nav-prev:hover { color: var(--stone-700); }
+
+
+    /* サマリー画面 */
+    .summary-app-wrapper {
+      min-height: 100vh;
+      color: var(--stone-800);
+      padding: 1.5rem;
+    }
+    @media (min-width: 768px) {
+      .summary-app-wrapper { padding: 3rem; }
+    }
+    .summary-container {
+      max-width: 56rem;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 3rem;
+    }
+
+    .summary-header {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding-top: 2rem;
+    }
+    .summary-title { font-size: 1.875rem; font-weight: 300; color: var(--stone-700); }
+    .summary-desc { color: var(--stone-600); line-height: 1.625; }
+
+    .core-guidelines-block {
+      background-color: #fff;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      border: 1px solid var(--emerald-100);
+    }
+    .core-guidelines-title {
+      font-size: 1.125rem;
+      font-weight: 500;
+      color: var(--emerald-900);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .core-guidelines-desc { font-size: 0.875rem; color: var(--stone-600); margin-bottom: 1.5rem; }
+    .core-keyword-grid { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+    .core-keyword-tag {
+      background-color: var(--emerald-100);
+      color: var(--emerald-800);
+      padding: 0.5rem 1.25rem;
+      border-radius: 9999px;
+      font-weight: 500;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .custom-guidelines-block {
+      background-color: rgba(236, 253, 245, 0.5);
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      border: 1px solid var(--emerald-100);
+    }
+    .custom-guideline-list {
+      list-style-type: disc;
+      list-style-position: inside;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      color: var(--stone-700);
+    }
+
+    .domain-summary-group { display: flex; flex-direction: column; gap: 1.5rem; }
+    .domain-summary-header {
+      font-size: 1.25rem;
+      font-weight: 300;
+      color: var(--stone-700);
+      border-bottom: 1px solid var(--stone-200);
+      padding-bottom: 0.5rem;
+    }
+    .domain-summary-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    @media (min-width: 768px) {
+      .domain-summary-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    .domain-summary-card {
+      background-color: #fff;
+      padding: 1.25rem;
+      border-radius: 0.75rem;
+      border: 1px solid var(--stone-200);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .domain-summary-content { display: flex; flex-direction: column; }
+    .domain-summary-title { font-weight: 500; color: var(--stone-800); margin-bottom: 0.75rem; }
+    .domain-summary-keywords { display: flex; flex-wrap: wrap; gap: 0.375rem; margin-bottom: 0.5rem; }
+    .domain-summary-keyword {
+      background-color: var(--stone-100);
+      color: var(--stone-600);
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+    }
+    .domain-summary-past-hints {
+      margin-top: 0.75rem;
+      font-size: 0.75rem;
+      color: var(--stone-600);
+      background-color: var(--stone-50);
+      padding: 0.625rem;
+      border-radius: 0.25rem;
+      border: 1px solid var(--stone-100);
+    }
+    .domain-summary-past-title { color: var(--stone-400); margin-bottom: 0.25rem; }
+    .domain-summary-status {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      border-top: 1px solid var(--stone-100);
+      padding-top: 0.75rem;
+      margin-top: 1rem;
+    }
+    .domain-summary-status-item { font-size: 0.75rem; color: var(--stone-500); }
+    .domain-summary-status-value { font-weight: 500; color: var(--stone-700); font-size: 0.875rem; }
+
+    .gap-domains-block {
+      background-color: rgba(255, 237, 213, 0.5);
+      padding: 2rem;
+      border-radius: 1rem;
+      border: 1px solid var(--orange-100);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .gap-domains-title { font-size: 1.125rem; font-weight: 500; color: var(--orange-900); }
+    .gap-domains-desc { color: var(--stone-700); font-size: 0.875rem; line-height: 1.625; }
+    @media (min-width: 768px) {
+      .gap-domains-desc { font-size: 1rem; }
+    }
+
+    .next-steps-block {
+      background-color: var(--stone-800);
+      color: #fff;
+      padding: 2rem;
+      border-radius: 1.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    @media (min-width: 768px) {
+      .next-steps-block { padding: 2.5rem; }
+    }
+    .next-steps-title {
+      font-size: 1.25rem;
+      font-weight: 300;
+      color: var(--stone-100);
+      border-bottom: 1px solid var(--stone-600);
+      padding-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .next-steps-desc { color: var(--stone-300); line-height: 1.625; }
+    .next-step-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .next-step-card {
+      background-color: rgba(68, 64, 60, 0.5);
+      padding: 1rem;
+      border-radius: 0.75rem;
+      border: 1px solid var(--stone-600);
+    }
+    .next-step-domain { font-size: 0.75rem; color: var(--stone-400); margin-bottom: 0.25rem; }
+    .next-step-action { font-size: 1rem; font-weight: 500; color: var(--stone-100); }
+    .next-step-fallback {
+      background-color: rgba(68, 64, 60, 0.5);
+      padding: 1.5rem;
+      border-radius: 0.75rem;
+      border: 1px solid var(--stone-600);
+      text-align: center;
+    }
+    .next-step-fallback-text { font-size: 1.125rem; font-weight: 500; }
+    .next-step-footer { font-size: 0.875rem; color: var(--stone-400); padding-top: 0.5rem; }
+
+    .summary-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding-top: 2rem;
+      padding-bottom: 3rem;
+    }
+    .summary-btn-group {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 1rem;
+    }
+    @media (min-width: 640px) {
+      .summary-btn-group { flex-direction: row; }
+    }
+    .summary-btn-group-bottom {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1rem;
+      border-top: 1px solid var(--stone-200);
+      padding-top: 1.5rem;
+    }
+    .summary-backup-note {
+      margin: -0.25rem 0 0;
+      color: var(--stone-500);
+      font-size: 0.875rem;
+      line-height: 1.6;
+      text-align: center;
+    }
+    @media (min-width: 640px) {
+      .summary-btn-group-bottom { flex-direction: row; }
+    }
+
+    /* モーダル */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(28, 25, 23, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      padding: 1rem;
+    }
+    .modal-content {
+      background-color: #fff;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      max-width: 24rem;
+      width: 100%;
+      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+    }
+    @media (min-width: 768px) {
+      .modal-content { padding: 2rem; }
+    }
+    .modal-title { font-size: 1.125rem; font-weight: 500; color: var(--stone-800); margin-bottom: 0.75rem; }
+    .modal-desc { font-size: 0.875rem; color: var(--stone-600); margin-bottom: 1.5rem; line-height: 1.625; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 0.75rem; }
+
+    .btn-modal-cancel {
+      padding: 0.5rem 1rem;
+      color: var(--stone-600);
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+    .btn-modal-cancel:hover { background-color: var(--stone-100); }
+    .btn-danger {
+      padding: 0.5rem 1rem;
+      background-color: var(--rose-600);
+      color: #fff;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: background-color 0.2s;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .btn-danger:hover { background-color: var(--rose-700); }
+
+    .toast {
+      position: fixed;
+      top: 1.25rem;
+      left: 50%;
+      width: min(92vw, 34rem);
+      transform: translate(-50%, -14px);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 2000;
+      background-color: #312e81;
+      color: #f8fafc;
+      border: 1px solid rgba(199, 210, 254, 0.55);
+      padding: 0.75rem 1.25rem;
+      border-radius: 9999px;
+      box-shadow: 0 16px 34px -14px rgba(49,46,129,0.65);
+      line-height: 1.5;
+      text-align: center;
+      font-weight: 500;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+    .toast.toast-error {
+      background-color: #fff7ed;
+      color: #7c2d12;
+      border-color: #fed7aa;
+      box-shadow: 0 16px 34px -14px rgba(124,45,18,0.35);
+    }
+
+    /* =========================================================
+       全体CSS統一パス: 見た目のみの低リスク調整
+       ========================================================= */
+    :where(button, .btn, .btn-primary, .btn-secondary, .btn-outline, .btn-dark, .btn-main, .btn-text, .btn-action, .btn-action-primary, .btn-nav-next, .btn-nav-prev, .btn-add, .btn-focus, .btn-reset, .chip, .menu-item, .radio-btn, .mode-btn) {
+      min-height: 44px;
+      border-radius: 12px;
+      font-family: inherit;
+      line-height: 1.35;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :where(button, .btn, .btn-primary, .btn-secondary, .btn-outline, .btn-dark, .btn-main, .btn-text, .btn-action, .btn-action-primary, .btn-nav-next, .btn-nav-prev, .btn-add, .btn-focus, .btn-reset, .chip, .menu-item, .radio-btn, .mode-btn):focus-visible {
+      outline: 3px solid rgba(37, 99, 235, 0.32);
+      outline-offset: 3px;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.18);
+    }
+
+    :where(input[type="text"], input[type="date"], input[type="number"], textarea, select, .form-input, .form-textarea, .input-text) {
+      min-height: 44px;
+      border-radius: 12px;
+      border-color: #cbd5e1;
+      background-color: #ffffff;
+      line-height: 1.55;
+      font-family: inherit;
+    }
+
+    :where(input[type="text"], input[type="date"], input[type="number"], textarea, select, .form-input, .form-textarea, .input-text):focus-visible {
+      outline: 3px solid rgba(37, 99, 235, 0.24);
+      outline-offset: 1px;
+      border-color: #3b82f6;
+    }
+
+    :where(.card, .section, .main-card, .box-panel, .box-panel-light, .info-box, .feedback-box, .form-section, .status, .modal-content, .step-container) {
+      border-radius: 16px;
+    }
+
+    :where(.info-box, .notice-text, .message-box-primary, .feedback-box) {
+      line-height: 1.7;
+    }
+
+    :where(.action-buttons, .modal-actions, .footer-actions, .btn-group, .header-actions, .control-actions) {
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 640px) {
+      html, body { overflow-x: hidden; }
+      :where(.app-wrapper, .app-container, #app-container, main, .content-wrapper, .wide-wrapper, .container, .main-card, .card, .section, .panel) { max-width: 100%; }
+      :where(.action-buttons, .modal-actions, .footer-actions, .btn-group, .header-actions, .control-actions) { flex-direction: column; align-items: stretch; }
+      :where(button, .btn, .btn-primary, .btn-secondary, .btn-outline, .btn-dark, .btn-main, .btn-text, .btn-action, .btn-action-primary, .btn-nav-next, .btn-nav-prev, .btn-add, .btn-focus, .btn-reset, .mode-btn) { width: 100%; justify-content: center; white-space: normal; }
+      :where(input, textarea, select) { max-width: 100%; }
+    }
+
+    .btn-primary, .btn-dark, .btn-outline { border-radius: 12px; padding: 0.72rem 1.25rem; font-weight: 600; }
+    .btn-outline { border-color: #d6d3d1; }
+    .btn-danger, .btn-reset { background: #fff1f2; color: #9f1239; border: 1px solid #fecdd3; }
+    .main-card, .info-box, .choice-card, .step-card, .result-card, .modal-content { border-radius: 16px; }
+    input, textarea { padding: 0.72rem 0.85rem; }
+    @media (max-width: 640px) { .app-wrapper { padding: 1rem 0.85rem; } .main-card { padding: 1.25rem; } }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- ※ type="text/babel" を外し、通常のJavaScriptとして実行します -->
+  <script>
+    const { useState, useEffect, useRef } = React;
+    // JSXをプレーンなJavaScriptで記述するためのエイリアス
+    const e = React.createElement;
+
+    // --- SVGアイコンコンポーネント (JSX -> JavaScript関数への書き換え) ---
+    const ChevronRight = ({ size = 24, className = "icon" }) => (
+      e("svg", { xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: className },
+        e("polyline", { points: "9 18 15 12 9 6" })
+      )
+    );
+    const ChevronLeft = ({ size = 24, className = "icon" }) => (
+      e("svg", { xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: className },
+        e("polyline", { points: "15 18 9 12 15 6" })
+      )
+    );
+    const Save = ({ size = 24, className = "icon" }) => (
+      e("svg", { xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: className },
+        e("path", { d: "M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" }),
+        e("polyline", { points: "17 21 17 13 7 13 7 21" }),
+        e("polyline", { points: "7 3 7 8 15 8" })
+      )
+    );
+    const Info = ({ size = 24, className = "icon" }) => (
+      e("svg", { xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: className },
+        e("circle", { cx: "12", cy: "12", r: "10" }),
+        e("line", { x1: "12", y1: "16", x2: "12", y2: "12" }),
+        e("line", { x1: "12", y1: "8", x2: "12.01", y2: "8" })
+      )
+    );
+    const Plus = ({ size = 24, className = "icon" }) => (
+      e("svg", { xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: className },
+        e("line", { x1: "12", y1: "5", x2: "12", y2: "19" }),
+        e("line", { x1: "5", y1: "12", x2: "19", y2: "12" })
+      )
+    );
+    const Check = ({ size = 24, className = "icon" }) => (
+      e("svg", { xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: className },
+        e("polyline", { points: "20 6 9 17 4 12" })
+      )
+    );
+    const RefreshCcw = ({ size = 24, className = "icon" }) => (
+      e("svg", { xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: className },
+        e("polyline", { points: "1 4 1 10 7 10" }),
+        e("polyline", { points: "23 20 23 14 17 14" }),
+        e("path", { d: "M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" })
+      )
+    );
+    const Download = ({ size = 24, className = "icon" }) => (
+      e("svg", { xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: className },
+        e("path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" }),
+        e("polyline", { points: "7 10 12 15 17 10" }),
+        e("line", { x1: "12", y1: "15", x2: "12", y2: "3" })
+      )
+    );
+    const Compass = ({ size = 24, className = "icon" }) => (
+      e("svg", { xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: className },
+        e("circle", { cx: "12", cy: "12", r: "10" }),
+        e("polygon", { points: "16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76" })
+      )
+    );
+    const Edit3 = ({ size = 24, className = "icon" }) => (
+      e("svg", { xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: className },
+        e("path", { d: "M12 20h9" }),
+        e("path", { d: "M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" })
+      )
+    );
+    const Target = ({ size = 24, className = "icon" }) => (
+      e("svg", { xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: className },
+        e("circle", { cx: "12", cy: "12", r: "10" }),
+        e("circle", { cx: "12", cy: "12", r: "6" }),
+        e("circle", { cx: "12", cy: "12", r: "2" })
+      )
+    );
+    const BookOpen = ({ size = 24, className = "icon" }) => (
+      e("svg", { xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: className },
+        e("path", { d: "M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" }),
+        e("path", { d: "M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" })
+      )
+    );
+    const Cloud = ({ size = 24, className = "icon" }) => (
+      e("svg", { xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: className },
+        e("path", { d: "M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" })
+      )
+    );
+    const Upload = ({ size = 24, className = "icon" }) => (
+      e("svg", { xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: className },
+        e("path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" }),
+        e("polyline", { points: "17 8 12 3 7 8" }),
+        e("line", { x1: "12", y1: "3", x2: "12", y2: "15" })
+      )
+    );
+    const FileJson = ({ size = 24, className = "icon" }) => (
+      e("svg", { xmlns: "http://www.w3.org/2000/svg", width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: className },
+        e("path", { d: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" }),
+        e("polyline", { points: "14 2 14 8 20 8" }),
+        e("path", { d: "M10 12a1 1 0 0 0-1 1v1a1 1 0 0 1-1 1 1 1 0 0 1 1 1v1a1 1 0 0 0 1 1" }),
+        e("path", { d: "M14 18a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1 1 1 0 0 1-1-1v-1a1 1 0 0 0-1-1" })
+      )
+    );
+
+    // --- 定数定義 ---
+    const DEFAULT_DOMAINS = [
+      "健康", "仕事", "家族関係", "親密な関係", "友人・社会的関係",
+      "地域との関わり", "精神性 / 内面とのつながり", "余暇 / 遊び",
+      "自己成長", "子どもとの関わり / 養育"
+    ];
+
+    const GUIDELINE_WORDS = [
+      "受けとめる", "冒険する", "自分の意見を穏やかに伝える", "本音でいる", "思いやる",
+      "自分をいたわる", "思いやりを向ける", "協力する", "勇気を持つ", "創造的でいる",
+      "好奇心を持つ", "励ます", "自分を表現する", "目の前に集中する", "公平でいる",
+      "柔軟でいる", "親しみを持つ", "許す", "感謝する", "助ける", "正直でいる",
+      "自分で選ぶ", "努力を続ける", "親切でいる", "愛情を示す", "今ここにいる",
+      "心を開く", "整える", "続ける", "安全を守る", "尊重する", "責任を持つ",
+      "工夫して活かす", "そっと支える", "信頼する", "誠実でいる", "信頼に足る行動をする"
+    ];
+
+    // --- メインコンポーネント ---
+    function ActWorksheetApp() {
+      // 状態管理
+      const [step, setStep] = useState('intro');
+      const [availableDomains, setAvailableDomains] = useState(DEFAULT_DOMAINS);
+      const [selectedDomains, setSelectedDomains] = useState([]);
+      const [currentDomainIndex, setCurrentDomainIndex] = useState(0);
+      const [domainData, setDomainData] = useState({});
+      const [newDomainName, setNewDomainName] = useState("");
+      const [newKeyword, setNewKeyword] = useState("");
+      const [activePastWork, setActivePastWork] = useState(null);
+      const [showResetConfirm, setShowResetConfirm] = useState(false);
+      const [keywordWarning, setKeywordWarning] = useState("");
+      const fileInputRef = useRef(null);
+      const BACKUP_META = { app: 'mental-care-workbook', workId: 5, schemaVersion: 1 };
+      const BACKUP_ERROR_MESSAGE = 'このワークで保存したバックアップファイルを選んでください。';
+
+      const isValidWorkbookBackup = (parsed) => {
+        const meta = parsed?._workbookBackup;
+        return meta?.app === BACKUP_META.app && meta?.workId === BACKUP_META.workId && meta?.schemaVersion === BACKUP_META.schemaVersion;
+      };
+
+      const getToastType = (message) => /ではありません|できません|失敗|読み込めません|バックアップファイル/.test(message) ? 'error' : 'success';
+
+      const showToast = (message) => {
+        const toast = document.getElementById("toast");
+        if (!toast) return;
+        toast.textContent = message;
+        toast.classList.toggle("toast-error", getToastType(message) === 'error');
+        toast.classList.add("show");
+        window.clearTimeout(showToast.timer);
+        showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 3000);
+      };
+
+      const resetFileInput = () => {
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      };
+
+      // データのロードと保存
+      useEffect(() => {
+        const saved = localStorage.getItem('act_worksheet_standalone_data');
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            setAvailableDomains(parsed.availableDomains || DEFAULT_DOMAINS);
+            setSelectedDomains(parsed.selectedDomains || []);
+            setDomainData(parsed.domainData || {});
+            setStep(parsed.step || 'intro');
+            setCurrentDomainIndex(parsed.currentDomainIndex || 0);
+          } catch (error) {
+            console.error("保存データの読み込みに失敗しました", error);
+          }
+        }
+      }, []);
+
+      useEffect(() => {
+        const dataToSave = {
+          availableDomains,
+          selectedDomains,
+          domainData,
+          step,
+          currentDomainIndex
+        };
+        localStorage.setItem('act_worksheet_standalone_data', JSON.stringify(dataToSave));
+      }, [availableDomains, selectedDomains, domainData, step, currentDomainIndex]);
+
+      // ヘルパー関数
+      const initDomainData = (domain) => {
+        if (!domainData[domain]) {
+          setDomainData(prev => ({
+            ...prev,
+            [domain]: {
+              q1: "", q2: "", q3: "", memo: "",
+              keywords: [],
+              deepen_guideline: "", deepen_meaning: "", deepen_action: "",
+              importance: 5, execution: 5,
+              barriers: "", // 行動指針を難しくしているもの
+              next_small_step: "",
+              // 過去の一場面ワーク用のデータ
+              calmScene: "", calmSelfRelation: "", calmKeywordsLike: "", calmGuideline: "", calmNextAction: "",
+              selfScene: "", selfStrengths: "", selfKeywordsLike: "", selfGuideline: "", selfNextAction: ""
+            }
+          }));
+        }
+      };
+
+      const handleDomainSelect = (domain) => {
+        if (selectedDomains.includes(domain)) {
+          setSelectedDomains(prev => prev.filter(d => d !== domain));
+        } else {
+          setSelectedDomains(prev => [...prev, domain]);
+          initDomainData(domain);
+        }
+      };
+
+      const addNewDomain = () => {
+        if (newDomainName.trim() !== "" && !availableDomains.includes(newDomainName)) {
+          setAvailableDomains(prev => [...prev, newDomainName]);
+          setNewDomainName("");
+        }
+      };
+
+      const updateCurrentDomainData = (key, value) => {
+        const domain = selectedDomains[currentDomainIndex];
+        setDomainData(prev => ({
+          ...prev,
+          [domain]: {
+            ...prev[domain],
+            [key]: value
+          }
+        }));
+      };
+
+      const toggleKeyword = (keyword) => {
+        const domain = selectedDomains[currentDomainIndex];
+        const currentKeywords = domainData[domain]?.keywords || [];
+
+        if (currentKeywords.includes(keyword)) {
+          updateCurrentDomainData('keywords', currentKeywords.filter(k => k !== keyword));
+          setKeywordWarning(""); // 減らした時は警告を消す
+        } else {
+          if (currentKeywords.length >= 5) {
+            setKeywordWarning("行動指針のキーワードは5個までです。たくさんある場合は、優先順位をつけて今の自分に特に大切な5個に絞り込んでみましょう。");
+            return;
+          }
+          updateCurrentDomainData('keywords', [...currentKeywords, keyword]);
+        }
+      };
+
+      const addNewKeyword = () => {
+        if (newKeyword.trim() !== "") {
+          const domain = selectedDomains[currentDomainIndex];
+          const currentKeywords = domainData[domain]?.keywords || [];
+          if (!currentKeywords.includes(newKeyword)) {
+            if (currentKeywords.length >= 5) {
+              setKeywordWarning("行動指針のキーワードは5個までです。たくさんある場合は、優先順位をつけて今の自分に特に大切な5個に絞り込んでみましょう。");
+              return;
+            }
+            updateCurrentDomainData('keywords', [...currentKeywords, newKeyword]);
+          }
+          setNewKeyword("");
+        }
+      };
+
+      const handleNextDomain = () => {
+        window.scrollTo(0, 0);
+        setActivePastWork(null);
+        setKeywordWarning(""); // ドメインが変わる際に警告をリセット
+        if (currentDomainIndex < selectedDomains.length - 1) {
+          setCurrentDomainIndex(prev => prev + 1);
+        } else {
+          setStep('summary');
+        }
+      };
+
+      const handlePrevDomain = () => {
+        window.scrollTo(0, 0);
+        setActivePastWork(null);
+        setKeywordWarning("");
+        if (currentDomainIndex > 0) {
+          setCurrentDomainIndex(prev => prev - 1);
+        } else {
+          setStep('select_domains');
+        }
+      };
+
+      const executeReset = () => {
+        localStorage.removeItem('act_worksheet_standalone_data');
+        setAvailableDomains(DEFAULT_DOMAINS);
+        setSelectedDomains([]);
+        setDomainData({});
+        setStep('intro');
+        setCurrentDomainIndex(0);
+        setShowResetConfirm(false);
+        window.scrollTo(0, 0);
+      };
+
+      // サマリーから入力へ戻る
+      const handleBackToInput = () => {
+        window.scrollTo(0, 0);
+        // 最後に選択した領域へ戻る
+        if (selectedDomains.length > 0) {
+          setCurrentDomainIndex(selectedDomains.length - 1);
+          setStep('input_domains');
+        } else {
+          setStep('select_domains');
+        }
+      };
+
+      const getContextPhrase = (domain) => {
+        switch (domain) {
+          case "健康": return "自分の体や心と向き合う中で、";
+          case "仕事": return "仕事や作業に取り組む中で、";
+          case "家族関係": return "家族との関わりの中で、";
+          case "親密な関係": return "大切な人との関わりの中で、";
+          case "友人・社会的関係": return "友人や周囲の人との関わりの中で、";
+          case "地域との関わり": return "地域社会と関わる中で、";
+          case "精神性 / 内面とのつながり": return "自分自身の内面と向き合う中で、";
+          case "余暇 / 遊び": return "余暇や遊びの時間を過ごす中で、";
+          case "自己成長": return "自分を育て、学ぶ過程で、";
+          case "子どもとの関わり / 養育": return "子どもと接する中で、";
+          default: return "この領域の中で、";
+        }
+      };
+
+      const getCustomGuidelines = () => {
+        const customLines = [];
+        selectedDomains.forEach(domain => {
+          const d = domainData[domain];
+          if (!d) return;
+          if (d.deepen_guideline && !customLines.includes(d.deepen_guideline)) customLines.push(d.deepen_guideline);
+          if (d.calmGuideline && !customLines.includes(d.calmGuideline)) customLines.push(d.calmGuideline);
+          if (d.selfGuideline && !customLines.includes(d.selfGuideline)) customLines.push(d.selfGuideline);
+        });
+        return customLines;
+      };
+
+      // テキストデータのエクスポート
+      const exportToText = () => {
+        const coreGuidelines = getCoreGuidelines();
+        const customGuidelines = getCustomGuidelines();
+        const dateStr = new Date().toLocaleDateString('ja-JP');
+
+        let text = `行動指針ワークシート 振り返り\n作成日: ${dateStr}\n\n`;
+
+        if (coreGuidelines.length > 0) {
+          text += `【あなたの中核的な行動指針（キーワード）】\n${coreGuidelines.join('、')}\n\n`;
+        }
+
+        if (customGuidelines.length > 0) {
+          text += `【あなたが紡ぎ出した独自の行動指針】\n${customGuidelines.map(g => '・' + g).join('\n')}\n\n`;
+        }
+
+        text += `【領域別の振り返り】\n`;
+        selectedDomains.forEach(domain => {
+          const data = domainData[domain];
+          if (!data) return;
+
+          text += `\n■ ${domain}\n`;
+          if (data.q1) text += `・どんな人でありたいか:\n  ${data.q1}\n`;
+          if (data.q2) text += `・どんなふるまいを大切にしたいか:\n  ${data.q2}\n`;
+          if (data.q3) text += `・育てたい強みや性質:\n  ${data.q3}\n`;
+
+          // 過去の場面からの抽出
+          if (data.calmScene || data.calmGuideline) {
+            text += `・落ち着けた場面:\n  ${data.calmScene || "(未入力)"}\n`;
+            if (data.calmGuideline) text += `  行動指針のヒント: ${data.calmGuideline}\n`;
+          }
+          if (data.selfScene || data.selfGuideline) {
+            text += `・自分らしかった場面:\n  ${data.selfScene || "(未入力)"}\n`;
+            if (data.selfGuideline) text += `  行動指針のヒント: ${data.selfGuideline}\n`;
+          }
+
+          const keywords = data.keywords || [];
+          if (keywords.length > 0) {
+            text += `・行動指針のキーワード: ${keywords.join('、')}\n`;
+          }
+
+          if (data.deepen_guideline) text += `・一番しっくりくる行動指針:\n  ${data.deepen_guideline}\n`;
+          if (data.deepen_meaning) text += `・その意味:\n  ${data.deepen_meaning}\n`;
+          if (data.deepen_action) text += `・表れる小さな行動:\n  ${data.deepen_action}\n`;
+
+          text += `・大切さ: ${data.importance} / 実行度: ${data.execution}\n`;
+
+          if (data.barriers) text += `・行動指針に沿うのを難しくしているもの:\n  ${data.barriers}\n`;
+          if (data.next_small_step) text += `・次の一歩:\n  ${data.next_small_step}\n`;
+        });
+
+        const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `行動指針ワークシート_${dateStr}.txt`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        showToast("入力内容のバックアップを保存しました。");
+      };
+
+      // JSONデータのエクスポート
+      const exportToJson = () => {
+        const dataToSave = {
+          _workbookBackup: BACKUP_META,
+          availableDomains,
+          selectedDomains,
+          domainData,
+          step,
+          currentDomainIndex
+        };
+        // YYYYMMDD形式の日付文字列を生成
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        const dateStr = `${yyyy}${mm}${dd}`;
+
+        const jsonStr = JSON.stringify(dataToSave, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `行動指針データ_${dateStr}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      };
+
+      // JSONデータのインポート処理
+      const handleFileUpload = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          try {
+            const parsed = JSON.parse(ev.target.result);
+            if (!isValidWorkbookBackup(parsed)) {
+              showToast(BACKUP_ERROR_MESSAGE);
+              resetFileInput();
+              return;
+            }
+            if (parsed.availableDomains && parsed.domainData) {
+              setAvailableDomains(parsed.availableDomains);
+              setSelectedDomains(parsed.selectedDomains || []);
+              setDomainData(parsed.domainData);
+              setStep(parsed.step || 'intro');
+              setCurrentDomainIndex(parsed.currentDomainIndex || 0);
+
+              showToast("バックアップを読み込みました。");
+              // 成功時の処理。ファイル選択状態をリセットする。
+              resetFileInput();
+            } else {
+              showToast(BACKUP_ERROR_MESSAGE);
+              resetFileInput();
+            }
+          } catch (error) {
+            console.error("ファイルの読み込みに失敗しました。正しいJSONファイルか確認してください。", error);
+            showToast("バックアップを読み込めませんでした。");
+            resetFileInput();
+          }
+        };
+        reader.readAsText(file);
+      };
+
+      const getCoreGuidelines = () => {
+        const counts = {};
+        selectedDomains.forEach(domain => {
+          const keywords = domainData[domain]?.keywords || [];
+          keywords.forEach(kw => {
+            counts[kw] = (counts[kw] || 0) + 1;
+          });
+        });
+        return Object.keys(counts).filter(kw => counts[kw] > 1);
+      };
+
+      const getGapDomains = () => {
+        return selectedDomains.filter(domain => {
+          const data = domainData[domain];
+          return data && data.importance >= 7 && data.execution <= 4;
+        });
+      };
+
+      // --- 画面レンダリング (JSX -> プレーンな JavaScript の React.createElement への完全な書き換え) ---
+      if (step === 'intro') {
+        return e("div", { className: "app-wrapper fade-in" },
+          e("div", { className: "container" },
+            e("div", { className: "intro-header" },
+              e("h1", { className: "intro-title" }, "大事にしたい方向を見つける"),
+              e("p", { className: "intro-subtitle" }, "心のコンパス — あなたの「在り方」をそっと見つめ直す時間")
+            ),
+            e("div", { className: "main-card" },
+              e("div", { className: "text-group" },
+                e("p", { className: "text-large" }, "行動指針とは？"),
+                e("p", { className: "text-body" }, "このワークでいう行動指針とは、達成して終わる目標ではなく、", e("strong", null, "日々の中で大切にしたいふるまいや、自分のあり方の方向"), "のことです。"),
+                e("p", { className: "text-body" }, "まずは、今の自分に関係がありそうな生活の領域を選びます。"),
+                e("details", { className: "supplement-details" },
+                  e("summary", null, "くわしい説明を見る"),
+                  e("p", null, "私たちは日々、様々なできごとに心を揺らされながら生きています。そんな中で、ご自身にとっての北極星となる行動指針を思い出すことは、歩みを進めるための静かな力となります。")
+                )
+              ),
+              e("div", { className: "info-box" },
+                e("div", { className: "info-box-header" },
+                  e(Info, { size: 20, className: "icon-emerald" }),
+                  e("span", null, "はじめる前にお伝えしたいこと")
+                ),
+                e("div", null,
+                  e("ul", { className: "info-list" },
+                    e("li", { className: "info-list-item" },
+                      e("span", { className: "info-bullet" }, "・"),
+                      e("span", null, e("strong", null, "行動指針に正解はありません。"), "人によって違ってよいものですし、その時期によって変わってよいものです。")
+                    ),
+                    e("li", { className: "info-list-item" },
+                      e("span", { className: "info-bullet" }, "・"),
+                      e("span", null, "これは「できているかどうかを裁く」ためではなく、", e("strong", null, "自分が向かいたい方向を確かめるため"), "のワークです。")
+                    ),
+                    e("li", { className: "info-list-item" },
+                      e("span", { className: "info-bullet" }, "・"),
+                      e("span", null, "途中で休んでもよいですし、空欄のまま進めても全く問題ありません。しんどければ飛ばして構いません。")
+                    )
+                  )
+                )
+              ),
+              e("div", { className: "action-area" },
+                e("button", { onClick: () => setStep('select_domains'), className: "btn-primary" },
+                  "はじめる ", e(ChevronRight, { size: 20, className: "icon" })
+                )
+              )
+            )
+          )
+        );
+      }
+
+      if (step === 'select_domains') {
+        return e("div", { className: "app-wrapper fade-in" },
+          e("div", { className: "container" },
+            e("div", { className: "page-title-group" },
+              e("h2", { className: "page-title" }, "人生の領域を選ぶ"),
+              e("p", { className: "page-desc" },
+                "今、少し立ち止まって見つめ直したい領域をいくつか選んでみましょう。", e("br", null),
+                "全部の領域を選ぶ必要はありません。今の自分に関係がある領域だけを選んで大丈夫です。"
+              )
+            ),
+            e("div", { className: "domain-grid" },
+              availableDomains.map(domain => {
+                const isSelected = selectedDomains.includes(domain);
+                return e("button", {
+                  key: domain,
+                  onClick: () => handleDomainSelect(domain),
+                  className: `domain-btn ${isSelected ? 'is-selected' : ''}`
+                },
+                  e("span", null, domain),
+                  isSelected && e(Check, { size: 18, className: "icon-emerald" })
+                );
+              })
+            ),
+            e("div", { className: "add-domain-box" },
+              e("div", { className: "input-group" },
+                e("label", { className: "input-label" }, "その他、追加したい領域があれば入力してください"),
+                e("input", {
+                  type: "text",
+                  value: newDomainName,
+                  onChange: (e) => setNewDomainName(e.target.value),
+                  placeholder: "例：ペットとの関わり、ボランティア活動...",
+                  className: "input-field"
+                })
+              ),
+              e("button", {
+                onClick: addNewDomain,
+                disabled: !newDomainName.trim(),
+                className: "btn-add"
+              },
+                e(Plus, { size: 20, className: "icon" })
+              )
+            ),
+            e("div", { className: "nav-buttons" },
+              e("button", { onClick: () => setStep('intro'), className: "btn-ghost" },
+                e(ChevronLeft, { size: 20, className: "icon" }), " 前へ戻る"
+              ),
+              e("button", {
+                onClick: () => {
+                  if (selectedDomains.length === 0) {
+                    showToast("少なくとも1つの領域を選んでみましょう。");
+                    return;
+                  }
+                  setCurrentDomainIndex(0);
+                  setStep('input_domains');
+                },
+                className: "btn-primary"
+              },
+                "次へ進む ", e(ChevronRight, { size: 20, className: "icon" })
+              )
+            )
+          )
+        );
+      }
+
+      if (step === 'input_domains') {
+        const domain = selectedDomains[currentDomainIndex];
+        const data = domainData[domain] || {};
+        const currentKeywordsCount = (data.keywords || []).length;
+
+        return e("div", { className: "input-app-wrapper fade-in" },
+          e("div", { className: "input-container" },
+
+            // スティッキーヘッダー
+            e("div", { className: "sticky-header" },
+              e("div", { className: "header-status" },
+                e("span", null, `${currentDomainIndex + 1} / ${selectedDomains.length}`),
+                e("span", { className: "status-badge" }, e(Save, { size: 16, className: "icon" }), " この端末に自動保存中")
+              ),
+              e("h2", { className: "header-domain-name" }, domain)
+            ),
+
+            e("div", { className: "content-stack" },
+
+              e("div", { className: "hint-box" },
+                e("p", { className: "hint-title" },
+                  e(Compass, { size: 16, className: "icon-emerald" }), " 行動指針は「目標」とは少し違います"
+                ),
+                e("ul", { className: "hint-list" },
+                  e("li", null, "目標の例：就職する、体調を整える、関係をよくする"),
+                  e("li", null, "行動指針の例：誠実に向き合う、自分をいたわる、思いやりをもって接する")
+                ),
+                e("p", { className: "hint-desc" }, "正解はありません。思いつくところだけで大丈夫です。あとで戻って書き足せます。"),
+                e("details", { className: "supplement-details" },
+                e("summary", null, "くわしい説明を見る"),
+                e("p", null, "「どうなりたいか」だけでなく、「どうふるまいたいか」を思い浮かべてみましょう。言葉にしにくいときは、空欄のまま進めてもかまいません。")
+                )
+              ),
+
+              // 言葉にしてみる
+              e("div", { className: "question-block" },
+                e("h3", { className: "question-title" }, "言葉にしてみる"),
+
+                e("div", { className: "form-group" },
+                  e("label", { className: "form-label" }, getContextPhrase(domain), e("strong", { className: "form-label-bold" }, "どんな自分でいたいですか？")),
+                  e("textarea", {
+                    value: data.q1 || "",
+                    onChange: (e) => updateCurrentDomainData('q1', e.target.value),
+                    className: "textarea-field",
+                    placeholder: "例：相手の言葉に耳を傾けられる人でいたい..."
+                  })
+                ),
+
+                e("div", { className: "form-group" },
+                  e("label", { className: "form-label" }, "この領域で、", e("strong", { className: "form-label-bold" }, "どんなふるまいや行動を大切にしたいですか？")),
+                  e("textarea", {
+                    value: data.q2 || "",
+                    onChange: (e) => updateCurrentDomainData('q2', e.target.value),
+                    className: "textarea-field",
+                    placeholder: "例：結果を急がず、丁寧に一つずつ向き合うこと..."
+                  })
+                ),
+
+                e("div", { className: "form-group" },
+                  e("label", { className: "form-label" }, "少しずつ", e("strong", { className: "form-label-bold" }, "育てたい姿勢や力"), "はありますか？"),
+                  e("textarea", {
+                    value: data.q3 || "",
+                    onChange: (e) => updateCurrentDomainData('q3', e.target.value),
+                    className: "textarea-field",
+                    placeholder: "例：しなやかさ、ユーモア、自分を許すこと..."
+                  })
+                )
+              ),
+
+              // 過去の一場面から考える
+              e("div", { className: "past-work-block" },
+                e("div", { className: "past-work-header" },
+                  e("h3", { className: "past-work-title" }, e(BookOpen, { size: 22, className: "icon-stone" }), " 過去の一場面から考える"),
+                  e("p", { className: "past-work-desc" }, "このワークでは、過去の出来事の中から、少し落ち着けた場面や、少し自分らしくいられた場面を思い出します。", e("br", null), "そこから、あなたが大切にしたい「行動指針」を見つけていきます。"),
+                  e("p", { className: "past-work-desc" }, "特別な思い出でなくて大丈夫です。小さな場面でも構いません。"),
+                  e("details", { className: "supplement-details" },
+                    e("summary", null, "思い出しにくいとき"),
+                    e("p", null, "はっきり思い出せないときは、うっすらした記憶でも大丈夫です。しんどくなったときは、途中でやめても構いません。")
+                  )
+                ),
+
+                e("div", { className: "tab-grid" },
+                  e("button", {
+                    onClick: () => setActivePastWork(activePastWork === 'calm' ? null : 'calm'),
+                    className: `tab-btn ${activePastWork === 'calm' ? 'is-active' : ''}`
+                  }, "少し落ち着けた場面を思い出す"),
+                  e("button", {
+                    onClick: () => setActivePastWork(activePastWork === 'self' ? null : 'self'),
+                    className: `tab-btn ${activePastWork === 'self' ? 'is-active' : ''}`
+                  }, "少し自分らしかった場面を思い出す")
+                ),
+
+                activePastWork === 'calm' && e("div", { className: "past-work-content fade-in" },
+                  e("h4", { className: "past-work-content-title" }, "少し落ち着けた場面を思い出す"),
+                  e("p", { className: "past-work-content-desc" }, "過去の中で、少し落ち着けた場面や、少し安心できた場面を一つ思い出してみましょう。", e("br", null), "大きな出来事でなくて大丈夫です。「なんとなく楽だった」「少しほっとできた」そのくらいの場面でも構いません。"),
+
+                  e("div", { className: "form-group-sm" },
+                    e("label", { className: "form-label-sm" }, "どんな場面でしたか"),
+                    e("p", { className: "form-hint" }, "覚えている範囲で、短く書いてみましょう。"),
+                    e("div", { className: "form-hint-box" }, e("span", { className: "form-hint-box-bold" }, "ヒント："), "どこにいましたか / 何をしていましたか / どんな空気でしたか / どんな気持ちでしたか"),
+                    e("textarea", { value: data.calmScene || "", onChange: (e) => updateCurrentDomainData('calmScene', e.target.value), className: "textarea-field-sm" })
+                  ),
+
+                  e("div", { className: "form-group-sm" },
+                    e("label", { className: "form-label-sm" }, "その場面で、自分に対してどんなふうに関わっていたと思いますか"),
+                    e("p", { className: "form-hint" }, "思いつくことを、短く書いてみましょう。"),
+                    e("textarea", { value: data.calmSelfRelation || "", onChange: (e) => updateCurrentDomainData('calmSelfRelation', e.target.value), className: "textarea-field-sm" })
+                  ),
+
+                  e("div", { className: "form-group-sm" },
+                    e("label", { className: "form-label-sm" }, "その時の自分に近い言葉を選ぶとしたら、どんな言葉が合いそうですか"),
+                    e("p", { className: "form-hint" }, "しっくりくるものを、いくつか選んで（書いて）みましょう。"),
+                    e("div", { className: "form-hint-box" }, e("span", { className: "form-hint-box-bold" }, "ヒント："), "自分をいたわる / 今ここにいる / 整える / 続ける / 無理をしすぎない / 丁寧にする / 落ち着いて向き合う"),
+                    e("input", { type: "text", value: data.calmKeywordsLike || "", onChange: (e) => updateCurrentDomainData('calmKeywordsLike', e.target.value), className: "input-field-sm" })
+                  ),
+
+                  e("div", { className: "form-group-sm" },
+                    e("label", { className: "form-label-sm" }, "この場面から見えてくる、あなたが大切にしたい「行動指針」は何だと思いますか"),
+                    e("p", { className: "form-hint" }, "一つだけでも大丈夫です。"),
+                    e("input", { type: "text", value: data.calmGuideline || "", onChange: (e) => updateCurrentDomainData('calmGuideline', e.target.value), className: "input-field-sm" })
+                  ),
+
+                  e("div", { className: "form-group-sm" },
+                    e("label", { className: "form-label-sm" }, "その行動指針を、今の生活の中で小さく表すとしたら、どんなことができそうですか"),
+                    e("p", { className: "form-hint" }, "5分くらいでできそうなことでも大丈夫です。"),
+                    e("div", { className: "form-hint-box" }, e("span", { className: "form-hint-box-bold" }, "ヒント："), "朝、深呼吸を3回する / しんどい時は少し休む / 作業の前に机の上を整える / 焦った時に一度立ち止まる"),
+                    e("textarea", { value: data.calmNextAction || "", onChange: (e) => updateCurrentDomainData('calmNextAction', e.target.value), className: "textarea-field-sm" })
+                  ),
+
+                  e("div", { className: "past-work-footer" },
+                    e("div", { className: "footer-section" },
+                      e("p", { className: "footer-title" }, "書くのが難しいとき"),
+                      e("p", null, "うまく言葉にならないときは、「その時の自分に近い言葉」を選ぶだけでも大丈夫です。ひとつに決めなくても構いません。空欄があっても大丈夫です。")
+                    ),
+                    e("div", { className: "footer-divider footer-section" },
+                      e("p", { className: "footer-title" }, "ワークのしおり"),
+                      e("ul", { className: "footer-list" },
+                        e("li", null, "このワークでは、つらい出来事を詳しく思い出す必要はありません。"),
+                        e("li", null, "少し落ち着けた場面や、少し自分に合っていた場面を思い出せれば十分です。"),
+                        e("li", null, "しんどくなったときは、いったん手を止めて休みましょう。")
+                      )
+                    )
+                  )
+                ),
+
+                activePastWork === 'self' && e("div", { className: "past-work-content fade-in" },
+                  e("h4", { className: "past-work-content-title" }, "少し自分らしかった場面を思い出す"),
+                  e("p", { className: "past-work-content-desc" }, "過去の中で、少し自分らしくいられた場面を一つ思い出してみましょう。", e("br", null), "うまくできた場面でなくても大丈夫です。「少ししっくりきた」「少し無理が少なかった」そのくらいの場面でも構いません。"),
+
+                  e("div", { className: "form-group-sm" },
+                    e("label", { className: "form-label-sm" }, "どんな場面でしたか"),
+                    e("p", { className: "form-hint" }, "覚えていることを、短く書いてみましょう。"),
+                    e("div", { className: "form-hint-box" }, e("span", { className: "form-hint-box-bold" }, "ヒント："), "何をしていましたか / どんなことに気持ちが向いていましたか / どんなペースで過ごしていましたか"),
+                    e("textarea", { value: data.selfScene || "", onChange: (e) => updateCurrentDomainData('selfScene', e.target.value), className: "textarea-field-sm" })
+                  ),
+
+                  e("div", { className: "form-group-sm" },
+                    e("label", { className: "form-label-sm" }, "その場面の自分には、どんな良さや姿勢があったと思いますか"),
+                    e("p", { className: "form-hint" }, "思いつくことを、短く書いてみましょう。"),
+                    e("textarea", { value: data.selfStrengths || "", onChange: (e) => updateCurrentDomainData('selfStrengths', e.target.value), className: "textarea-field-sm" })
+                  ),
+
+                  e("div", { className: "form-group-sm" },
+                    e("label", { className: "form-label-sm" }, "その時の自分に近い言葉を選ぶとしたら、どんな言葉がしっくりきますか"),
+                    e("p", { className: "form-hint" }, "しっくりくるものを、いくつか選んで（書いて）みましょう。"),
+                    e("div", { className: "form-hint-box" }, e("span", { className: "form-hint-box-bold" }, "ヒント："), "誠実に向き合う / 穏やかに進める / 好奇心を持つ / 丁寧に取り組む / 自分で選ぶ / 続ける / 無理をしない"),
+                    e("input", { type: "text", value: data.selfKeywordsLike || "", onChange: (e) => updateCurrentDomainData('selfKeywordsLike', e.target.value), className: "input-field-sm" })
+                  ),
+
+                  e("div", { className: "form-group-sm" },
+                    e("label", { className: "form-label-sm" }, "この場面から見えてくる、あなたが大切にしたい「行動指針」は何だと思いますか"),
+                    e("p", { className: "form-hint" }, "一つだけでも大丈夫です。"),
+                    e("input", { type: "text", value: data.selfGuideline || "", onChange: (e) => updateCurrentDomainData('selfGuideline', e.target.value), className: "input-field-sm" })
+                  ),
+
+                  e("div", { className: "form-group-sm" },
+                    e("label", { className: "form-label-sm" }, "その行動指針を、今日や明日の中で少しだけ表すとしたら、どんなことができそうですか"),
+                    e("p", { className: "form-hint" }, "とても小さな一歩でも大丈夫です。"),
+                    e("textarea", { value: data.selfNextAction || "", onChange: (e) => updateCurrentDomainData('selfNextAction', e.target.value), className: "textarea-field-sm" })
+                  ),
+
+                  e("div", { className: "past-work-footer" },
+                    e("div", { className: "footer-section" },
+                      e("p", { className: "footer-title" }, "書くのが難しいとき"),
+                      e("p", null, "うまく言葉にならないときは、「その時の自分に近い言葉」を選ぶだけでも大丈夫です。ひとつに決めなくても構いません。空欄があっても大丈夫です。")
+                    ),
+                    e("div", { className: "footer-divider footer-section" },
+                      e("p", { className: "footer-title" }, "ワークのしおり"),
+                      e("ul", { className: "footer-list" },
+                        e("li", null, "このワークでは、つらい出来事を詳しく思い出す必要はありません。"),
+                        e("li", null, "少し落ち着けた場面や、少し自分に合っていた場面を思い出せれば十分です。"),
+                        e("li", null, "しんどくなったときは、いったん手を止めて休みましょう。")
+                      )
+                    )
+                  )
+                )
+              ),
+
+              // キーワード選択
+              e("div", { className: "keyword-block" },
+                e("div", { className: "keyword-header" },
+                  e("h3", { className: "keyword-title" }, "行動指針のキーワード", e("span", { className: "keyword-count" }, `現在: ${currentKeywordsCount} / 5個`)),
+                  e("p", { className: "keyword-desc" }, "以下の言葉の中から、今の時点で特に大切だと感じるものを", e("strong", null, "最大5個まで"), "選んでみましょう。直感で、しっくりくるものを選ぶだけで大丈夫です。"),
+                  keywordWarning && e("div", { className: "alert-warning fade-in" }, keywordWarning)
+                ),
+
+                e("div", { className: "keyword-grid" },
+                  GUIDELINE_WORDS.map(word => {
+                    const isSelected = (data.keywords || []).includes(word);
+                    return e("button", {
+                      key: word,
+                      onClick: () => toggleKeyword(word),
+                      className: `keyword-tag ${isSelected ? 'is-selected' : ''}`
+                    }, word);
+                  }),
+                  (data.keywords || []).filter(k => !GUIDELINE_WORDS.includes(k)).map(word => (
+                    e("button", {
+                      key: word,
+                      onClick: () => toggleKeyword(word),
+                      className: "keyword-tag is-selected"
+                    }, word)
+                  ))
+                ),
+
+                e("div", { className: "keyword-add-group" },
+                  e("input", {
+                    type: "text",
+                    value: newKeyword,
+                    onChange: (e) => setNewKeyword(e.target.value),
+                    placeholder: "その他のしっくりくる言葉...",
+                    className: "input-field-inline"
+                  }),
+                  e("button", {
+                    onClick: addNewKeyword,
+                    disabled: !newKeyword.trim(),
+                    className: "btn-add-keyword"
+                  }, "追加")
+                ),
+
+                // 深める欄
+                (data.keywords && data.keywords.length > 0) && e("div", { className: "deepen-block fade-in" },
+                  e("p", { className: "deepen-title" }, e(Edit3, { size: 16, className: "icon-emerald" }), " 選んだ言葉を少しだけ深める"),
+
+                  e("div", { className: "selected-keyword-box" },
+                    e("p", { className: "selected-keyword-label" }, "あなたが選んだキーワード："),
+                    e("div", { className: "selected-keyword-grid" },
+                      data.keywords.map(kw => e("span", { key: kw, className: "keyword-display-tag" }, kw))
+                    )
+                  ),
+
+                  e("div", { className: "form-group" },
+                    e("label", { className: "form-label" }, "選んだ中で、今この領域で", e("strong", null, "いちばんしっくりくる行動指針"), "はどれですか？"),
+                    e("input", {
+                      type: "text",
+                      value: data.deepen_guideline || "",
+                      onChange: (e) => updateCurrentDomainData('deepen_guideline', e.target.value),
+                      className: "input-field"
+                    })
+                  ),
+
+                  e("div", { className: "form-group" },
+                    e("label", { className: "form-label" }, "その行動指針は、あなたにとって", e("strong", null, "どんな意味"), "がありますか？"),
+                    e("textarea", {
+                      value: data.deepen_meaning || "",
+                      onChange: (e) => updateCurrentDomainData('deepen_meaning', e.target.value),
+                      className: "textarea-field"
+                    })
+                  ),
+
+                  e("div", { className: "form-group" },
+                    e("label", { className: "form-label" }, "その行動指針が表れる", e("strong", null, "小さな行動"), "には、どんなものがありますか？"),
+                    e("textarea", {
+                      value: data.deepen_action || "",
+                      onChange: (e) => updateCurrentDomainData('deepen_action', e.target.value),
+                      className: "textarea-field",
+                      placeholder: "例：朝起きたら窓を開けて深呼吸する、など..."
+                    })
+                  )
+                )
+              ),
+
+              // 現在地をみつめる（数値）
+              e("div", { className: "status-block" },
+                e("div", { className: "status-title-group" },
+                  e("h3", { className: "status-title" }, "現在地をみつめる"),
+                  e("p", { className: "status-desc" }, "これは評価ではなく、今の状態の確認です。体調や状況によって変わってよいものです。")
+                ),
+
+                e("div", { className: "status-group" },
+                  e("div", { className: "status-header" },
+                    e("label", { className: "status-label" }, "今の時点で、この領域はどのくらい「大切」ですか？"),
+                    e("span", { className: "status-value" }, data.importance)
+                  ),
+                  e("input", {
+                    type: "range", min: "0", max: "10",
+                    value: data.importance || 5,
+                    onChange: (e) => updateCurrentDomainData('importance', parseInt(e.target.value)),
+                    className: "range-slider"
+                  }),
+                  e("div", { className: "range-labels" },
+                    e("span", null, "全く大切でない (0)"),
+                    e("span", null, "非常に大切 (10)")
+                  )
+                ),
+
+                e("div", { className: "status-group status-group-divider" },
+                  e("div", { className: "status-header" },
+                    e("label", { className: "status-label" }, "今の生活の中で、どのくらい行動指針に沿って「ふるまえている」と感じますか？"),
+                    e("span", { className: "status-value" }, data.execution)
+                  ),
+                  e("p", { className: "status-note" }, "※実行度が低いことは失敗ではなく、少しの助けや工夫が必要なサインかもしれません。"),
+                  e("input", {
+                    type: "range", min: "0", max: "10",
+                    value: data.execution || 5,
+                    onChange: (e) => updateCurrentDomainData('execution', parseInt(e.target.value)),
+                    className: "range-slider"
+                  }),
+                  e("div", { className: "range-labels" },
+                    e("span", null, "全くできていない (0)"),
+                    e("span", null, "十分にできている (10)")
+                  )
+                )
+              ),
+
+              // 行動指針に沿うのを難しくしているもの
+              e("div", { className: "barriers-block" },
+                e("div", { className: "barriers-title-group" },
+                  e("h3", { className: "barriers-title" }, e(Cloud, { size: 20, className: "icon-stone" }), " 行動指針に沿うのを難しくしているもの"),
+                  e("p", { className: "barriers-desc" }, "大切にしたい行動指針に向かおうとするとき、どんな気持ちや考え、あるいは周囲の状況がそれを邪魔することがありますか？", e("br", null), "「こうあるべきだという考え」「不安な気持ち」「忙しさ」など、思い当たるものを軽く書き出してみましょう。")
+                ),
+                e("textarea", {
+                  value: data.barriers || "",
+                  onChange: (e) => updateCurrentDomainData('barriers', e.target.value),
+                  className: "textarea-field",
+                  placeholder: "例：つい完璧にやろうとして動けなくなる、など..."
+                })
+              ),
+
+              // 次の小さな一歩
+              e("div", { className: "step-block" },
+                e("div", { className: "step-title-group" },
+                  e("h3", { className: "step-title" }, e(Target, { size: 20, className: "icon-emerald" }), " 次の小さな一歩"),
+                  e("p", { className: "step-desc" }, "選んだ行動指針を生活に結びつけるために、", e("strong", null, "今日または明日にできそうな小さな行動"), "を一つだけ書いてみましょう。5分以内で終わるような、とても小さなことで大丈夫です。")
+                ),
+                e("textarea", {
+                  value: data.next_small_step || "",
+                  onChange: (e) => updateCurrentDomainData('next_small_step', e.target.value),
+                  className: "textarea-field-white",
+                  placeholder: "例：お茶を淹れて、1分だけゆっくり味わう..."
+                })
+              ),
+
+              e("div", { className: "nav-buttons-input" },
+                e("button", { onClick: handlePrevDomain, className: "btn-nav-prev" },
+                  e(ChevronLeft, { size: 20, className: "icon" }), currentDomainIndex === 0 ? " 領域選択へ" : " 前の領域へ"
+                ),
+                e("button", { onClick: handleNextDomain, className: "btn-dark" },
+                  currentDomainIndex === selectedDomains.length - 1 ? "サマリーへ " : "次の領域へ ", e(ChevronRight, { size: 20, className: "icon" })
+                )
+              )
+            )
+          )
+        );
+      }
+
+      if (step === 'summary') {
+        const coreGuidelines = getCoreGuidelines();
+        const customGuidelines = getCustomGuidelines();
+        const gapDomains = getGapDomains();
+
+        return e("div", { className: "summary-app-wrapper fade-in" },
+          e("div", { className: "summary-container" },
+
+            e("div", { className: "summary-header" },
+              e("h2", { className: "summary-title" }, "おつかれさまでした"),
+              e("p", { className: "summary-desc" }, "あなたが大切にしたい行動指針の輪郭が、少しずつ見えてきたのではないでしょうか。", e("br", null), "全体をやさしく振り返ってみましょう。")
+            ),
+
+            coreGuidelines.length > 0 && e("div", { className: "core-guidelines-block" },
+              e("h3", { className: "core-guidelines-title" }, "あなたの中核的な行動指針（キーワード）"),
+              e("p", { className: "core-guidelines-desc" }, "複数の領域にわたって選ばれた、あなたの軸となるかもしれない言葉です。"),
+              e("div", { className: "core-keyword-grid" },
+                coreGuidelines.map(kw => e("span", { key: kw, className: "core-keyword-tag" }, kw))
+              )
+            ),
+
+            customGuidelines.length > 0 && e("div", { className: "custom-guidelines-block" },
+              e("h3", { className: "core-guidelines-title" }, "あなたが紡ぎ出した独自の行動指針"),
+              e("p", { className: "core-guidelines-desc" }, "ワークを通じて、ご自身の言葉で表現された行動指針です。"),
+              e("ul", { className: "custom-guideline-list" },
+                customGuidelines.map((guideline, index) => e("li", { key: index, style: { lineHeight: 1.625 } }, guideline))
+              )
+            ),
+
+            e("div", { className: "domain-summary-group" },
+              e("h3", { className: "domain-summary-header" }, "領域別の現在地"),
+              e("div", { className: "domain-summary-grid" },
+                selectedDomains.map(domain => {
+                  const data = domainData[domain];
+                  if (!data) return null;
+                  return e("div", { key: domain, className: "domain-summary-card" },
+                    e("div", { className: "domain-summary-content" },
+                      e("h4", { className: "domain-summary-title" }, domain),
+                      e("div", { className: "domain-summary-keywords" },
+                        (data.keywords || []).map(kw => e("span", { key: kw, className: "domain-summary-keyword" }, kw))
+                      ),
+                      (!data.deepen_guideline && (data.calmGuideline || data.selfGuideline)) && e("div", { className: "domain-summary-past-hints" },
+                        e("p", { className: "domain-summary-past-title" }, "過去の場面から見えた行動指針："),
+                        data.calmGuideline && e("p", null, `・${data.calmGuideline}`),
+                        data.selfGuideline && e("p", null, `・${data.selfGuideline}`)
+                      )
+                    ),
+                    e("div", { className: "domain-summary-status" },
+                      e("div", { className: "domain-summary-status-item" }, "大切さ: ", e("span", { className: "domain-summary-status-value" }, data.importance)),
+                      e("div", { className: "domain-summary-status-item" }, "実行度: ", e("span", { className: "domain-summary-status-value" }, data.execution))
+                    )
+                  );
+                })
+              )
+            ),
+
+            gapDomains.length > 0 && e("div", { className: "gap-domains-block" },
+              e("h3", { className: "gap-domains-title" }, "今の自分を受けとめる"),
+              e("p", { className: "gap-domains-desc" }, e("strong", null, gapDomains.join('、')), " の領域は、あなたにとって大切である反面、今は少し、目指す行動指針から距離があると感じているかもしれませんね。"),
+              e("p", { className: "gap-domains-desc" }, "できない自分を責める必要はありません。「今はそういう時期なのかもしれない」と、まずはその事実をやさしく受けとめてみましょう。大切にしたいという気持ちがあること自体が、素晴らしい第一歩です。")
+            ),
+
+            e("div", { className: "next-steps-block" },
+              e("h3", { className: "next-steps-title" }, e(Target, { size: 24, className: "icon-stone-light" }), " 持ち帰る「次の一歩」"),
+              e("p", { className: "next-steps-desc" }, "あなたが各領域で設定した小さな一歩です。今日この後、あるいは明日のどこかで試してみてください。"),
+
+              e("div", { className: "next-step-list" },
+                selectedDomains.map(domain => {
+                  const stepText = domainData[domain]?.next_small_step;
+                  if (!stepText) return null;
+                  return e("div", { key: domain, className: "next-step-card" },
+                    e("p", { className: "next-step-domain" }, `${domain} の領域で`),
+                    e("p", { className: "next-step-action" }, stepText)
+                  );
+                }),
+
+                selectedDomains.every(domain => !domainData[domain]?.next_small_step) && e("div", { className: "next-step-fallback" },
+                  e("p", { className: "next-step-fallback-text" }, "今日選んだ「行動指針」を一つだけ思い浮かべながら、深呼吸を3回おこなう。")
+                )
+              ),
+
+              e("p", { className: "next-step-footer" }, "どんなに小さな一歩でも、それはあなたが望む方向へ進むための、確かな足跡となります。")
+            ),
+
+            // アクションボタン群
+            e("div", { className: "summary-actions" },
+              e("div", { className: "summary-btn-group" },
+                e("button", { onClick: handleBackToInput, className: "btn-outline" }, e(ChevronLeft, { size: 16, className: "icon" }), " 入力に戻る"),
+                e("button", { onClick: exportToText, className: "btn-secondary" }, e(Download, { size: 16, className: "icon" }), " まとめをファイル保存")
+              ),
+
+              e("div", { className: "summary-btn-group-bottom" },
+                e("button", { onClick: () => setShowResetConfirm(true), className: "btn-text-danger" }, e(RefreshCcw, { size: 16, className: "icon" }), " 入力内容を消去して初めから")
+              )
+            ),
+
+            // リセット確認モーダル
+            showResetConfirm && e("div", { className: "modal-overlay fade-in" },
+              e("div", { className: "modal-content" },
+                e("h3", { className: "modal-title" }, "入力内容を消去しますか？"),
+                e("p", { className: "modal-desc" }, "これまでの入力内容と、この端末に保存された内容をすべて消去します。はじめからやり直してもよろしいですか？"),
+                e("div", { className: "modal-actions" },
+                  e("button", { onClick: () => setShowResetConfirm(false), className: "btn-modal-cancel" }, "キャンセル"),
+                  e("button", { onClick: executeReset, className: "btn-danger" }, "入力内容を消去")
+                )
+              )
+            )
+
+          )
+        );
+      }
+
+      return null;
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(e(ActWorksheetApp));
+    function completeMentalCareFinish() {
+      try {
+        if (typeof saveToStorage === 'function') saveToStorage();
+        if (typeof saveState === 'function') saveState();
+        if (typeof saveAppState === 'function') saveAppState();
+      } catch (err) {
+        console.warn('終了時の保存処理に失敗しました', err);
+      }
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'mental-care-finish-complete' }, window.location.origin);
+      }
+    }
+
+    window.addEventListener('message', (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== 'mental-care-finish') return;
+      completeMentalCareFinish();
+    });
+</script>
+</body>
+</html>

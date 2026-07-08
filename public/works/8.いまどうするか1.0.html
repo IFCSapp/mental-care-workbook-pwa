@@ -1,0 +1,1785 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>今できる一歩を選ぶ｜いまどうするか</title>
+  <style>
+    /* ==========================================================================
+       変数の定義・リセット
+       ========================================================================== */
+    :root {
+      --primary: #0d9488;       /* 落ち着いたティール */
+      --primary-hover: #0f766e;
+      --bg-color: #f9fafb;      /* やさしい背景色 */
+      --card-bg: #ffffff;
+      --text-main: #374151;
+      --text-sub: #4b5563;
+      --border-color: #e5e7eb;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --radius: 8px;
+      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+      /* ゾーンの色分け */
+      --zone1-color: #ef4444; /* 赤系 (今すぐは決められないこと) */
+      --zone1-bg: rgba(239, 68, 68, 0.05);
+      --zone2-color: #f59e0b; /* 黄系 (自分から働きかけられること) */
+      --zone2-bg: rgba(245, 158, 11, 0.05);
+      --zone3-color: #3b82f6; /* 青系 (今ここで自分が決められること) */
+      --zone3-bg: rgba(59, 130, 246, 0.05);
+      --zone-available-color: #6b7280; /* グレー系 (未配置) */
+      --zone-available-bg: rgba(107, 114, 128, 0.05);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      line-height: 1.6;
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* アクセシビリティ用のフォーカススタイル */
+    :focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+
+    /* ==========================================================================
+       レイアウト・コンテナ
+       ========================================================================== */
+    .app-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 標準的な読みやすさのための幅（Step 1, 2, 4, 5向け） */
+    .content-wrapper {
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* 分類や振り返り用の少し広い幅（Step 3, 6向け） */
+    .wide-wrapper {
+      max-width: 940px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    header {
+      background-color: var(--card-bg);
+      border-bottom: 1px solid var(--border-color);
+      padding: 16px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .header-title {
+      font-size: 1.25rem;
+      font-weight: bold;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .progress-container {
+      width: 100%;
+      height: 6px;
+      background-color: var(--border-color);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 4px;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background-color: var(--primary);
+      width: 16.6%; /* Step 1 で「始まっている」感が出るよう初期値を設定 */
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      font-size: 0.85rem;
+      color: var(--text-sub);
+      text-align: right;
+      font-weight: bold;
+    }
+
+    main {
+      flex: 1;
+      padding: 32px 24px;
+    }
+
+    .step-section {
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+    .step-section.active {
+      display: block;
+    }
+
+    footer {
+      padding: 16px 24px 32px;
+      display: flex;
+      justify-content: space-between;
+      border-top: 1px solid var(--border-color);
+      background-color: var(--bg-color);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ==========================================================================
+       コンポーネント・共通スタイル
+       ========================================================================== */
+    h1, h2, h3 {
+      color: var(--text-main);
+      margin-bottom: 16px;
+    }
+
+    /* フォーカス時のアウトラインを除去（スクリプトで制御するため） */
+    h2:focus {
+      outline: none;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: var(--text-sub);
+      margin-bottom: 24px;
+    }
+
+    p {
+      margin-bottom: 16px;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    /* フォーム要素 */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 1rem;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    @media (min-width: 600px) {
+      .grid-2 {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    @media (min-width: 768px) {
+      .grid-3 {
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+    }
+
+    /* ボタン */
+    button {
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.95rem;
+      padding: 10px 20px;
+      border-radius: 6px;
+      border: none;
+      font-weight: bold;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-outline {
+      background-color: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+    }
+    .btn-outline:hover:not(:disabled) {
+      background-color: var(--border-color);
+    }
+
+    .btn-text {
+      background-color: transparent;
+      color: var(--text-sub);
+      padding: 6px 12px;
+    }
+    .btn-text:hover:not(:disabled) {
+      background-color: var(--border-color);
+      color: var(--text-main);
+    }
+    .btn-coffee-finish {
+      display: none; align-items: center; justify-content: center; gap: 6px;
+      border: 1px solid var(--border-color); border-radius: 999px;
+      min-height: 36px; padding: 6px 12px; background: var(--card-bg);
+    }
+    .btn-coffee-finish .coffee-icon { font-size: 1.05rem; line-height: 1; }
+    .btn-coffee-finish .coffee-label { font-size: 0.82rem; }
+
+    .btn-danger {
+      background-color: transparent;
+      border: 1px solid var(--danger);
+      color: var(--danger);
+    }
+    .btn-danger:hover:not(:disabled) {
+      background-color: var(--danger);
+      color: white;
+    }
+
+    /* レンジスライダー (しんどさメーター) */
+    .range-container {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    input[type="range"] {
+      flex: 1;
+      accent-color: var(--primary);
+    }
+    .range-value {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--primary);
+      min-width: 40px;
+      text-align: right;
+    }
+
+    /* チップ (Step 3) */
+    .chip-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-height: 80px; /* PC向けに少し高さを確保 */
+      padding: 12px;
+      background-color: var(--bg-color);
+      border-radius: 6px;
+      border: 1px dashed var(--border-color);
+      transition: all 0.2s;
+    }
+
+    /* ドラッグ時のハイライト用 CSS */
+    .drag-over-zone-cannotDirectlyControl {
+      background-color: var(--zone1-bg) !important;
+      border-color: var(--zone1-color) !important;
+      box-shadow: 0 0 0 1px var(--zone1-color);
+    }
+    .drag-over-zone-mayInfluence {
+      background-color: var(--zone2-bg) !important;
+      border-color: var(--zone2-color) !important;
+      box-shadow: 0 0 0 1px var(--zone2-color);
+    }
+    .drag-over-zone-canChooseNow {
+      background-color: var(--zone3-bg) !important;
+      border-color: var(--zone3-color) !important;
+      box-shadow: 0 0 0 1px var(--zone3-color);
+    }
+    .drag-over-zone-available {
+      background-color: var(--zone-available-bg) !important;
+      border-color: var(--zone-available-color) !important;
+      box-shadow: 0 0 0 1px var(--zone-available-color);
+    }
+
+    .chip {
+      background-color: white;
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 6px 14px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.2s;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      touch-action: none;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .chip {
+      cursor: grab;
+    }
+    .chip:active {
+      cursor: grabbing;
+    }
+
+    /* ゾーン毎のチップ色 */
+    .chip-cannotDirectlyControl { border-color: var(--zone1-color); color: var(--zone1-color); background-color: var(--zone1-bg); }
+    .chip-mayInfluence { border-color: var(--zone2-color); color: var(--zone2-color); background-color: var(--zone2-bg); }
+    .chip-canChooseNow { border-color: var(--zone3-color); color: var(--zone3-color); background-color: var(--zone3-bg); }
+    .chip-available { border-color: var(--border-color); color: var(--text-main); }
+
+    .chip-cannotDirectlyControl:hover { background-color: white; border-color: var(--danger-hover); }
+    .chip-mayInfluence:hover { background-color: white; border-color: #d97706; }
+    .chip-canChooseNow:hover { background-color: white; border-color: #2563eb; }
+    .chip-available:hover { border-color: var(--primary); color: var(--primary); }
+
+    /* 削除ボタンの調整 */
+    .chip-delete-btn {
+      opacity: 0.4;
+      margin-left: 8px;
+      padding: 0 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border-radius: 50%;
+      font-weight: bold;
+      font-size: 1rem;
+      line-height: 1;
+    }
+    .chip-delete-btn:hover, .chip-delete-btn:focus {
+      opacity: 1;
+      color: var(--danger);
+      background-color: rgba(239, 68, 68, 0.1);
+      outline: none;
+    }
+
+    .zone-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all 0.2s;
+    }
+
+    /* ゾーンの色分け装飾 */
+    #available-drop-zone { border-top: 4px solid var(--zone-available-color); }
+    #available-drop-zone h3 { color: var(--zone-available-color); }
+
+    #zone1-drop-zone { border-top: 4px solid var(--zone1-color); }
+    #zone1-drop-zone .zone-header { color: var(--zone1-color); border-bottom-color: rgba(239, 68, 68, 0.2); }
+
+    #zone2-drop-zone { border-top: 4px solid var(--zone2-color); }
+    #zone2-drop-zone .zone-header { color: var(--zone2-color); border-bottom-color: rgba(245, 158, 11, 0.2); }
+
+    #zone3-drop-zone { border-top: 4px solid var(--zone3-color); }
+    #zone3-drop-zone .zone-header { color: var(--zone3-color); border-bottom-color: rgba(59, 130, 246, 0.2); }
+
+    .zone-header {
+      font-weight: bold;
+      font-size: 1.05rem;
+      text-align: center;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .zone-desc {
+      font-size: 0.85rem;
+      color: var(--text-sub);
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    /* ラジオボタン風選択肢 */
+    .radio-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .radio-label {
+      cursor: pointer;
+      display: flex;
+      align-items: stretch;
+    }
+    .radio-label input[type="radio"] {
+      display: none;
+    }
+    .radio-btn {
+      padding: 8px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      background-color: white;
+      color: var(--text-sub);
+      transition: all 0.2s;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .radio-label input[type="radio"]:focus-visible + .radio-btn {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
+    .radio-label input[type="radio"]:checked + .radio-btn {
+      background-color: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    /* 振り返り画面 (Step 6) */
+    .summary-section {
+      margin-bottom: 32px;
+    }
+    .summary-section h3 {
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+      color: var(--primary);
+      font-size: 1.1rem;
+    }
+    .summary-list {
+      list-style-type: disc;
+      padding-left: 24px;
+      margin-bottom: 16px;
+    }
+    .summary-item {
+      margin-bottom: 8px;
+    }
+    .summary-label {
+      font-weight: bold;
+      color: var(--text-sub);
+      font-size: 0.9rem;
+      display: inline-block;
+      min-width: 120px;
+    }
+
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 32px;
+      justify-content: center;
+    }
+
+    /* 補助 UI */
+    details {
+      background-color: white;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+    summary {
+      cursor: pointer;
+      font-weight: bold;
+      color: var(--primary);
+      border-radius: 4px;
+    }
+    details p {
+      margin-top: 12px;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+    }
+
+    /* モーダル */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.4);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .modal-overlay.show {
+      display: flex;
+      opacity: 1;
+    }
+    .modal-content {
+      background: white;
+      border-radius: var(--radius);
+      padding: 24px;
+      width: 90%;
+      max-width: 420px;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+      transform: translateY(20px);
+      transition: transform 0.2s;
+    }
+    .modal-overlay.show .modal-content {
+      transform: translateY(0);
+    }
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    .modal-content button {
+      width: 100%;
+      margin-bottom: 8px;
+    }
+    .modal-content .modal-actions button {
+      width: auto;
+      margin-bottom: 0;
+    }
+
+    /* トースト */
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      width: min(92vw, 34rem);
+      transform: translate(-50%, -16px);
+      background-color: #312e81;
+      color: #f8fafc;
+      border: 1px solid rgba(199, 210, 254, 0.55);
+      padding: 12px 22px;
+      border-radius: 24px;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      text-align: center;
+      box-shadow: 0 16px 34px -14px rgba(49,46,129,0.65);
+      opacity: 0;
+      pointer-events: none;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      z-index: 200;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+    .toast.toast-error {
+      background-color: #fff7ed;
+      color: #7c2d12;
+      border-color: #fed7aa;
+      box-shadow: 0 16px 34px -14px rgba(124,45,18,0.35);
+    }
+
+    /* ==========================================================================
+       印刷用スタイル
+       ========================================================================== */
+    @media print {
+      body {
+        background-color: white;
+        color: #111;
+        line-height: 1.8;
+      }
+      header, footer, .no-print {
+        display: none !important;
+      }
+      .app-container {
+        max-width: 100%;
+        margin: 0;
+      }
+      main {
+        padding: 0;
+      }
+      .step-section {
+        display: none !important;
+      }
+      #step-6 {
+        display: block !important;
+      }
+      .card {
+        border: none;
+        box-shadow: none;
+        padding: 0;
+        margin-bottom: 32px;
+      }
+      .summary-section h3 {
+        border-bottom: 1px solid #999;
+        color: #111;
+        padding-bottom: 4px;
+        margin-bottom: 12px;
+      }
+      .summary-label {
+        color: #444;
+      }
+      .grid-3 {
+        display: block !important;
+      }
+      .grid-3 > div {
+        margin-bottom: 24px;
+      }
+      .summary-list {
+        margin-bottom: 0;
+      }
+    }
+
+    /* =========================================================
+       全体CSS統一パス: 見た目のみの低リスク調整
+       ========================================================= */
+    :where(button, .btn, .btn-primary, .btn-secondary, .btn-outline, .btn-dark, .btn-main, .btn-text, .btn-action, .btn-action-primary, .btn-nav-next, .btn-nav-prev, .btn-add, .btn-focus, .btn-reset, .chip, .menu-item, .radio-btn, .mode-btn) {
+      min-height: 44px;
+      border-radius: 12px;
+      font-family: inherit;
+      line-height: 1.35;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :where(button, .btn, .btn-primary, .btn-secondary, .btn-outline, .btn-dark, .btn-main, .btn-text, .btn-action, .btn-action-primary, .btn-nav-next, .btn-nav-prev, .btn-add, .btn-focus, .btn-reset, .chip, .menu-item, .radio-btn, .mode-btn):focus-visible {
+      outline: 3px solid rgba(37, 99, 235, 0.32);
+      outline-offset: 3px;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.18);
+    }
+
+    :where(input[type="text"], input[type="date"], input[type="number"], textarea, select, .form-input, .form-textarea, .input-text) {
+      min-height: 44px;
+      border-radius: 12px;
+      border-color: #cbd5e1;
+      background-color: #ffffff;
+      line-height: 1.55;
+      font-family: inherit;
+    }
+
+    :where(input[type="text"], input[type="date"], input[type="number"], textarea, select, .form-input, .form-textarea, .input-text):focus-visible {
+      outline: 3px solid rgba(37, 99, 235, 0.24);
+      outline-offset: 1px;
+      border-color: #3b82f6;
+    }
+
+    :where(.card, .section, .main-card, .box-panel, .box-panel-light, .info-box, .feedback-box, .form-section, .status, .modal-content, .step-container) {
+      border-radius: 16px;
+    }
+
+    :where(.info-box, .notice-text, .message-box-primary, .feedback-box) {
+      line-height: 1.7;
+    }
+
+    :where(.action-buttons, .modal-actions, .footer-actions, .btn-group, .header-actions, .control-actions) {
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 640px) {
+      html, body { overflow-x: hidden; }
+      :where(.app-wrapper, .app-container, #app-container, main, .content-wrapper, .wide-wrapper, .container, .main-card, .card, .section, .panel) { max-width: 100%; }
+      :where(.action-buttons, .modal-actions, .footer-actions, .btn-group, .header-actions, .control-actions) { flex-direction: column; align-items: stretch; }
+      :where(button, .btn, .btn-primary, .btn-secondary, .btn-outline, .btn-dark, .btn-main, .btn-text, .btn-action, .btn-action-primary, .btn-nav-next, .btn-nav-prev, .btn-add, .btn-focus, .btn-reset, .mode-btn) { width: 100%; justify-content: center; white-space: normal; }
+      :where(input, textarea, select) { max-width: 100%; }
+    }
+
+    .btn-primary, .btn-outline, .btn-text, .btn-danger, .radio-btn { border-radius: 12px; }
+    .btn-danger, #btn-clear-all { background: #fff1f2; color: #991b1b; border: 1px solid #fecdd3; }
+    .card, .chip-item, .drop-zone, .modal-content { border-radius: 16px; }
+    input[type="text"], input[type="date"], textarea, select { padding: 0.72rem 0.85rem; }
+    footer, .action-buttons { gap: 0.75rem; flex-wrap: wrap; }
+    @media (max-width: 640px) { header, main, footer { padding-inline: 1rem; } .header-top, footer { align-items: stretch; flex-direction: column; } }
+</style>
+</head>
+<body>
+
+  <div class="app-container">
+    <header class="no-print">
+      <div class="header-top">
+        <div class="header-title">今できる一歩を選ぶ</div>
+        <div class="header-actions">
+          <button type="button" class="btn-text btn-coffee-finish" id="btn-save-status" aria-label="今日はここまで" title="今日はここまで"><span class="coffee-icon" aria-hidden="true">☕</span><span class="coffee-label" aria-hidden="true">今日はここまで</span></button>
+          <button type="button" class="btn-danger" id="btn-clear-all">入力内容を消去</button>
+        </div>
+      </div>
+      <div class="progress-container">
+        <div id="progress-bar" class="progress-bar"></div>
+      </div>
+      <div id="progress-text" class="progress-text">Step 1 / 6</div>
+    </header>
+
+    <main>
+      <!-- Step 1: 導入と足場づくり -->
+      <section id="step-1" class="step-section">
+        <div class="content-wrapper">
+          <h2 tabindex="-1">Step 1: はじめる前に、少し足場をつくる</h2>
+          <p class="subtitle">気がかりを整理し、今できる一歩を見つける</p>
+
+          <div class="card">
+            <p>このワークでは、頭の中にある気がかりを少しずつ見える形にしていきます。</p>
+            <p>正解に分ける必要はありません。いまの自分にとって「扱いやすい置き場所」を見つければ十分です。</p>
+            <p>しんどくなったら、いつでも途中でやめて大丈夫です。入力内容はこの端末に自動保存されます。外部には送信されません。</p>
+          </div>
+
+          <div class="card">
+            <h3>短い足場づくり（グラウンディング）</h3>
+            <p>ワークを始める前に、少しだけ今の自分に注意を向けてみましょう。</p>
+            <ul style="padding-left: 24px; margin-bottom: 16px; color: var(--text-sub);">
+              <li>足の裏が床に触れている感覚を確かめる</li>
+              <li>いま見えているものを 3つ 心の中でつぶやく</li>
+              <li>いま聞こえる音を 2つ 探す</li>
+              <li>体のどこかで感じている感覚を 1つ 見つける</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h3>いまのしんどさメーター（開始前）</h3>
+            <p>いま、どのくらい気がかりでしんどさを感じていますか？直感で選んでみてください。</p>
+            <div class="form-group range-container">
+              <span style="font-size: 0.9rem; color: var(--text-sub);">おだやか (0)</span>
+              <input type="range" id="distress-before" min="0" max="10" step="1">
+              <span style="font-size: 0.9rem; color: var(--text-sub);">とてもしんどい (10)</span>
+              <div id="distress-before-val" class="range-value">5</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 2: 気がかりを一つ整理する -->
+      <section id="step-2" class="step-section">
+        <div class="content-wrapper">
+          <h2 tabindex="-1">Step 2: いま気になっていることを一つ選ぶ</h2>
+
+          <div class="card">
+            <div class="grid-2">
+              <div class="form-group">
+                <label for="basic-date">記入日</label>
+                <input type="date" id="basic-date">
+              </div>
+              <div class="form-group">
+                <label for="basic-name">名前</label>
+                <input type="text" id="basic-name" placeholder="表紙で入力" readonly>
+                <div class="hint">表紙から反映されます</div>
+              </div>
+              <div class="form-group">
+                <label for="basic-staff">担当職員（任意）</label>
+                <input type="text" id="basic-staff" placeholder="職員名">
+              </div>
+              <div class="form-group">
+                <label for="basic-count">実施回数（任意）</label>
+                <input type="text" id="basic-count" placeholder="例: 1回目">
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="form-group">
+              <label for="concern-title">いま、いちばん気がかりなことは何ですか？</label>
+              <p style="font-size:0.9rem; color:var(--text-sub); margin-bottom:8px;">この場面を短く書くと、どんな一文になりますか。</p>
+              <input type="text" id="concern-title" placeholder="例: 明日の面談でうまく話せるか不安">
+            </div>
+            <div class="form-group">
+              <label for="concern-details">もう少し書けそうであれば、補足してみましょう。</label>
+              <textarea id="concern-details" placeholder="どんな状況か、何が気になっているかなど"></textarea>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 3: 気がかりを3つに分ける -->
+      <section id="step-3" class="step-section">
+        <div class="wide-wrapper">
+          <h2 tabindex="-1">Step 3: 気がかりを3つに分ける</h2>
+
+          <div class="card">
+            <p>気がかりの中にあるものを、3つの場所に分けてみましょう。<br>自分で決められないものを何とかしようとしつづけるより、今できることに力を向けるための整理です。</p>
+            <p>正解を探す必要はありません。迷ったら、いまの自分にとってしっくりくる場所に置いてみてください。あとで置き直しても大丈夫です。</p>
+            <p style="font-size:0.9rem; color:var(--text-sub);">※項目はドラッグして動かすことも、クリック（またはEnterキー）して置き場所を選ぶこともできます。</p>
+
+            <p style="font-size: 0.9rem; color: var(--primary); font-weight: bold; margin-bottom: 12px;">自分で決められないものを無理に動かそうとしつづけるより、今の自分にできることを見つけるための目印です。</p>
+
+            <p style="font-size: 0.9rem; color: var(--primary); font-weight: bold; margin-bottom: 12px;">今ここで、自分が決められることは何かを探してみましょう。</p>
+
+            <details>
+              <summary>迷ったら…</summary>
+              <p><strong>今すぐは決められないこと：</strong> その場では自分で決められないもの（過去、他の人の気持ち、わいてくる感情など）</p>
+              <p><strong>自分から働きかけられること：</strong> いまは自分では決められないが、自分の言い方や行動で少し変わるかもしれないもの（伝え方の工夫、相談、準備のしかたなど）</p>
+              <p><strong>今ここで自分が決められること：</strong> 今ここで、自分が選んでできること（休む、注意を向ける、5分だけやる、相談する、伝えるなど）</p>
+            </details>
+          </div>
+
+          <div class="card" id="available-drop-zone" style="transition: all 0.2s;">
+            <h3 style="font-size: 1rem;">未配置の項目</h3>
+            <div id="chip-available-container" class="chip-container" style="background-color: #f3f4f6;"></div>
+
+            <div style="margin-top: 16px; display: flex; gap: 8px; max-width: 400px;">
+              <input type="text" id="new-chip-input" placeholder="新しい項目を追加...">
+              <button class="btn-outline" id="btn-add-chip">追加</button>
+            </div>
+          </div>
+
+          <div class="grid-3">
+            <div class="zone-card" id="zone1-drop-zone">
+              <div class="zone-header">今すぐは決められないこと</div>
+              <div class="zone-desc">その場では自分で決められないもの</div>
+              <div id="chip-zone1-container" class="chip-container"></div>
+            </div>
+            <div class="zone-card" id="zone2-drop-zone">
+              <div class="zone-header">自分から働きかけられること</div>
+              <div class="zone-desc">いまは自分では決められないが、自分の言い方や行動で少し変わるかもしれないもの</div>
+              <div id="chip-zone2-container" class="chip-container"></div>
+            </div>
+            <div class="zone-card" id="zone3-drop-zone">
+              <div class="zone-header">今ここで自分が決められること</div>
+              <div class="zone-desc">今ここで、自分が選んでできること</div>
+              <div id="chip-zone3-container" class="chip-container"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 4: 今すぐは決められないことがあっても、今どうするか -->
+      <section id="step-4" class="step-section">
+        <div class="content-wrapper">
+          <h2 tabindex="-1">Step 4: 今すぐは決められないことがあっても、今どうするか</h2>
+
+          <div class="card">
+            <p>先ほど「今すぐは決められないこと」に置いた項目について、今どうするかを一つずつ選んでみましょう。</p>
+            <p style="font-size: 0.95rem; color: var(--text-sub); border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: 8px;">自分で決められないものを、今すぐなくそうとしなくても大丈夫です。</p>
+            <details>
+              <summary>くわしい説明を見る</summary>
+              <p>自分で決められないものを何とかしようとしつづける代わりに、今の自分にできそうな向き合い方を選びます。ここで選んだ向き合い方をふまえて、次は今ここでできる一歩を見つけます。</p>
+            </details>
+          </div>
+
+          <div id="responses-container"></div>
+
+          <div class="card">
+            <h3>いまのしんどさメーター（途中）</h3>
+            <p>しんどさが下がらなくても大丈夫です。今日の目的は、力を向ける先を見つけることです。</p>
+            <div class="form-group range-container">
+              <span style="font-size: 0.9rem; color: var(--text-sub);">おだやか (0)</span>
+              <input type="range" id="distress-after" min="0" max="10" step="1">
+              <span style="font-size: 0.9rem; color: var(--text-sub);">とてもしんどい (10)</span>
+              <div id="distress-after-val" class="range-value">5</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 5: 行動の指針と今日の一歩を決める -->
+      <section id="step-5" class="step-section">
+        <div class="content-wrapper">
+          <h2 tabindex="-1">Step 5: 行動の指針と、今日の一歩を決める</h2>
+
+          <div class="card">
+            <h3>1. 大切にしたい行動の指針</h3>
+            <p>自分で決められないものがあっても、今ここでどんな自分でいたいですか。一つ選んでみましょう。</p>
+            <div class="radio-group" id="guideline-radios">
+              <label class="radio-label"><input type="radio" name="guideline" value="丁寧"><span class="radio-btn">丁寧</span></label>
+              <label class="radio-label"><input type="radio" name="guideline" value="誠実"><span class="radio-btn">誠実</span></label>
+              <label class="radio-label"><input type="radio" name="guideline" value="勇気"><span class="radio-btn">勇気</span></label>
+              <label class="radio-label"><input type="radio" name="guideline" value="思いやり"><span class="radio-btn">思いやり</span></label>
+              <label class="radio-label"><input type="radio" name="guideline" value="落ち着き"><span class="radio-btn">落ち着き</span></label>
+              <label class="radio-label"><input type="radio" name="guideline" value="自分を責めすぎない"><span class="radio-btn">自分を責めすぎない</span></label>
+              <label class="radio-label"><input type="radio" name="guideline" value="粘り強さ"><span class="radio-btn">粘り強さ</span></label>
+              <label class="radio-label"><input type="radio" name="guideline" value="自由入力"><span class="radio-btn">その他（自由入力）</span></label>
+            </div>
+            <div class="form-group" style="margin-top: 12px; display: none;" id="custom-guideline-container">
+              <input type="text" id="custom-guideline" placeholder="自分なりの指針を入力">
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>2. 今日の一歩を決める</h3>
+            <p>選んだ指針に沿って、今できることを一つだけ書きます。10分以内でできる小さな一歩にします。</p>
+            <details>
+              <summary>くわしい説明を見る</summary>
+              <p>自分で決められないものを何とかしつづけるより、選んだ指針に沿って、今できることに力を向けてみましょう。今ここで自分が決められることから、一つだけ選びます。長い目で見て、自分の助けになりそうな一歩かも少し考えてみましょう。</p>
+            </details>
+            <div class="form-group">
+              <label for="next-action">今日の一歩（行動）</label>
+              <p style="font-size:0.85rem; color:var(--text-sub); margin-bottom:8px;">全部を動かそうとしなくて大丈夫です。今できることを一つだけ選びます。</p>
+              <input type="text" id="next-action" placeholder="例: 関連する資料を1ページだけ読む">
+            </div>
+            <div class="grid-2">
+              <div class="form-group">
+                <label for="next-when">いつやりますか？</label>
+                <input type="text" id="next-when" placeholder="例: 今日の15時、夕食の後など">
+              </div>
+              <div class="form-group">
+                <label for="next-where">どこでやりますか？</label>
+                <input type="text" id="next-where" placeholder="例: 自分のデスク、リビングなど">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="next-ifHard">しんどくなったら、どうしますか？</label>
+              <input type="text" id="next-ifHard" placeholder="例: 一旦深呼吸する、温かいお茶を飲む">
+            </div>
+            <div class="form-group">
+              <label for="next-selfCompassion">3. 自分へのひとこと</label>
+              <p style="font-size:0.9rem; color:var(--text-sub); margin-bottom:8px;">取り組もうとしている自分へ、やさしい言葉をかけてあげましょう。</p>
+              <input type="text" id="next-selfCompassion" placeholder="例: しんどい中、よく向き合おうとしてるね">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Step 6: 振り返りと出力 -->
+      <section id="step-6" class="step-section">
+        <div class="wide-wrapper">
+          <h2 tabindex="-1" class="no-print">Step 6: 振り返りと出力</h2>
+
+          <div class="card no-print">
+            <h3>いまのしんどさメーター（終了時）</h3>
+            <p>しんどさが下がっていなくても大丈夫です。自分で決められないものがそのままでも、今日決めた一歩がこれからの助けになるかもしれません。</p>
+            <div class="form-group range-container">
+              <span style="font-size: 0.9rem; color: var(--text-sub);">おだやか (0)</span>
+              <input type="range" id="distress-end" min="0" max="10" step="1">
+              <span style="font-size: 0.9rem; color: var(--text-sub);">とてもしんどい (10)</span>
+              <div id="distress-end-val" class="range-value">5</div>
+            </div>
+          </div>
+
+          <div class="card" id="print-area">
+            <h2 style="text-align: center; border-bottom: 1px solid var(--border-color); padding-bottom: 16px; margin-bottom: 24px;">今できる一歩を選ぶ</h2>
+
+            <div class="summary-section">
+              <h3>基本情報</h3>
+              <div><span class="summary-label">記入日:</span> <span id="sum-date"></span></div>
+              <div><span class="summary-label">名前:</span> <span id="sum-name"></span></div>
+              <div><span class="summary-label">担当職員:</span> <span id="sum-staff"></span></div>
+              <div><span class="summary-label">実施回数:</span> <span id="sum-count"></span></div>
+            </div>
+
+            <div class="summary-section">
+              <h3>気がかり</h3>
+              <div><span class="summary-label">タイトル:</span> <span id="sum-title"></span></div>
+              <div style="margin-top: 8px;"><span class="summary-label">詳細:</span> <p id="sum-details" style="margin-top: 4px; padding: 12px; background: var(--bg-color); border-radius: 6px;"></p></div>
+            </div>
+
+            <div class="summary-section grid-3">
+              <div>
+                <h4 style="color: var(--text-sub); margin-bottom: 8px;">今すぐは決められないこと</h4>
+                <ul id="sum-zone1" class="summary-list"></ul>
+              </div>
+              <div>
+                <h4 style="color: var(--text-sub); margin-bottom: 8px;">自分から働きかけられること</h4>
+                <ul id="sum-zone2" class="summary-list"></ul>
+              </div>
+              <div>
+                <h4 style="color: var(--text-sub); margin-bottom: 8px;">今ここで自分が決められること</h4>
+                <ul id="sum-zone3" class="summary-list"></ul>
+              </div>
+            </div>
+
+            <div class="summary-section">
+              <h3>今すぐは決められないことがあっても、今どうするか</h3>
+              <div id="sum-responses"></div>
+            </div>
+
+            <div class="summary-section">
+              <h3>行動の指針</h3>
+              <p id="sum-guideline" style="font-weight: bold; font-size: 1.1rem; color: var(--primary);"></p>
+            </div>
+
+            <div class="summary-section">
+              <h3>今日の一歩</h3>
+              <div><span class="summary-label">行動:</span> <span id="sum-action"></span></div>
+              <div><span class="summary-label">いつ:</span> <span id="sum-when"></span></div>
+              <div><span class="summary-label">どこで:</span> <span id="sum-where"></span></div>
+              <div><span class="summary-label">しんどくなったら:</span> <span id="sum-ifHard"></span></div>
+              <div style="margin-top: 12px;"><span class="summary-label">自分へのひとこと:</span> <span id="sum-selfCompassion" style="font-weight: bold;"></span></div>
+            </div>
+
+            <div class="summary-section">
+              <h3>しんどさメーター</h3>
+              <div>
+                開始前: <strong id="sum-distress-before"></strong> /
+                途中: <strong id="sum-distress-after"></strong> /
+                終了時: <strong id="sum-distress-end"></strong>
+              </div>
+              <p style="text-align: center; color: var(--text-sub); font-size: 0.9rem; margin-top: 16px;">自分で決められないものがあっても、今ここで力を向けられることはあります。</p>
+            </div>
+          </div>
+
+          <div class="action-buttons no-print">
+            <button class="btn-primary" id="btn-copy-text">まとめをコピー</button>
+            <button class="btn-outline" id="btn-print">印刷・PDF保存</button>
+            <button class="btn-text" id="btn-restart">入力内容を見直す</button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="no-print">
+      <button id="btn-prev" class="btn-outline">前へ戻る</button>
+      <button id="btn-next" class="btn-primary">次へ進む</button>
+    </footer>
+  </div>
+
+  <!-- チップ移動用モーダル -->
+  <div id="chip-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="chip-modal-target-name">
+    <div class="modal-content">
+      <h3 id="chip-modal-target-name" style="text-align: center; color: var(--primary); margin-bottom: 16px;"></h3>
+      <p style="text-align: center; margin-bottom: 20px;">どこに分けますか？</p>
+      <button class="btn-outline move-trigger" data-zone="cannotDirectlyControl">今すぐは決められないこと</button>
+      <button class="btn-outline move-trigger" data-zone="mayInfluence">自分から働きかけられること</button>
+      <button class="btn-outline move-trigger" data-zone="canChooseNow">今ここで自分が決められること</button>
+      <div style="height: 16px;"></div>
+      <button class="btn-outline move-trigger" data-zone="available" style="border-style: dashed;">未配置に戻す</button>
+      <div class="modal-actions">
+        <button class="btn-text" id="btn-close-chip-modal">キャンセル</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 汎用確認モーダル -->
+  <div id="confirm-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title" aria-describedby="confirm-modal-desc">
+    <div class="modal-content">
+      <h3 id="confirm-modal-title">確認</h3>
+      <p id="confirm-modal-desc" style="margin-bottom: 12px;"></p>
+      <div class="modal-actions">
+        <button class="btn-outline" id="btn-confirm-cancel">キャンセル</button>
+        <button id="btn-confirm-ok" class="btn-danger">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- やわらかい確認モーダル (入力ガード用) -->
+  <div id="soft-confirm-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="soft-confirm-title" aria-describedby="soft-confirm-desc">
+    <div class="modal-content">
+      <h3 id="soft-confirm-title" style="color: var(--text-main);">確認</h3>
+      <p id="soft-confirm-desc" style="margin-bottom: 20px;"></p>
+      <div class="modal-actions">
+        <button class="btn-outline" id="btn-soft-cancel">戻る</button>
+        <button id="btn-soft-ok" class="btn-primary">このまま進む</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- トースト通知 -->
+  <div id="toast" class="toast"></div>
+
+  <script>
+    /* ==========================================================================
+       状態管理 (State)
+       ========================================================================== */
+    const STORAGE_KEY = 'control_map_state_v1';
+    const BACKUP_META = { app: 'mental-care-workbook', workId: 8, schemaVersion: 1 };
+    const BACKUP_ERROR_MESSAGE = 'このワークで保存したバックアップファイルを選んでください。';
+
+    function isValidWorkbookBackup(parsed) {
+      const meta = parsed?._workbookBackup;
+      return meta?.app === BACKUP_META.app && meta?.workId === BACKUP_META.workId && meta?.schemaVersion === BACKUP_META.schemaVersion;
+    }
+
+    function stripBackupMeta(parsed) {
+      const { _workbookBackup, ...content } = parsed;
+      return content;
+    }
+
+    const initialChips = [
+      "感情や気持ち", "思考", "身体感覚", "記憶", "そのときの気分",
+      "望んだ結果になるかどうか", "未来に起こること", "過去に起こったこと",
+      "他人の言動", "他人の評価", "他人が自分をどう見るか", "仕事の問題",
+      "病気やけが", "大切な人の苦しみ", "災害や社会の変化", "気持ちへの反応",
+      "思考への反応", "注意を向ける先", "相談すること", "休むこと",
+      "5分だけ進めること", "伝え方を工夫すること", "自分にやさしくすること",
+      "行動の指針に沿って動くこと"
+    ];
+
+    let state = {
+      basic: { name: "", date: "", staff: "", count: "" },
+      distress: { before: "5", afterStep4: "5", end: "5" },
+      concern: { title: "", details: "" },
+      chips: {
+        available: [...initialChips],
+        cannotDirectlyControl: [],
+        mayInfluence: [],
+        canChooseNow: []
+      },
+      customChips: [],
+      responses: [],
+      direction: { guideline: "", customGuideline: "" },
+      nextStep: { action: "", when: "", where: "", ifHard: "", selfCompassion: "" }
+    };
+
+    let currentStep = 1;
+    const totalSteps = 6;
+    let selectedChipForMove = null;
+    let customDragElement = null;
+    let dragSourceElement = null;
+    let currentDropZoneKey = null;
+    let dragOffset = { startX: 0, startY: 0 };
+    let dragMoved = false;
+    let cachedDropZones = [];
+
+    let skipConfirm = { step2: false, step3: false, step5: false };
+    let lastFocusedElement = null;
+
+    /* ==========================================================================
+       コア関数
+       ========================================================================== */
+    function init() {
+      loadState();
+
+      if (!state.basic.date) {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        state.basic.date = `${yyyy}-${mm}-${dd}`;
+        saveState();
+      }
+
+      setupEventListeners();
+      renderCurrentStep();
+    }
+
+    function loadState() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          mergeState(parsed);
+        } catch (e) {
+          console.error('Failed to parse saved state', e);
+        }
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function applyCoverProfile(profile) {
+      const name = profile?.name || '';
+      if (state.basic.name === name) return;
+      state.basic.name = name;
+      saveState();
+      renderCurrentStep();
+    }
+
+    function mergeState(parsed) {
+      if (parsed.basic) Object.assign(state.basic, parsed.basic);
+      if (parsed.distress) Object.assign(state.distress, parsed.distress);
+      if (parsed.concern) Object.assign(state.concern, parsed.concern);
+      if (parsed.chips) {
+        state.chips.available = parsed.chips.available || [];
+        state.chips.cannotDirectlyControl = parsed.chips.cannotDirectlyControl || [];
+        state.chips.mayInfluence = parsed.chips.mayInfluence || [];
+        state.chips.canChooseNow = parsed.chips.canChooseNow || [];
+      }
+      if (parsed.customChips) state.customChips = parsed.customChips;
+      if (parsed.responses) state.responses = parsed.responses;
+      if (parsed.direction) Object.assign(state.direction, parsed.direction);
+      if (parsed.nextStep) Object.assign(state.nextStep, parsed.nextStep);
+    }
+
+    /* ==========================================================================
+       UI 制御
+       ========================================================================== */
+    function renderCurrentStep() {
+      document.querySelectorAll('.step-section').forEach((el, index) => {
+        el.classList.toggle('active', index + 1 === currentStep);
+      });
+
+      const progress = (currentStep / totalSteps) * 100;
+      document.getElementById('progress-bar').style.width = `${progress}%`;
+      document.getElementById('progress-text').innerText = `Step ${currentStep} / ${totalSteps}`;
+
+      document.getElementById('btn-prev').style.visibility = currentStep === 1 ? 'hidden' : 'visible';
+      document.getElementById('btn-next').style.display = currentStep === totalSteps ? 'none' : 'inline-flex';
+
+      bindInputs();
+      if (currentStep === 3) renderChips();
+      if (currentStep === 4) renderResponses();
+      if (currentStep === 5) renderGuideline();
+      if (currentStep === 6) renderSummary();
+
+      // スクロール制御を確実に実行
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+        // 新しいStepの見出し（h2）にフォーカスを移す
+        const activeSection = document.querySelector('.step-section.active');
+        if (activeSection) {
+          const h2 = activeSection.querySelector('h2');
+          if (h2) h2.focus({ preventScroll: true });
+        }
+      });
+    }
+
+    function goToStep(step) {
+      if (document.activeElement) document.activeElement.blur();
+      currentStep = step;
+      renderCurrentStep();
+    }
+
+    function nextStep() {
+      // 画面が下に引っ張られるのを防ぐため、フォーカスを外す
+      if (document.activeElement) document.activeElement.blur();
+
+      if (currentStep === 2 && !skipConfirm.step2 && !state.concern.title.trim()) {
+        showSoftConfirm('空のままでも進めますが、書けそうなら一言あると整理しやすいです。\nこのまま進みますか？', () => {
+          skipConfirm.step2 = true;
+          executeNextStep();
+        });
+        return;
+      }
+      if (currentStep === 3 && !skipConfirm.step3 &&
+          state.chips.cannotDirectlyControl.length === 0 &&
+          state.chips.mayInfluence.length === 0 &&
+          state.chips.canChooseNow.length === 0) {
+        showSoftConfirm('何も置かないまま進むこともできますが、1つだけでも置くと整理しやすいです。\nこのまま進みますか？', () => {
+          skipConfirm.step3 = true;
+          executeNextStep();
+        });
+        return;
+      }
+      if (currentStep === 5 && !skipConfirm.step5 && (!state.direction.guideline || !state.nextStep.action.trim())) {
+        showSoftConfirm('指針や一歩が空のままでも進めますが、少しでも書いておくと後で振り返りやすいです。\nこのまま進みますか？', () => {
+          skipConfirm.step5 = true;
+          executeNextStep();
+        });
+        return;
+      }
+
+      executeNextStep();
+    }
+
+    function executeNextStep() {
+      if (currentStep < totalSteps) {
+        currentStep++;
+        renderCurrentStep();
+      }
+    }
+
+    function prevStep() {
+      // 画面が下に引っ張られるのを防ぐため、フォーカスを外す
+      if (document.activeElement) document.activeElement.blur();
+
+      if (currentStep > 1) {
+        currentStep--;
+        renderCurrentStep();
+      }
+    }
+
+    function openModal(modalId) {
+      lastFocusedElement = document.activeElement;
+      const modal = document.getElementById(modalId);
+      modal.classList.add('show');
+      const firstBtn = modal.querySelector('button');
+      if (firstBtn) firstBtn.focus();
+    }
+
+    function closeModal(modalId) {
+      const modal = document.getElementById(modalId);
+      modal.classList.remove('show');
+      if (lastFocusedElement) {
+        lastFocusedElement.focus();
+        lastFocusedElement = null;
+      }
+    }
+
+    function getToastType(message) {
+      return /ではありません|できません|失敗|読み込めません|バックアップファイル/.test(message) ? 'error' : 'success';
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.innerText = message;
+      toast.classList.toggle('toast-error', getToastType(message) === 'error');
+      toast.classList.add('show');
+      window.clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    /* ==========================================================================
+       イベントリスナー設定
+       ========================================================================== */
+    function setupEventListeners() {
+      // 共通入力
+      const inputs = [
+        { id: 'basic-date', sec: 'basic', key: 'date' },
+        { id: 'basic-name', sec: 'basic', key: 'name' },
+        { id: 'basic-staff', sec: 'basic', key: 'staff' },
+        { id: 'basic-count', sec: 'basic', key: 'count' },
+        { id: 'concern-title', sec: 'concern', key: 'title' },
+        { id: 'concern-details', sec: 'concern', key: 'details' },
+        { id: 'next-action', sec: 'nextStep', key: 'action' },
+        { id: 'next-when', sec: 'nextStep', key: 'when' },
+        { id: 'next-where', sec: 'nextStep', key: 'where' },
+        { id: 'next-ifHard', sec: 'nextStep', key: 'ifHard' },
+        { id: 'next-selfCompassion', sec: 'nextStep', key: 'selfCompassion' },
+        { id: 'custom-guideline', sec: 'direction', key: 'customGuideline' }
+      ];
+
+      inputs.forEach(item => {
+        const el = document.getElementById(item.id);
+        el.addEventListener('input', (e) => {
+          state[item.sec][item.key] = e.target.value;
+          // 値が変更されたら確認フラグを戻す
+          if (item.key === 'title') skipConfirm.step2 = false;
+          if (item.key === 'action' || item.sec === 'direction') skipConfirm.step5 = false;
+          saveState();
+        });
+      });
+
+      // メーター
+      ['before', 'after', 'end'].forEach(key => {
+        const el = document.getElementById(`distress-${key}`);
+        const realKey = key === 'after' ? 'afterStep4' : key;
+        el.addEventListener('input', (e) => {
+          updateDistress(realKey, e.target.value);
+        });
+      });
+
+      // ナビゲーション
+      document.getElementById('btn-prev').addEventListener('click', prevStep);
+      document.getElementById('btn-next').addEventListener('click', nextStep);
+
+      // 保存・クリア
+      document.getElementById('btn-save-status').addEventListener('click', () => {
+        showToast('入力内容はこの端末に保存されています。いつでも再開できます。');
+      });
+      document.getElementById('btn-clear-all').addEventListener('click', () => {
+        openConfirmModal('すべての入力を消去して最初からやり直しますか？', () => {
+          localStorage.removeItem(STORAGE_KEY);
+          location.reload();
+        });
+      });
+
+      // ステップ3
+      document.getElementById('btn-add-chip').addEventListener('click', addCustomChip);
+
+      // モーダル内移動
+      document.querySelectorAll('.move-trigger').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          moveChip(e.target.dataset.zone);
+        });
+      });
+      document.getElementById('btn-close-chip-modal').addEventListener('click', closeChipModal);
+
+      // 指針
+      document.querySelectorAll('input[name="guideline"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          state.direction.guideline = e.target.value;
+          skipConfirm.step5 = false;
+          renderGuideline();
+          saveState();
+        });
+      });
+
+      // 出力系
+      document.getElementById('btn-copy-text').addEventListener('click', copyText);
+      document.getElementById('btn-print').addEventListener('click', () => window.print());
+      document.getElementById('btn-restart').addEventListener('click', () => goToStep(1));
+
+      // キーボード
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          const visibleModal = document.querySelector('.modal-overlay.show');
+          if (visibleModal) {
+            closeModal(visibleModal.id);
+            selectedChipForMove = null;
+          }
+        }
+      });
+    }
+
+    /* ==========================================================================
+       チップ関連
+       ========================================================================== */
+    function renderChips() {
+      const zones = ['available', 'cannotDirectlyControl', 'mayInfluence', 'canChooseNow'];
+      zones.forEach(zoneKey => {
+        const containerId = zoneKey === 'available' ? 'chip-available-container' : `chip-zone${zones.indexOf(zoneKey)}-container`;
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+
+        if (state.chips[zoneKey].length === 0 && zoneKey !== 'available') {
+          container.innerHTML = '<div style="color:var(--text-sub); font-size:0.85rem; text-align:center; width:100%; padding:10px; pointer-events:none;">（ここにドロップ）</div>';
+        }
+
+        state.chips[zoneKey].forEach(text => {
+          const chip = document.createElement('div');
+          chip.className = `chip chip-${zoneKey}`;
+          chip.setAttribute('role', 'button');
+          chip.tabIndex = 0;
+
+          const textSpan = document.createElement('span');
+          textSpan.innerText = text;
+          chip.appendChild(textSpan);
+
+          if (state.customChips.includes(text)) {
+            const delBtn = document.createElement('span');
+            delBtn.className = 'chip-delete-btn';
+            delBtn.innerText = '×';
+            delBtn.setAttribute('aria-label', '削除');
+            delBtn.setAttribute('role', 'button');
+            delBtn.tabIndex = 0;
+
+            const handleDel = (e) => {
+              e.stopPropagation();
+              openConfirmModal(`「${text}」を削除しますか？`, () => {
+                deleteCustomChip(text, zoneKey);
+              });
+            };
+
+            delBtn.addEventListener('click', handleDel);
+            delBtn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleDel(e); }});
+            chip.appendChild(delBtn);
+          }
+
+          const handleOpenModal = (e) => {
+            if (e.target.classList.contains('chip-delete-btn')) return;
+            e.preventDefault();
+            openChipModal(text, zoneKey);
+          };
+
+          chip.addEventListener('click', handleOpenModal);
+          chip.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') handleOpenModal(e); });
+
+          // ポインタードラッグ
+          chip.addEventListener('pointerdown', (e) => {
+            if (e.pointerType === 'mouse' && e.button !== 0) return;
+            if (e.target.classList.contains('chip-delete-btn')) return;
+            if (e.cancelable) e.preventDefault();
+
+            dragMoved = false;
+            selectedChipForMove = { text, currentZone: zoneKey };
+            dragSourceElement = chip;
+
+            const rect = chip.getBoundingClientRect();
+            dragOffset = { startX: e.clientX, startY: e.clientY };
+
+            cachedDropZones = [
+              { key: 'available', id: 'available-drop-zone' },
+              { key: 'cannotDirectlyControl', id: 'zone1-drop-zone' },
+              { key: 'mayInfluence', id: 'zone2-drop-zone' },
+              { key: 'canChooseNow', id: 'zone3-drop-zone' }
+            ].map(zone => ({ key: zone.key, rect: document.getElementById(zone.id).getBoundingClientRect() }));
+
+            customDragElement = chip.cloneNode(true);
+            Object.assign(customDragElement.style, {
+              position: 'fixed', left: rect.left + 'px', top: rect.top + 'px', width: rect.width + 'px',
+              margin: '0', zIndex: '1000', pointerEvents: 'none', opacity: '0.9',
+              transform: 'translate(0px, 0px) scale(1.05)', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+              cursor: 'grabbing', willChange: 'transform'
+            });
+
+            document.body.appendChild(customDragElement);
+            chip.style.opacity = '0.3';
+
+            const onMove = (me) => {
+              if (!customDragElement) return;
+              if (me.cancelable) me.preventDefault();
+              const dx = me.clientX - dragOffset.startX, dy = me.clientY - dragOffset.startY;
+              if (!dragMoved && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) dragMoved = true;
+              customDragElement.style.transform = `translate(${dx}px, ${dy}px) scale(1.05)`;
+
+              let hoveredZoneKey = null;
+              for (const dz of cachedDropZones) {
+                if (me.clientX >= dz.rect.left && me.clientX <= dz.rect.right && me.clientY >= dz.rect.top && me.clientY <= dz.rect.bottom) {
+                  hoveredZoneKey = dz.key; break;
+                }
+              }
+
+              if (currentDropZoneKey !== hoveredZoneKey) {
+                cachedDropZones.forEach(dz => {
+                  const el = document.getElementById(dz.key === 'available' ? 'available-drop-zone' : `zone${['available','cannotDirectlyControl','mayInfluence','canChooseNow'].indexOf(dz.key)}-drop-zone`);
+                  if(el) el.classList.remove(`drag-over-zone-${dz.key}`);
+                });
+                if (hoveredZoneKey) {
+                  const dzId = hoveredZoneKey === 'available' ? 'available-drop-zone' : `zone${['available','cannotDirectlyControl','mayInfluence','canChooseNow'].indexOf(hoveredZoneKey)}-drop-zone`;
+                  document.getElementById(dzId).classList.add(`drag-over-zone-${hoveredZoneKey}`);
+                  customDragElement.className = `chip chip-${hoveredZoneKey}`;
+                } else {
+                  customDragElement.className = `chip chip-${selectedChipForMove.currentZone}`;
+                }
+                currentDropZoneKey = hoveredZoneKey;
+              }
+            };
+
+            const onUp = () => {
+              document.removeEventListener('pointermove', onMove);
+              document.removeEventListener('pointerup', onUp);
+              if (customDragElement) customDragElement.remove();
+              customDragElement = null;
+              if (dragSourceElement) dragSourceElement.style.opacity = '1';
+              dragSourceElement = null;
+              cachedDropZones.forEach(dz => {
+                const el = document.getElementById(dz.key === 'available' ? 'available-drop-zone' : `zone${['available','cannotDirectlyControl','mayInfluence','canChooseNow'].indexOf(dz.key)}-drop-zone`);
+                if(el) el.classList.remove(`drag-over-zone-${dz.key}`);
+              });
+              if (!dragMoved && selectedChipForMove) {
+                openChipModal(selectedChipForMove.text, selectedChipForMove.currentZone);
+              } else if (currentDropZoneKey && selectedChipForMove) {
+                moveChip(currentDropZoneKey);
+              }
+              currentDropZoneKey = null;
+            };
+
+            document.addEventListener('pointermove', onMove, { passive: false });
+            document.addEventListener('pointerup', onUp);
+          });
+
+          container.appendChild(chip);
+        });
+      });
+    }
+
+    function addCustomChip() {
+      const input = document.getElementById('new-chip-input');
+      const val = input.value.trim();
+      if (!val) return;
+      const all = [...state.chips.available, ...state.chips.cannotDirectlyControl, ...state.chips.mayInfluence, ...state.chips.canChooseNow];
+      if (!all.includes(val)) {
+        state.chips.available.push(val);
+        state.customChips.push(val);
+        skipConfirm.step3 = false;
+        saveState();
+        renderChips();
+        input.value = '';
+      } else {
+        showToast('すでに同じ項目があります');
+      }
+    }
+
+    function deleteCustomChip(text, currentZone) {
+      state.chips[currentZone] = state.chips[currentZone].filter(c => c !== text);
+      state.customChips = state.customChips.filter(c => c !== text);
+      saveState();
+      renderChips();
+      closeConfirmModal();
+    }
+
+    function openChipModal(text, currentZone) {
+      selectedChipForMove = { text, currentZone };
+      document.getElementById('chip-modal-target-name').innerText = text;
+      openModal('chip-modal');
+    }
+
+    function closeChipModal() {
+      closeModal('chip-modal');
+      selectedChipForMove = null;
+    }
+
+    function moveChip(targetZone) {
+      if (!selectedChipForMove) return;
+      if (selectedChipForMove.currentZone !== targetZone) {
+        state.chips[selectedChipForMove.currentZone] = state.chips[selectedChipForMove.currentZone].filter(c => c !== selectedChipForMove.text);
+        state.chips[targetZone].push(selectedChipForMove.text);
+        skipConfirm.step3 = false;
+        saveState();
+        renderChips();
+      }
+      closeChipModal();
+    }
+
+    /* ==========================================================================
+       その他の描画・連携
+       ========================================================================== */
+    function updateDistress(key, value) {
+      state.distress[key] = value;
+      const displayId = key === 'afterStep4' ? 'after' : key;
+      document.getElementById(`distress-${displayId}-val`).innerText = value;
+      saveState();
+    }
+
+    function bindInputs() {
+      document.getElementById('basic-date').value = state.basic.date;
+      document.getElementById('basic-name').value = state.basic.name;
+      document.getElementById('basic-staff').value = state.basic.staff;
+      document.getElementById('basic-count').value = state.basic.count;
+      document.getElementById('concern-title').value = state.concern.title;
+      document.getElementById('concern-details').value = state.concern.details;
+      document.getElementById('distress-before').value = state.distress.before;
+      document.getElementById('distress-before-val').innerText = state.distress.before;
+      document.getElementById('distress-after').value = state.distress.afterStep4;
+      document.getElementById('distress-after-val').innerText = state.distress.afterStep4;
+      document.getElementById('distress-end').value = state.distress.end;
+      document.getElementById('distress-end-val').innerText = state.distress.end;
+      document.getElementById('next-action').value = state.nextStep.action;
+      document.getElementById('next-when').value = state.nextStep.when;
+      document.getElementById('next-where').value = state.nextStep.where;
+      document.getElementById('next-ifHard').value = state.nextStep.ifHard;
+      document.getElementById('next-selfCompassion').value = state.nextStep.selfCompassion;
+      document.getElementById('custom-guideline').value = state.direction.customGuideline;
+    }
+
+    function renderGuideline() {
+      document.querySelectorAll('input[name="guideline"]').forEach(r => r.checked = r.value === state.direction.guideline);
+      document.getElementById('custom-guideline-container').style.display = state.direction.guideline === '自由入力' ? 'block' : 'none';
+    }
+
+    function renderResponses() {
+      const container = document.getElementById('responses-container'), targets = state.chips.cannotDirectlyControl;
+      state.responses = state.responses.filter(r => targets.includes(r.target));
+      targets.forEach(t => { if (!state.responses.find(r => r.target === t)) state.responses.push({ target: t, mode: "", note: "" }); });
+      saveState();
+      if (targets.length === 0) {
+        container.innerHTML = '<div class="card"><p style="color:var(--text-sub); text-align:center;">「今すぐは決められないこと」に置かれた項目はありません。</p></div>';
+        return;
+      }
+      const modes = [
+        { val: '気づく', desc: 'いまこれがある、と気づく' },
+        { val: 'そのまま置いておく', desc: 'なくそうとせず、そのまま置いておく' },
+        { val: '自分にやさしく声をかける', desc: 'しんどいのは自然、と自分に声をかける' },
+        { val: '今のことに戻る', desc: '今やっていることに少し戻る' }
+      ];
+      container.innerHTML = targets.map((target, idx) => {
+        const resp = state.responses.find(r => r.target === target);
+        return `
+          <div class="card">
+            <h3 style="font-size:1.1rem; color:var(--primary);">対象: ${escapeHtml(target)}</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom:16px;">
+              ${modes.map(m => `
+                <label class="radio-label">
+                  <input type="radio" name="resp_${idx}" value="${m.val}" ${resp.mode === m.val ? 'checked' : ''} onchange="updateStep4Mode('${target}', this.value)">
+                  <div class="radio-btn" style="width:100%; flex-direction:column; padding:12px; text-align:center;">
+                    <div style="font-weight:bold; margin-bottom:4px;">${m.val}</div>
+                    <div style="font-size:0.8rem; opacity:0.8;">${m.desc}</div>
+                  </div>
+                </label>`).join('')}
+            </div>
+            <textarea style="min-height:60px;" placeholder="メモ（任意）" oninput="updateStep4Note('${target}', this.value)">${escapeHtml(resp.note)}</textarea>
+          </div>`;
+      }).join('');
+    }
+    window.updateStep4Mode = (target, val) => { const r = state.responses.find(x => x.target === target); if(r) r.mode = val; saveState(); };
+    window.updateStep4Note = (target, val) => { const r = state.responses.find(x => x.target === target); if(r) r.note = val; saveState(); };
+
+    function renderSummary() {
+      const s = state;
+      const ids = ['date', 'name', 'staff', 'count']; ids.forEach(id => document.getElementById(`sum-${id}`).innerText = s.basic[id] || '未記入');
+      document.getElementById('sum-title').innerText = s.concern.title || '未記入';
+      document.getElementById('sum-details').innerText = s.concern.details || '未記入';
+      const rList = (id, list) => document.getElementById(id).innerHTML = list.length ? list.map(i => `<li class="summary-item">${escapeHtml(i)}</li>`).join('') : '<li class="summary-item" style="color:var(--text-sub);">なし</li>';
+      rList('sum-zone1', s.chips.cannotDirectlyControl); rList('sum-zone2', s.chips.mayInfluence); rList('sum-zone3', s.chips.canChooseNow);
+      document.getElementById('sum-responses').innerHTML = s.responses.length ? s.responses.map(r => `<div style="margin-bottom:12px; border-bottom:1px dashed var(--border-color); padding-bottom:8px;"><div><strong>対象:</strong> ${escapeHtml(r.target)}</div><div><strong>今どうするか:</strong> ${escapeHtml(r.mode || '未選択')}</div>${r.note ? `<div><strong>メモ:</strong> ${escapeHtml(r.note)}</div>` : ''}</div>`).join('') : '<p>なし</p>';
+      document.getElementById('sum-guideline').innerText = (s.direction.guideline === '自由入力' ? s.direction.customGuideline : s.direction.guideline) || '未選択';
+      ['action', 'when', 'where', 'ifHard', 'selfCompassion'].forEach(k => document.getElementById(`sum-${k}`).innerText = s.nextStep[k] || '未記入');
+      document.getElementById('sum-distress-before').innerText = s.distress.before;
+      document.getElementById('sum-distress-after').innerText = s.distress.afterStep4;
+      document.getElementById('sum-distress-end').innerText = s.distress.end;
+    }
+
+    /* ==========================================================================
+       モーダル制御・トグル
+       ========================================================================== */
+    function openConfirmModal(desc, onOk) {
+      document.getElementById('confirm-modal-desc').innerText = desc;
+      const okBtn = document.getElementById('btn-confirm-ok');
+      okBtn.onclick = onOk;
+      openModal('confirm-modal');
+    }
+    function closeConfirmModal() { closeModal('confirm-modal'); }
+    document.getElementById('btn-confirm-cancel').onclick = closeConfirmModal;
+
+    let softConfirmCallback = null;
+    function showSoftConfirm(message, onConfirm) {
+      document.getElementById('soft-confirm-desc').innerText = message;
+      softConfirmCallback = onConfirm;
+      openModal('soft-confirm-modal');
+    }
+    function closeSoftConfirmModal() { closeModal('soft-confirm-modal'); softConfirmCallback = null; }
+    document.getElementById('btn-soft-ok').onclick = () => { if(softConfirmCallback) softConfirmCallback(); closeSoftConfirmModal(); };
+    document.getElementById('btn-soft-cancel').onclick = closeSoftConfirmModal;
+
+    /* ==========================================================================
+       インポート・エクスポート
+       ========================================================================== */
+    function exportJson() {
+      const backupState = { ...state, _workbookBackup: BACKUP_META };
+      const data = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupState, null, 2));
+      const a = document.createElement('a'); a.href = data; a.download = `control_map_${state.basic.date || 'data'}.json`; a.click(); showToast('入力内容のバックアップを保存しました');
+    }
+    function importJson(e) {
+      const f = e.target.files[0]; if(!f) return;
+      const r = new FileReader(); r.onload = (ev) => {
+        try {
+          const p = JSON.parse(ev.target.result);
+          if (!isValidWorkbookBackup(p)) {
+            showToast(BACKUP_ERROR_MESSAGE);
+            return;
+          }
+          state = { basic:{}, distress:{before:"5",afterStep4:"5",end:"5"}, concern:{}, chips:{available:[...initialChips],cannotDirectlyControl:[],mayInfluence:[],canChooseNow:[]}, customChips:[], responses:[], direction:{}, nextStep:{} };
+          mergeState(stripBackupMeta(p)); skipConfirm = {step2:false,step3:false,step5:false}; saveState(); renderCurrentStep(); showToast('バックアップを読み込みました');
+        } catch(err) { showToast('バックアップを読み込めませんでした'); }
+      }; r.readAsText(f); e.target.value = '';
+    }
+    function copyText() {
+      const s = state;
+      const g = s.direction.guideline === '自由入力' ? s.direction.customGuideline : s.direction.guideline;
+      const txt = `【今できる一歩を選ぶ】\n\n■基本情報\n記入日: ${s.basic.date}\n名前: ${s.basic.name}\n担当職員: ${s.basic.staff}\n実施回数: ${s.basic.count}\n\n■気がかり\nタイトル: ${s.concern.title}\n詳細: ${s.concern.details}\n\n■今すぐは決められないこと\n${s.chips.cannotDirectlyControl.length ? s.chips.cannotDirectlyControl.map(i=>`・${i}`).join('\n') : 'なし'}\n\n■自分から働きかけられること\n${s.chips.mayInfluence.length ? s.chips.mayInfluence.map(i=>`・${i}`).join('\n') : 'なし'}\n\n■今ここで自分が決められること\n${s.chips.canChooseNow.length ? s.chips.canChooseNow.map(i=>`・${i}`).join('\n') : 'なし'}\n\n■今どうするか\n${s.responses.length ? s.responses.map(r=>`対象: ${r.target}\n今どうするか: ${r.mode}\nメモ: ${r.note}\n`).join('\n') : 'なし'}\n■行動の指針\n${g || '未選択'}\n\n■今日の一歩\n行動: ${s.nextStep.action}\nいつ: ${s.nextStep.when}\nどこで: ${s.nextStep.where}\nしんどくなったら: ${s.nextStep.ifHard}\n自分へのひとこと: ${s.nextStep.selfCompassion}\n\n■メーター\n開始前: ${s.distress.before} / 途中: ${s.distress.afterStep4} / 終了時: ${s.distress.end}`;
+      navigator.clipboard.writeText(txt).then(() => showToast('コピーしました')).catch(() => { const t = document.createElement('textarea'); t.value = txt; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); showToast('コピーしました'); });
+    }
+
+    function escapeHtml(str) { return str ? String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#039;"}[m])) : ''; }
+
+    window.addEventListener('message', (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== 'mental-care-profile') return;
+      applyCoverProfile(event.data.profile);
+    });
+
+    document.addEventListener('DOMContentLoaded', init);
+    function completeMentalCareFinish() {
+      try {
+        if (typeof saveToStorage === 'function') saveToStorage();
+        if (typeof saveState === 'function') saveState();
+        if (typeof saveAppState === 'function') saveAppState();
+      } catch (err) {
+        console.warn('終了時の保存処理に失敗しました', err);
+      }
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'mental-care-finish-complete' }, window.location.origin);
+      }
+    }
+
+    window.addEventListener('message', (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== 'mental-care-finish') return;
+      completeMentalCareFinish();
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>頭の中を少し離れて見る｜視覚化ツール</title>
+
+  <style>
+    /* ===== ベース ===== */
+    :root {
+      --bg-color: #f8fafc;
+      --text-color: #1e293b;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --danger: #dc2626;
+      --danger-hover: #b91c1c;
+      --success: #059669;
+      --success-light: #d1fae5;
+      --danger-light: #fee2e2;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont,
+                   "Segoe UI", "Hiragino Kaku Gothic ProN",
+                   "Noto Sans JP", sans-serif;
+      background: var(--bg-color);
+      color: var(--text-color);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ===== ヘッダー ===== */
+    header {
+      background: #ffffff;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      padding: 1rem 1.5rem;
+      z-index: 30;
+    }
+
+    .header-container {
+      max-width: 800px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .header-top {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    @media (min-width: 768px) {
+      .header-top {
+        flex-direction: row;
+      }
+    }
+
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #334155;
+      margin: 0;
+    }
+
+    /* ===== ステータス ===== */
+    .status {
+      padding: 0.5rem 1rem;
+      border-radius: 999px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    .status.alert {
+      background: var(--danger-light);
+      color: var(--danger);
+    }
+    .status.safe {
+      background: var(--success-light);
+      color: var(--success);
+    }
+
+    /* ===== フォーム群 ===== */
+    .form-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      border-top: 1px solid var(--border-color);
+      padding-top: 0.75rem;
+    }
+
+    @media (min-width: 768px) {
+      .form-section {
+        flex-direction: row;
+      }
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      width: 100%;
+    }
+
+    @media (min-width: 768px) {
+      .form-group {
+        width: 50%;
+      }
+    }
+
+    .input-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.25rem;
+    }
+
+    label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #475569;
+    }
+
+    input[type="text"], textarea {
+      width: 100%;
+      box-sizing: border-box;
+      border: 1px solid #cbd5e1;
+      border-radius: 0.375rem;
+      padding: 0.375rem 0.75rem;
+      font-size: 0.875rem;
+      font-family: inherit;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input[type="text"]:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 1px var(--primary);
+    }
+
+    textarea {
+      resize: none;
+    }
+
+    /* ===== メイン領域 ===== */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ===== モニター ===== */
+    #monitor {
+      background: #e2e8f0;
+      border: 4px solid #cbd5e1;
+      border-radius: 1rem;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.1);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .monitor-normal {
+      width: 16rem;
+      height: 16rem;
+    }
+    @media (min-width: 768px) {
+      .monitor-normal {
+        width: 20rem;
+        height: 20rem;
+      }
+    }
+
+    .monitor-expanded {
+      width: 91.666%; /* w-11/12 */
+      height: 65vh;
+    }
+    @media (min-width: 768px) {
+      .monitor-expanded {
+        width: 83.333%; /* md:w-10/12 */
+      }
+    }
+
+    /* ===== 通知スペース ===== */
+    #notification-space {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 33%;
+      height: 100%;
+      background-color: rgba(203, 213, 225, 0.3);
+      transition: opacity 0.6s ease;
+      opacity: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 1rem;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .notification-space-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #64748b;
+      background: rgba(255, 255, 255, 0.5);
+      padding: 0.25rem 0.5rem;
+      border-radius: 999px;
+    }
+
+    /* ===== 行動ウィンドウ ===== */
+    #active-window {
+      background: #ffffff;
+      border: 2px solid #94a3b8;
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 0.5rem 0.25rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      transition: all 0.6s ease;
+      z-index: 10;
+      width: 11rem;
+      height: 8rem;
+    }
+    @media (min-width: 768px) {
+      #active-window {
+        width: 13rem;
+        height: 9rem;
+      }
+    }
+
+    .active-window-clickable {
+      cursor: pointer;
+      z-index: 30 !important;
+      border-color: #3b82f6 !important;
+      background-color: #f0f9ff !important;
+    }
+    .active-window-clickable:hover {
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+      transform: translate(-50%, -50%) scale(1.05) !important;
+    }
+
+    .focus-glow {
+      box-shadow: 0 0 25px 8px rgba(37,99,235,0.6);
+      border-color: #2563eb !important;
+      transform: translate(-50%, -50%) scale(1.05) !important;
+    }
+
+    .window-icon {
+      width: 1.5rem;
+      height: 1.5rem;
+      color: var(--primary);
+      margin-bottom: 0.25rem;
+      flex-shrink: 0;
+    }
+
+    .window-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      gap: 0.25rem;
+      padding: 0 0.25rem;
+      box-sizing: border-box;
+    }
+
+    #value-display {
+      font-size: 0.625rem;
+      font-weight: 600;
+      color: #1d4ed8;
+      background: #eff6ff;
+      border: 1px solid #dbeafe;
+      padding: 0.125rem 0.5rem;
+      border-radius: 999px;
+      width: 90%;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    @media (min-width: 768px) {
+      #value-display { font-size: 0.75rem; }
+    }
+
+    #action-display {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #334155;
+      text-align: center;
+      line-height: 1.2;
+      word-break: break-word;
+      max-width: 100%;
+    }
+    @media (min-width: 768px) {
+      #action-display { font-size: 0.875rem; }
+    }
+
+    /* ===== 通知 ===== */
+    .notification {
+      position: absolute;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.375rem 0.75rem;
+      border-radius: 0.375rem;
+      color: #fff;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+      user-select: none;
+      cursor: grab;
+      touch-action: none;
+      transform: translate(-50%, -50%);
+      transition: all 0.6s cubic-bezier(0.34,1.56,0.64,1);
+      white-space: nowrap;
+      z-index: 20;
+      opacity: 0; /* JSでフェードインさせるため */
+    }
+    @media (min-width: 768px) {
+      .notification { font-size: 0.875rem; }
+    }
+
+    .notification.is-dragging {
+      cursor: grabbing;
+      transition: none !important;
+      transform: translate(-50%, -50%) scale(1.1);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      z-index: 50 !important;
+    }
+
+    .notification-normal {
+      background: var(--danger);
+    }
+    
+    .notification-rebound {
+      background: #334155;
+    }
+
+    .notification-highlight {
+      transform: scale(1.15);
+      box-shadow: 0 0 0 2px #f87171, 0 0 0 4px #fff;
+    }
+
+    /* ===== 外界情報 ===== */
+    .world-info {
+      position: absolute;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      font-weight: 500;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 2;
+      opacity: 0;
+    }
+
+    /* ===== 観察者 ===== */
+    #observer {
+      position: absolute;
+      transition: all 0.6s cubic-bezier(0.34,1.56,0.64,1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .observer-fused {
+      top: 50%;
+      bottom: auto;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 15;
+      opacity: 0.4;
+      filter: grayscale(100%);
+    }
+
+    .observer-defused {
+      top: auto;
+      bottom: 5px;
+      transform: translateX(-50%);
+      z-index: 40;
+      opacity: 1;
+      filter: none;
+    }
+
+    .observer-emoji {
+      font-size: 2.25rem;
+      user-select: none;
+      position: relative;
+      z-index: 10;
+    }
+
+    /* 視界コーン */
+    .vision-cone {
+      position: absolute;
+      left: calc(100% - 10px); 
+      top: -396px; 
+      width: 800px;
+      height: 800px;
+      background: linear-gradient(to right, rgba(59, 130, 246, 0.15), transparent);
+      clip-path: polygon(0 49.5%, 100% 0, 100% 100%, 0 50.5%);
+      transform-origin: left center;
+      transform: scaleX(0);
+      opacity: 0;
+      transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.8s ease;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .observer-eye-icon {
+      position: absolute;
+      top: -8px;
+      right: -12px;
+      opacity: 0;
+      transform: scale(0.5);
+      transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      color: var(--primary);
+      background-color: white;
+      border-radius: 50%;
+      padding: 2px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      z-index: 20;
+      width: 1.5rem;
+      height: 1.5rem;
+    }
+
+    .observer-defused .vision-cone {
+      transform: scaleX(1);
+      opacity: 1;
+    }
+    .observer-defused .observer-eye-icon {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* ===== フッター (ボタン群) ===== */
+    footer {
+      background: #ffffff;
+      border-top: 1px solid var(--border-color);
+      padding: 1rem 1.5rem;
+      z-index: 30;
+    }
+
+    .footer-container {
+      max-width: 800px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      transition: all 0.2s;
+      border: 1px solid transparent;
+    }
+
+    button svg {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+
+    .btn-add {
+      background: #fef2f2;
+      color: var(--danger);
+      border-color: #fecaca;
+      font-weight: 500;
+    }
+    .btn-add:hover {
+      background: #fee2e2;
+    }
+
+    /* アンカーボタンのON/OFF状態 */
+    .btn-anchor {
+      font-weight: 700;
+      min-width: 200px;
+    }
+    .btn-anchor-off {
+      background: #f1f5f9;
+      color: #334155;
+      border-color: #cbd5e1;
+    }
+    .btn-anchor-off:hover {
+      background: #e2e8f0;
+    }
+    .btn-anchor-on {
+      background: #ecfdf5;
+      color: var(--success);
+      border-color: #a7f3d0;
+    }
+    .btn-anchor-on:hover {
+      background: #d1fae5;
+    }
+
+    .btn-focus {
+      background: var(--primary);
+      color: #ffffff;
+      font-weight: 500;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    }
+    .btn-focus:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-reset {
+      background: #f8fafc;
+      color: #64748b;
+      border-color: #e2e8f0;
+      font-weight: 500;
+    }
+    .btn-reset:hover {
+      background: #f1f5f9;
+    }
+
+    /* =========================================================
+       全体CSS統一パス: 見た目のみの低リスク調整
+       ========================================================= */
+    :where(button, .btn, .btn-primary, .btn-secondary, .btn-outline, .btn-dark, .btn-main, .btn-text, .btn-action, .btn-action-primary, .btn-nav-next, .btn-nav-prev, .btn-add, .btn-focus, .btn-reset, .chip, .menu-item, .radio-btn, .mode-btn) {
+      min-height: 44px;
+      border-radius: 12px;
+      font-family: inherit;
+      line-height: 1.35;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :where(button, .btn, .btn-primary, .btn-secondary, .btn-outline, .btn-dark, .btn-main, .btn-text, .btn-action, .btn-action-primary, .btn-nav-next, .btn-nav-prev, .btn-add, .btn-focus, .btn-reset, .chip, .menu-item, .radio-btn, .mode-btn):focus-visible {
+      outline: 3px solid rgba(37, 99, 235, 0.32);
+      outline-offset: 3px;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.18);
+    }
+
+    :where(input[type="text"], input[type="date"], input[type="number"], textarea, select, .form-input, .form-textarea, .input-text) {
+      min-height: 44px;
+      border-radius: 12px;
+      border-color: #cbd5e1;
+      background-color: #ffffff;
+      line-height: 1.55;
+      font-family: inherit;
+    }
+
+    :where(input[type="text"], input[type="date"], input[type="number"], textarea, select, .form-input, .form-textarea, .input-text):focus-visible {
+      outline: 3px solid rgba(37, 99, 235, 0.24);
+      outline-offset: 1px;
+      border-color: #3b82f6;
+    }
+
+    :where(.card, .section, .main-card, .box-panel, .box-panel-light, .info-box, .feedback-box, .form-section, .status, .modal-content, .step-container) {
+      border-radius: 16px;
+    }
+
+    :where(.info-box, .notice-text, .message-box-primary, .feedback-box) {
+      line-height: 1.7;
+    }
+
+    :where(.action-buttons, .modal-actions, .footer-actions, .btn-group, .header-actions, .control-actions) {
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 640px) {
+      html, body { overflow-x: hidden; }
+      :where(.app-wrapper, .app-container, #app-container, main, .content-wrapper, .wide-wrapper, .container, .main-card, .card, .section, .panel) { max-width: 100%; }
+      :where(.action-buttons, .modal-actions, .footer-actions, .btn-group, .header-actions, .control-actions) { flex-direction: column; align-items: stretch; }
+      :where(button, .btn, .btn-primary, .btn-secondary, .btn-outline, .btn-dark, .btn-main, .btn-text, .btn-action, .btn-action-primary, .btn-nav-next, .btn-nav-prev, .btn-add, .btn-focus, .btn-reset, .mode-btn) { width: 100%; justify-content: center; white-space: normal; }
+      :where(input, textarea, select) { max-width: 100%; }
+    }
+
+    .btn-add, .btn-focus, .btn-reset, .btn-anchor { padding: 0.72rem 1rem; border-radius: 12px; }
+    .btn-reset { background: #fff1f2; color: #991b1b; border: 1px solid #fecdd3; }
+    .form-section, #monitor, #active-window, #observer { border-radius: 16px; }
+    input[type="text"], textarea { padding: 0.72rem 0.85rem; }
+    @media (max-width: 640px) { header, main { padding-inline: 1rem; } .form-section { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+  <header>
+    <div class="header-container">
+      <div class="header-top">
+        <h1>頭の中を少し離れて見る</h1>
+        <div id="status-container" class="status alert">
+          <span id="status-text">状態: 通知が前面に出ています</span>
+        </div>
+      </div>
+      
+      <div class="form-section">
+        <div class="form-group">
+          <div class="input-wrapper">
+            <label for="value-input">あなたの中の行動指針:</label>
+            <input type="text" id="value-input" placeholder="例: 誠実さ、家族を大切にする、学び続ける">
+          </div>
+          <div class="input-wrapper">
+            <label for="action-input">行動指針に沿った行動:</label>
+            <input type="text" id="action-input" placeholder="例: 元気よく挨拶する、5分だけ本を開く">
+          </div>
+        </div>
+
+        <div class="form-group" style="width: 100%;">
+          <label for="notification-input">よく浮かぶ思考・感情（改行で10個程度まで）:</label>
+          <textarea id="notification-input" rows="3" placeholder="不安&#10;逃げたい&#10;どうせダメだ"></textarea>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div id="monitor" class="monitor-normal">
+      
+      <div id="notification-space">
+        <span class="notification-space-label">思考・感情を置いておける場所</span>
+      </div>
+
+      <div id="active-window">
+        <svg class="window-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+        </svg>
+        <div class="window-content">
+          <span id="value-display">あなたの行動指針</span>
+          <span id="action-display">具体的な行動</span>
+        </div>
+      </div>
+      
+      <div id="observer" class="observer-fused">
+        <div class="vision-cone"></div>
+        <svg class="observer-eye-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        </svg>
+        <span class="observer-emoji">🧍</span>
+      </div>
+      
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-container">
+      <button id="btn-add" class="btn-add">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        通知が頭に浮かぶ
+      </button>
+
+      <button id="btn-anchor" class="btn-anchor btn-anchor-off">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path></svg>
+        <span>現在に触れる (オフ)</span>
+      </button>
+
+      <button id="btn-focus" class="btn-focus">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+        行動指針に沿って一歩進む
+      </button>
+
+      <button id="btn-reset" class="btn-reset">
+        はじめから
+      </button>
+    </div>
+  </footer>
+
+  <script>
+    let isAnchorOn = false;
+    const notifications = [];
+    let connectionInterval = null;
+    let observerPositionX = 50; 
+    
+    const defaultWords = ['不安', '焦り', '逃げたい', '胸の圧迫感', 'どうせダメだ', '失敗する', '動悸', '怖い', 'やめたい'];
+    let customWords = [];
+
+    const reboundBaseWords = ['感情は消せない', '感情はコントロールできない', '考えても変わらない', '何をしても戻る', '努力してもどかせない'];
+    const worldInfoWords = ['風の音', '床の感触', '部屋の明るさ', '呼吸のリズム', '遠くの車の音', '空気の温度', '時計の針の音', '椅子の背もたれ', '服の肌触り'];
+
+    const monitor = document.getElementById('monitor');
+    const activeWindow = document.getElementById('active-window');
+    const notificationSpace = document.getElementById('notification-space');
+    const statusContainer = document.getElementById('status-container');
+    const statusText = document.getElementById('status-text');
+    const btnAdd = document.getElementById('btn-add');
+    const btnAnchor = document.getElementById('btn-anchor');
+    const btnFocus = document.getElementById('btn-focus');
+    const btnReset = document.getElementById('btn-reset');
+    const observer = document.getElementById('observer');
+
+    const valueInput = document.getElementById('value-input');
+    const actionInput = document.getElementById('action-input');
+    const valueDisplay = document.getElementById('value-display');
+    const actionDisplay = document.getElementById('action-display');
+    const notificationInput = document.getElementById('notification-input');
+
+    valueInput.addEventListener('input', (e) => {
+      const val = e.target.value.trim();
+      valueDisplay.textContent = val ? val : 'あなたの行動指針';
+    });
+
+    actionInput.addEventListener('input', (e) => {
+      const val = e.target.value.trim();
+      actionDisplay.textContent = val ? val : '具体的な行動';
+    });
+
+    notificationInput.addEventListener('input', (e) => {
+      const val = e.target.value.trim();
+      if (val) {
+        customWords = val.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+      } else {
+        customWords = [];
+      }
+    });
+
+    function updateNotificationTexts() {
+      notifications.forEach(el => {
+        const baseText = el.dataset.baseText;
+        if (isAnchorOn) {
+          if (el.classList.contains('notification-rebound')) {
+            el.textContent = baseText + 'からそのまま置いておく';
+          } else {
+            el.textContent = baseText + '、という考えが出ている';
+          }
+        } else {
+          el.textContent = baseText;
+        }
+      });
+    }
+
+    function spawnNotification() {
+      const wordList = customWords.length > 0 ? customWords : defaultWords;
+      const text = wordList[Math.floor(Math.random() * wordList.length)];
+      
+      if (isAnchorOn) {
+        const existing = notifications.find(el => el.dataset.baseText === text && !el.classList.contains('notification-rebound'));
+        if (existing) {
+          existing.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease';
+          existing.classList.add('notification-highlight');
+          setTimeout(() => {
+            existing.classList.remove('notification-highlight');
+            existing.style.transform = 'translate(-50%, -50%) scale(1)';
+            existing.style.transition = 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+          }, 300);
+          return;
+        }
+      }
+
+      const el = document.createElement('div');
+      el.className = 'notification notification-normal';
+      
+      el.dataset.baseText = text;
+      el.textContent = isAnchorOn ? text + '、という考えが出ている' : text;
+      
+      monitor.appendChild(el);
+      notifications.push(el);
+      makeDraggable(el);
+      requestAnimationFrame(() => {
+        updateAllPositions();
+        el.style.opacity = '1';
+      });
+    }
+
+    function spawnReboundNotification() {
+      const baseWord = reboundBaseWords[Math.floor(Math.random() * reboundBaseWords.length)];
+      const text = baseWord;
+      
+      if (isAnchorOn) {
+        const existing = notifications.find(el => el.dataset.baseText === text && el.classList.contains('notification-rebound'));
+        if (existing) {
+          existing.style.transition = 'transform 0.2s ease';
+          existing.classList.add('notification-highlight');
+          setTimeout(() => {
+            existing.classList.remove('notification-highlight');
+            existing.style.transform = 'translate(-50%, -50%) scale(1)';
+            existing.style.transition = 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+          }, 300);
+          return;
+        }
+      }
+
+      const el = document.createElement('div');
+      el.className = 'notification notification-rebound';
+      
+      el.dataset.baseText = text;
+      el.textContent = isAnchorOn ? text + 'からそのまま置いておく' : text;
+      
+      monitor.appendChild(el);
+      notifications.push(el);
+      makeDraggable(el);
+      
+      el.style.transition = 'none';
+      const randomX = Math.random() * 80 + 10;
+      el.style.top = '-50px';
+      el.style.left = `${randomX}%`;
+      void el.offsetHeight; 
+      el.style.transition = 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
+      
+      updateAllPositions();
+      el.style.opacity = isAnchorOn ? '0.4' : '1';
+    }
+
+    function spawnWorldInfo() {
+      if (!isAnchorOn) return;
+
+      const text = worldInfoWords[Math.floor(Math.random() * worldInfoWords.length)];
+      const el = document.createElement('div');
+      el.className = 'world-info';
+      el.textContent = text;
+
+      const topPos = Math.random() * 90 + 5;
+      el.style.top = `${topPos}%`;
+      el.style.left = '-20%';
+
+      monitor.appendChild(el);
+
+      const duration = 12000 + Math.random() * 8000;
+      
+      const animation = el.animate([
+        { left: '-20%', opacity: 0 },
+        { opacity: 0.6, offset: 0.1 },
+        { opacity: 0.6, offset: 0.9 },
+        { left: '110%', opacity: 0 }
+      ], {
+        duration: duration,
+        easing: 'linear',
+        fill: 'forwards'
+      });
+
+      animation.onfinish = () => {
+        if (el.parentNode) el.remove();
+      };
+    }
+
+    function makeDraggable(el) {
+      let startX, startY, initialLeft, initialTop;
+      let hasMoved = false;
+
+      const onDown = (e) => {
+        el.classList.add('is-dragging');
+        hasMoved = false;
+        const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+        const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+        startX = clientX;
+        startY = clientY;
+        const rect = el.getBoundingClientRect();
+        const parentRect = monitor.getBoundingClientRect();
+        
+        initialLeft = (rect.left - parentRect.left) + (rect.width / 2);
+        initialTop = (rect.top - parentRect.top) + (rect.height / 2);
+        
+        el.style.left = `${initialLeft}px`;
+        el.style.top = `${initialTop}px`;
+        
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('touchmove', onMove, { passive: false });
+        document.addEventListener('mouseup', onUp);
+        document.addEventListener('touchend', onUp);
+      };
+
+      const onMove = (e) => {
+        if (!el.classList.contains('is-dragging')) return;
+        if (e.cancelable) e.preventDefault();
+        const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+        const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+        const dx = clientX - startX;
+        const dy = clientY - startY;
+        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+          hasMoved = true;
+        }
+        el.style.left = `${initialLeft + dx}px`;
+        el.style.top = `${initialTop + dy}px`;
+      };
+
+      const onUp = () => {
+        if (!el.classList.contains('is-dragging')) return;
+        el.classList.remove('is-dragging');
+        
+        requestAnimationFrame(() => {
+          el.style.left = el.dataset.targetLeft;
+          el.style.top = el.dataset.targetTop;
+        });
+        
+        if (hasMoved) {
+          setTimeout(() => {
+            spawnReboundNotification();
+          }, 150);
+        }
+        
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('touchmove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        document.removeEventListener('touchend', onUp);
+      };
+
+      el.addEventListener('mousedown', onDown);
+      el.addEventListener('touchstart', onDown, { passive: false });
+    }
+
+    function updateAllPositions() {
+      const activeNotifications = notifications.filter(el => el.parentNode === monitor);
+      
+      activeNotifications.forEach((el, index) => {
+        let x, y;
+        if (!isAnchorOn) {
+          x = 50 + (Math.random() * 30 - 15);
+          y = 50 + (Math.random() * 30 - 15);
+        } else {
+          x = 83; 
+          
+          const startY = 15; 
+          const availableHeight = 70; 
+          const maxGap = 12; 
+          
+          let gapY = maxGap;
+          if (activeNotifications.length > 1) {
+            gapY = Math.min(maxGap, availableHeight / (activeNotifications.length - 1));
+          }
+          y = startY + (index * gapY);
+        }
+        
+        const targetLeft = `${x}%`;
+        const targetTop = `${y}%`;
+        
+        el.dataset.targetLeft = targetLeft;
+        el.dataset.targetTop = targetTop;
+        
+        if (!el.classList.contains('is-dragging')) {
+          el.style.left = targetLeft;
+          el.style.top = targetTop;
+        }
+      });
+    }
+
+    btnAnchor.addEventListener('click', () => {
+      isAnchorOn = !isAnchorOn;
+      
+      if (isAnchorOn) {
+        const uniqueBaseTexts = new Set();
+        for (let i = notifications.length - 1; i >= 0; i--) {
+          const el = notifications[i];
+          const baseText = el.dataset.baseText;
+          if (uniqueBaseTexts.has(baseText)) {
+            el.remove();
+            notifications.splice(i, 1);
+          } else {
+            uniqueBaseTexts.add(baseText);
+          }
+        }
+      }
+
+      const rebounds = document.querySelectorAll('.notification-rebound');
+
+      if (isAnchorOn) {
+        rebounds.forEach(el => { el.style.opacity = '0.4'; });
+        updateNotificationTexts();
+
+        monitor.className = 'monitor-expanded';
+        notificationSpace.style.opacity = '1';
+        activeWindow.style.left = '40%';
+        activeWindow.classList.add('active-window-clickable');
+        
+        activeWindow.appendChild(observer);
+        observer.className = 'observer-defused';
+        observerPositionX = 15; 
+        observer.style.left = `${observerPositionX}%`;
+
+        statusContainer.className = 'status safe';
+        statusText.textContent = '状態: 気づきの範囲が広がっています';
+        
+        btnAnchor.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path></svg><span>現在に触れる (オン)</span>';
+        btnAnchor.className = 'btn-anchor btn-anchor-on';
+
+        spawnWorldInfo();
+        connectionInterval = setInterval(spawnWorldInfo, 2500);
+      } else {
+        rebounds.forEach(el => { el.style.opacity = '1'; });
+        updateNotificationTexts();
+
+        monitor.className = 'monitor-normal';
+        notificationSpace.style.opacity = '0';
+        activeWindow.style.left = '50%';
+        activeWindow.classList.remove('active-window-clickable');
+
+        monitor.appendChild(observer);
+        observer.className = 'observer-fused';
+        observer.style.left = '50%';
+        
+        statusContainer.className = 'status alert';
+        statusText.textContent = '状態: 通知が前面に出ています';
+        
+        btnAnchor.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path></svg><span>現在に触れる (オフ)</span>';
+        btnAnchor.className = 'btn-anchor btn-anchor-off';
+
+        if (connectionInterval) clearInterval(connectionInterval);
+        document.querySelectorAll('.world-info').forEach(el => el.remove());
+      }
+      updateAllPositions();
+    });
+
+    activeWindow.addEventListener('click', () => {
+      if (isAnchorOn) {
+        btnFocus.click();
+      }
+    });
+
+    btnAdd.addEventListener('click', () => {
+      spawnNotification();
+    });
+
+    let focusTimeout;
+    btnFocus.addEventListener('click', () => {
+      activeWindow.classList.add('focus-glow');
+      
+      if (isAnchorOn) {
+        observerPositionX += 20; 
+        if (observerPositionX > 85) {
+          observerPositionX = 15;
+        }
+        observer.style.left = `${observerPositionX}%`;
+      }
+      
+      clearTimeout(focusTimeout);
+      focusTimeout = setTimeout(() => {
+        activeWindow.classList.remove('focus-glow');
+      }, 1500);
+    });
+
+    btnReset.addEventListener('click', () => {
+      notifications.forEach(el => el.remove());
+      notifications.length = 0;
+      
+      if (isAnchorOn) {
+        btnAnchor.click();
+      } else {
+        observer.style.left = '50%';
+      }
+    });
+
+    function completeMentalCareFinish() {
+      try {
+        if (typeof saveToStorage === 'function') saveToStorage();
+        if (typeof saveState === 'function') saveState();
+        if (typeof saveAppState === 'function') saveAppState();
+      } catch (err) {
+        console.warn('終了時の保存処理に失敗しました', err);
+      }
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'mental-care-finish-complete' }, window.location.origin);
+      }
+    }
+
+    window.addEventListener('message', (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== 'mental-care-finish') return;
+      completeMentalCareFinish();
+    });
+</script>
+</body>
+</html>

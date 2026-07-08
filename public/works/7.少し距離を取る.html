@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>考えと少し距離を取る｜少し距離を取る</title>
+  <style>
+    /* --- デザイン変数 --- */
+    :root {
+      --color-bg: #fbfaf9;
+      --color-text: #4a4a4a;
+      --color-text-light: #7a7a7a;
+      --color-primary: #7b8d93;
+      --color-primary-hover: #65767b;
+      --color-surface: #ffffff;
+      --color-border: #e2e2e2;
+      --color-focus: #a8c1ce;
+      --font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+      --radius: 8px;
+      --transition: all 0.2s ease;
+    }
+
+    /* --- ベーススタイル --- */
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--color-bg);
+      color: var(--color-text);
+      font-family: var(--font-family);
+      line-height: 1.6;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    /* --- レイアウト --- */
+    #app-container {
+      width: 100%;
+      max-width: 600px;
+      padding: 40px 24px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header-title {
+      font-size: 0.9rem;
+      color: var(--color-text-light);
+      text-align: center;
+      margin-bottom: 40px;
+      font-weight: normal;
+      letter-spacing: 0.05em;
+    }
+
+    .step-container {
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      padding: 32px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* --- タイポグラフィ --- */
+    .step-title {
+      font-size: 1.2rem;
+      font-weight: normal;
+      margin-top: 0;
+      margin-bottom: 24px;
+      color: var(--color-text);
+    }
+
+    .step-desc {
+      margin-bottom: 24px;
+      white-space: pre-wrap;
+    }
+
+    .notice-text {
+      font-size: 0.9rem;
+      color: var(--color-text-light);
+      margin-top: 16px;
+      white-space: pre-wrap;
+    }
+
+    .feedback-box p {
+      white-space: pre-wrap;
+      margin: 0;
+    }
+
+    /* --- フォーム・インタラクション --- */
+    .input-text {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 1rem;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+      color: var(--color-text);
+      background-color: var(--color-bg);
+      transition: var(--transition);
+    }
+
+    .input-text:focus {
+      outline: none;
+      border-color: var(--color-focus);
+      box-shadow: 0 0 0 3px rgba(168, 193, 206, 0.2);
+    }
+
+    .chip-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .chip {
+      background-color: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: 20px;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      color: var(--color-text);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .chip:hover {
+      background-color: #f0f0f0;
+    }
+
+    .chip.selected {
+      background-color: var(--color-primary);
+      color: white;
+      border-color: var(--color-primary);
+    }
+
+    /* --- ボタン --- */
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      font-size: 1rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      border: none;
+      transition: var(--transition);
+      text-align: center;
+      text-decoration: none;
+    }
+
+    .btn:focus-visible {
+      outline: 2px solid var(--color-focus);
+      outline-offset: 2px;
+    }
+
+    .btn-main {
+      background-color: var(--color-primary);
+      color: #ffffff;
+      width: 100%;
+    }
+
+    .btn-main:hover {
+      background-color: var(--color-primary-hover);
+    }
+
+    .btn-text {
+      background: transparent;
+      color: var(--color-text-light);
+      font-size: 0.9rem;
+      padding: 8px;
+    }
+
+    .btn-text:hover {
+      color: var(--color-text);
+      text-decoration: underline;
+    }
+
+    .back-action {
+      text-align: center;
+      margin-top: 16px;
+    }
+
+    /* --- 結果表示 --- */
+    .feedback-box {
+      background-color: var(--color-bg);
+      padding: 24px;
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+      border-left: 3px solid var(--color-primary);
+    }
+
+    .highlight {
+      font-weight: bold;
+    }
+
+    /* --- フッター --- */
+    .footer-actions {
+      margin-top: 24px;
+      text-align: center;
+    }
+
+    /* =========================================================
+       全体CSS統一パス: 見た目のみの低リスク調整
+       ========================================================= */
+    :where(button, .btn, .btn-primary, .btn-secondary, .btn-outline, .btn-dark, .btn-main, .btn-text, .btn-action, .btn-action-primary, .btn-nav-next, .btn-nav-prev, .btn-add, .btn-focus, .btn-reset, .chip, .menu-item, .radio-btn, .mode-btn) {
+      min-height: 44px;
+      border-radius: 12px;
+      font-family: inherit;
+      line-height: 1.35;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :where(button, .btn, .btn-primary, .btn-secondary, .btn-outline, .btn-dark, .btn-main, .btn-text, .btn-action, .btn-action-primary, .btn-nav-next, .btn-nav-prev, .btn-add, .btn-focus, .btn-reset, .chip, .menu-item, .radio-btn, .mode-btn):focus-visible {
+      outline: 3px solid rgba(37, 99, 235, 0.32);
+      outline-offset: 3px;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.18);
+    }
+
+    :where(input[type="text"], input[type="date"], input[type="number"], textarea, select, .form-input, .form-textarea, .input-text) {
+      min-height: 44px;
+      border-radius: 12px;
+      border-color: #cbd5e1;
+      background-color: #ffffff;
+      line-height: 1.55;
+      font-family: inherit;
+    }
+
+    :where(input[type="text"], input[type="date"], input[type="number"], textarea, select, .form-input, .form-textarea, .input-text):focus-visible {
+      outline: 3px solid rgba(37, 99, 235, 0.24);
+      outline-offset: 1px;
+      border-color: #3b82f6;
+    }
+
+    :where(.card, .section, .main-card, .box-panel, .box-panel-light, .info-box, .feedback-box, .form-section, .status, .modal-content, .step-container) {
+      border-radius: 16px;
+    }
+
+    :where(.info-box, .notice-text, .message-box-primary, .feedback-box) {
+      line-height: 1.7;
+    }
+
+    :where(.action-buttons, .modal-actions, .footer-actions, .btn-group, .header-actions, .control-actions) {
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 640px) {
+      html, body { overflow-x: hidden; }
+      :where(.app-wrapper, .app-container, #app-container, main, .content-wrapper, .wide-wrapper, .container, .main-card, .card, .section, .panel) { max-width: 100%; }
+      :where(.action-buttons, .modal-actions, .footer-actions, .btn-group, .header-actions, .control-actions) { flex-direction: column; align-items: stretch; }
+      :where(button, .btn, .btn-primary, .btn-secondary, .btn-outline, .btn-dark, .btn-main, .btn-text, .btn-action, .btn-action-primary, .btn-nav-next, .btn-nav-prev, .btn-add, .btn-focus, .btn-reset, .mode-btn) { width: 100%; justify-content: center; white-space: normal; }
+      :where(input, textarea, select) { max-width: 100%; }
+    }
+
+    .btn { padding: 0.72rem 1.1rem; border-radius: 12px; }
+    .btn-text { color: #475569; }
+    .chip { border-radius: 999px; }
+    .feedback-box, .step-container { border-radius: 16px; }
+    .input-text { padding: 0.72rem 0.85rem; }
+    @media (max-width: 640px) { #app-container { padding-inline: 0.85rem; } .footer-actions { align-items: stretch; } }
+</style>
+</head>
+<body>
+
+  <div id="app-container">
+    <h1 class="header-title">考えと少し距離を取る</h1>
+    <div id="step-content"></div>
+    <div id="footer-content" class="footer-actions"></div>
+  </div>
+
+  <script>
+    /**
+     * 文言定義（差し替えやすいように一箇所にまとめています）
+     */
+    const TEXT_DATA = {
+      start: {
+        title: "立ち止まったとき",
+        desc: "行動の前に、ふと立ち止まってしまったとき。\n頭の中に浮かんでいる言葉に気づき、少しだけ距離をとってみるワークです。",
+        btn: "はじめてみる"
+      },
+      step1: {
+        title: "1. 浮かんでいる言葉",
+        desc: "今、どんな言葉が頭に浮かんでいますか？\n短い言葉で置いてみます。",
+        placeholder: "例：どうせ無理、失敗する、など",
+        actionBtn: "形を変えてみる",
+        feedbackTemplate: "という言葉が、今、頭に浮かんでいます。",
+        emptyFallback: "言葉にならない感覚",
+        notice: "これは自動で浮かんでくる言葉です。\n正しいかどうか、今は決めなくて大丈夫です。",
+        nextBtn: "次へ進む"
+      },
+      step2: {
+        title: "2. 何に引っかかりましたか",
+        desc: "先ほどの言葉が浮かんだとき、どんなところに引っかかりを感じましたか？\n近いものを選んでみます。（選ばなくても進めます）",
+        options: [
+          "言葉そのもの", 
+          "胸のざわつき", 
+          "体の重さ", 
+          "なんとなく不安",
+          "失敗しそうな感じ",
+          "やめたほうがいい感じ",
+          "うまく言えない"
+        ],
+        feedback: "気づいた時点で十分です。\n次は、よく来る通知として見てみます。",
+        nextBtn: "次へ進む"
+      },
+      step3: {
+        title: "3. よく来る通知に名前をつける",
+        desc: "頭の中には、人に備わっている仕組みから、自動で通知のように来る言葉があります。\nそれは、身を守ろうとするときに出やすい反応のひとつです。\n少し距離をとりやすくするために、名前をつけてみます。",
+        examples: ["ダメ出し通知", "先回りアラート", "完璧じゃないとダメ", "ブレーキ通知"],
+        placeholder: "名前を入力してみる",
+        actionBtn: "自分で”通知”に名前をつける",
+        feedbackPrefix: "今、「",
+        feedbackSuffix: "」という通知が来ています。",
+        nextBtn: "次へ進む"
+      },
+      step4: {
+        title: "4. 小さな一歩",
+        desc: "その通知が来ていても、今、選びたいごく小さな行動を一つだけ決めてみます。",
+        examples: ["席に座る", "ファイルを開く", "5分だけ触る", "メモを1行だけ書く"],
+        placeholder: "行動を入力してみる",
+        actionBtn: "この一歩を決めて終わる",
+        notice: "これは評価ではなく、選択です。"
+      },
+      end: {
+        title: "おつかれさまでした",
+        desc: "通知は来ても大丈夫です。\n最後に決めた小さな行動へ、自分のペースで戻ってみてください。",
+        btn: "最初からもう一度"
+      },
+      common: {
+        quitBtn: "今日はここまで",
+        backBtn: "前へ戻る"
+      }
+    };
+
+    /**
+     * 状態管理
+     */
+    const state = {
+      currentStep: 0, // 0:start, 1:step1, 2:step2, 3:step3, 4:step4, 5:end
+      step1_done: false,
+      thoughtText: "",
+      step2_done: false,
+      step2_hook: "",
+      step3_done: false,
+      notificationName: "",
+      step4_done: false,
+      actionText: ""
+    };
+
+    // DOM要素の取得
+    const contentDiv = document.getElementById('step-content');
+    const footerDiv = document.getElementById('footer-content');
+
+    /**
+     * XSS対策用のエスケープ関数
+     */
+    function escapeHTML(str) {
+      return str.replace(/[&<>'"]/g, 
+        tag => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          "'": '&#39;',
+          '"': '&quot;'
+        }[tag] || tag)
+      );
+    }
+
+    /**
+     * 画面の描画処理を司るメイン関数
+     */
+    function render() {
+      let html = '';
+
+      switch (state.currentStep) {
+        case 0:
+          html = renderStart();
+          break;
+        case 1:
+          html = renderStep1();
+          break;
+        case 2:
+          html = renderStep2();
+          break;
+        case 3:
+          html = renderStep3();
+          break;
+        case 4:
+          html = renderStep4();
+          break;
+        case 5:
+          html = renderEnd();
+          break;
+      }
+
+      contentDiv.innerHTML = html;
+      footerDiv.innerHTML = '';
+    }
+
+    function goToStep(stepNumber) {
+      state.currentStep = stepNumber;
+      render();
+    }
+
+    /* --- 各画面のレンダリング関数 --- */
+
+    function renderStart() {
+      const d = TEXT_DATA.start;
+      return `
+        <div class="step-container">
+          <h2 class="step-title">${d.title}</h2>
+          <p class="step-desc">${d.desc}</p>
+          <button class="btn btn-main" onclick="goToStep(1)">${d.btn}</button>
+        </div>
+      `;
+    }
+
+    function renderStep1() {
+      const d = TEXT_DATA.step1;
+      let html = `
+        <div class="step-container">
+          <h2 class="step-title">${d.title}</h2>
+          <p class="step-desc">${d.desc}</p>
+      `;
+
+      if (!state.step1_done) {
+        html += `
+          <input type="text" id="input-thought" class="input-text" placeholder="${d.placeholder}" value="${escapeHTML(state.thoughtText)}">
+          <button class="btn btn-main" onclick="handleStep1Action()">${d.actionBtn}</button>
+          <div class="back-action">
+            <button class="btn btn-text" onclick="goToStep(0)">${TEXT_DATA.common.backBtn}</button>
+          </div>
+        `;
+      } else {
+        const displayThought = state.thoughtText.trim() === "" ? d.emptyFallback : state.thoughtText;
+        html += `
+          <div class="feedback-box">
+            <p>「<span class="highlight">${escapeHTML(displayThought)}</span>」${d.feedbackTemplate}</p>
+            <p class="notice-text">${d.notice}</p>
+          </div>
+          <button class="btn btn-main" onclick="goToStep(2)">${d.nextBtn}</button>
+          <div class="back-action">
+            <button class="btn btn-text" onclick="state.step1_done = false; render();">${TEXT_DATA.common.backBtn}</button>
+          </div>
+        `;
+      }
+      html += `</div>`;
+      return html;
+    }
+
+    function handleStep1Action() {
+      const input = document.getElementById('input-thought');
+      state.thoughtText = input.value;
+      state.step1_done = true;
+      render();
+    }
+
+    function renderStep2() {
+      const d = TEXT_DATA.step2;
+      let html = `
+        <div class="step-container">
+          <h2 class="step-title">${d.title}</h2>
+          <p class="step-desc">${d.desc}</p>
+      `;
+
+      if (!state.step2_done) {
+        html += `<div class="chip-group">`;
+        d.options.forEach(opt => {
+          const isSelected = state.step2_hook === opt;
+          const cssClass = isSelected ? "chip selected" : "chip";
+          html += `<button class="${cssClass}" onclick="handleStep2Select('${escapeHTML(opt)}')">${escapeHTML(opt)}</button>`;
+        });
+        html += `</div>`;
+        html += `
+          <button class="btn btn-main" onclick="handleStep2Action()">${d.nextBtn}</button>
+          <div class="back-action">
+            <button class="btn btn-text" onclick="goToStep(1)">${TEXT_DATA.common.backBtn}</button>
+          </div>
+        `;
+      } else {
+        let feedbackText = d.feedback;
+        if (state.step2_hook) {
+          feedbackText = `「<span class="highlight">${escapeHTML(state.step2_hook)}</span>」がありました。\n${d.feedback}`;
+        }
+        html += `
+          <div class="feedback-box">
+            <p>${feedbackText}</p>
+          </div>
+          <button class="btn btn-main" onclick="goToStep(3)">${d.nextBtn}</button>
+          <div class="back-action">
+            <button class="btn btn-text" onclick="state.step2_done = false; render();">${TEXT_DATA.common.backBtn}</button>
+          </div>
+        `;
+      }
+      html += `</div>`;
+      return html;
+    }
+
+    function handleStep2Select(option) {
+      if (state.step2_hook === option) {
+        state.step2_hook = ""; // 選択解除
+      } else {
+        state.step2_hook = option; // 選択
+      }
+      render();
+    }
+
+    function handleStep2Action() {
+      state.step2_done = true;
+      render();
+    }
+
+    function renderStep3() {
+      const d = TEXT_DATA.step3;
+      let html = `
+        <div class="step-container">
+          <h2 class="step-title">${d.title}</h2>
+          <p class="step-desc">${d.desc}</p>
+      `;
+
+      if (!state.step3_done) {
+        html += `<div class="chip-group">`;
+        d.examples.forEach(ex => {
+          html += `<button class="chip" onclick="fillInput('input-notification', '${escapeHTML(ex)}')">${escapeHTML(ex)}</button>`;
+        });
+        html += `</div>`;
+        html += `
+          <input type="text" id="input-notification" class="input-text" placeholder="${d.placeholder}" value="${escapeHTML(state.notificationName)}">
+          <button class="btn btn-main" onclick="handleStep3Action()">${d.actionBtn}</button>
+          <div class="back-action">
+            <button class="btn btn-text" onclick="goToStep(2)">${TEXT_DATA.common.backBtn}</button>
+          </div>
+        `;
+      } else {
+        const displayNotification = state.notificationName.trim() === "" ? "名もなき通知" : state.notificationName;
+        html += `
+          <div class="feedback-box">
+            <p>${d.feedbackPrefix}<span class="highlight">${escapeHTML(displayNotification)}</span>${d.feedbackSuffix}</p>
+          </div>
+          <button class="btn btn-main" onclick="goToStep(4)">${d.nextBtn}</button>
+          <div class="back-action">
+            <button class="btn btn-text" onclick="state.step3_done = false; render();">${TEXT_DATA.common.backBtn}</button>
+          </div>
+        `;
+      }
+      html += `</div>`;
+      return html;
+    }
+
+    function handleStep3Action() {
+      const input = document.getElementById('input-notification');
+      state.notificationName = input.value;
+      state.step3_done = true;
+      render();
+    }
+
+    function renderStep4() {
+      const d = TEXT_DATA.step4;
+      let html = `
+        <div class="step-container">
+          <h2 class="step-title">${d.title}</h2>
+          <p class="step-desc">${d.desc}</p>
+          <div class="chip-group">
+      `;
+      d.examples.forEach(ex => {
+        html += `<button class="chip" onclick="fillInput('input-action', '${escapeHTML(ex)}')">${escapeHTML(ex)}</button>`;
+      });
+      html += `</div>`;
+      html += `
+        <input type="text" id="input-action" class="input-text" placeholder="${d.placeholder}">
+        <p class="notice-text" style="margin-bottom: 24px;">${d.notice}</p>
+        <button class="btn btn-main" onclick="goToStep(5)">${d.actionBtn}</button>
+        <div class="back-action">
+          <button class="btn btn-text" onclick="goToStep(3)">${TEXT_DATA.common.backBtn}</button>
+        </div>
+      </div>`;
+      return html;
+    }
+
+    function renderEnd() {
+      const d = TEXT_DATA.end;
+      return `
+        <div class="step-container">
+          <h2 class="step-title">${d.title}</h2>
+          <p class="step-desc">${d.desc}</p>
+          <button class="btn btn-main" onclick="resetApp()">${d.btn}</button>
+        </div>
+      `;
+    }
+
+    /* --- ユーティリティ --- */
+    function fillInput(inputId, text) {
+      const input = document.getElementById(inputId);
+      if (input) {
+        input.value = text;
+        input.focus();
+      }
+    }
+
+    function resetApp() {
+      state.currentStep = 0;
+      state.step1_done = false;
+      state.thoughtText = "";
+      state.step2_done = false;
+      state.step2_hook = "";
+      state.step3_done = false;
+      state.notificationName = "";
+      state.step4_done = false;
+      state.actionText = "";
+      render();
+    }
+
+    // 初回描画
+    render();
+
+    function completeMentalCareFinish() {
+      try {
+        if (typeof saveToStorage === 'function') saveToStorage();
+        if (typeof saveState === 'function') saveState();
+        if (typeof saveAppState === 'function') saveAppState();
+      } catch (err) {
+        console.warn('終了時の保存処理に失敗しました', err);
+      }
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'mental-care-finish-complete' }, window.location.origin);
+      }
+    }
+
+    window.addEventListener('message', (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== 'mental-care-finish') return;
+      completeMentalCareFinish();
+    });
+</script>
+</body>
+</html>

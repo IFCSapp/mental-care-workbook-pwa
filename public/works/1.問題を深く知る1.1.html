@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>困っていることを整理する｜問題を深く知る</title>
+
+  <style>
+    /* 変数定義 */
+    :root {
+      --slate-50: #f8fafc;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-300: #cbd5e1;
+      --slate-400: #94a3b8;
+      --slate-500: #64748b;
+      --slate-600: #475569;
+      --slate-700: #334155;
+      --slate-800: #1e293b;
+      --slate-900: #0f172a;
+      --blue-50: #eff6ff;
+      --blue-200: #bfdbfe;
+      --blue-400: #60a5fa;
+      --blue-500: #3b82f6;
+      --blue-600: #2563eb;
+      --blue-700: #1d4ed8;
+      --red-600: #dc2626;
+      --red-700: #b91c1c;
+      --emerald-600: #059669;
+      --emerald-700: #047857;
+    }
+
+    body {
+      background-color: var(--slate-100);
+      color: var(--slate-800);
+      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
+      line-height: 1.5;
+      position: relative;
+    }
+
+    * { box-sizing: border-box; }
+
+    @media print {
+      body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        background-color: white !important;
+      }
+      @page { margin: 1.5cm; }
+      .print-hidden { display: none !important; }
+      .print-block { display: block !important; }
+      .app-container { box-shadow: none !important; }
+    }
+
+    /* レイアウト・コンテナ */
+    .app-wrapper {
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+    @media (min-width: 640px) { .app-wrapper { padding: 2rem 1.5rem; } }
+    @media (min-width: 1024px) { .app-wrapper { padding: 2rem 2rem; } }
+
+    .coffee-btn-wrap {
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      z-index: 40;
+    }
+    .coffee-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.75rem;
+      background-color: white;
+      color: var(--slate-600);
+      border-radius: 9999px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      border: 1px solid var(--slate-200);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .coffee-btn:hover { background-color: var(--slate-50); color: var(--blue-600); }
+    .coffee-btn svg { width: 1.5rem; height: 1.5rem; }
+
+    .app-container {
+      max-width: 56rem;
+      margin: 0 auto;
+      background-color: white;
+      border-radius: 0.75rem;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ヘッダー */
+    .header {
+      background-color: var(--slate-800);
+      padding: 1.5rem;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .header-title-wrap { display: flex; align-items: center; gap: 0.75rem; }
+    .header-icon { width: 2rem; height: 2rem; display: none; }
+    @media (min-width: 640px) { .header-icon { display: block; } }
+    .header-title { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.025em; margin: 0; }
+    @media (min-width: 640px) { .header-title { font-size: 1.5rem; } }
+    .header-actions { display: flex; gap: 0.75rem; }
+
+    .print-only-header { display: none; padding: 2rem 2rem 0; }
+    .print-only-title { font-size: 1.875rem; font-weight: 700; color: var(--slate-800); text-align: center; margin: 0 0 0.5rem 0; }
+    @media print { .print-only-header { display: block; } }
+
+    /* ボタン共通 */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      border-radius: 0.25rem;
+      transition: background-color 0.2s, color 0.2s;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      font-size: 1rem;
+    }
+    .btn svg { margin-right: 0.5rem; width: 1rem; height: 1rem; }
+    .btn-blue { background-color: var(--blue-600); color: white; }
+    .btn-blue:hover { background-color: var(--blue-700); }
+    .btn-slate { background-color: var(--slate-600); color: white; }
+    .btn-slate:hover { background-color: var(--slate-700); }
+    .btn-emerald { background-color: var(--emerald-600); color: white; }
+    .btn-emerald:hover { background-color: var(--emerald-700); }
+    .btn-red { background-color: var(--red-600); color: white; }
+    .btn-red:hover { background-color: var(--red-700); }
+    .btn-ghost { background-color: var(--slate-100); color: var(--slate-600); }
+    .btn-ghost:hover { background-color: var(--slate-200); }
+    .btn-outline { background-color: white; color: var(--slate-700); border: 1px solid var(--slate-300); box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); font-size: 0.875rem; }
+    .btn-outline:hover { background-color: var(--slate-100); }
+    .btn-large {
+      padding: 1rem 2rem;
+      background-color: var(--blue-600);
+      color: white;
+      border-radius: 0.5rem;
+      font-weight: 700;
+      font-size: 1.125rem;
+      display: inline-flex;
+      align-items: center;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+      transition: background-color 0.2s;
+    }
+    .btn-large:hover { background-color: var(--blue-700); }
+    .btn-large svg { margin-right: 0.5rem; width: 1.25rem; height: 1.25rem; }
+    .btn-link {
+      display: inline-flex;
+      align-items: center;
+      color: var(--slate-500);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 0.875rem;
+      padding: 0.5rem;
+      transition: color 0.2s;
+    }
+    .btn-link:hover { color: var(--red-600); }
+    .btn-link svg { margin-right: 0.25rem; width: 1rem; height: 1rem; }
+
+    /* プログレスバー */
+    .progress-wrap { background-color: var(--slate-50); border-bottom: 1px solid var(--slate-200); position: sticky; top: 0; z-index: 10; padding: 0.75rem 1.5rem; }
+    .progress-text { display: flex; justify-content: space-between; align-items: center; font-size: 0.875rem; font-weight: 500; color: var(--slate-600); margin-bottom: 0.25rem; }
+    .progress-bg { width: 100%; background-color: var(--slate-200); border-radius: 9999px; height: 0.625rem; }
+    .progress-fill { background-color: var(--blue-600); height: 100%; border-radius: 9999px; transition: width 0.5s ease; }
+
+    /* コンテンツエリア */
+    .content-pad { padding: 1.5rem; }
+    @media (min-width: 640px) { .content-pad { padding: 2rem; } }
+
+    /* 冒頭インフォメーション */
+    .info-box { background-color: var(--blue-50); border-left: 4px solid var(--blue-500); padding: 1rem; border-radius: 0.25rem; margin-bottom: 1.5rem; color: var(--slate-700); font-size: 0.875rem; line-height: 1.625; }
+    .info-box p { font-weight: 700; margin: 0 0 0.5rem 0; display: flex; align-items: center; font-size: 1rem; }
+    .info-box p svg { width: 1.25rem; height: 1.25rem; margin-right: 0.5rem; color: var(--blue-600); }
+    .info-box ul { margin: 0 0 0 0.25rem; padding-left: 1rem; }
+    .info-box li { margin-bottom: 0.5rem; }
+
+    .info-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 2rem; background-color: var(--slate-50); padding: 1rem; border-radius: 0.25rem; border: 1px solid var(--slate-200); }
+    @media (min-width: 640px) { .info-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 768px) { .info-grid { grid-template-columns: repeat(4, 1fr); } }
+    .label-title { display: block; font-size: 0.875rem; font-weight: 600; color: var(--slate-700); margin-bottom: 0.25rem; }
+    .form-input { width: 100%; padding: 0.5rem; border: 1px solid var(--slate-300); border-radius: 0.25rem; font-size: 1rem; outline: none; }
+    .form-input:focus { border-color: var(--blue-500); box-shadow: 0 0 0 2px var(--blue-200); }
+
+    /* セクション共通 */
+    .section { background-color: white; border: 1px solid var(--slate-200); border-radius: 0.5rem; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); overflow: hidden; margin-bottom: 1.5rem; }
+    .section-btn { width: 100%; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; background-color: var(--slate-50); border: none; cursor: pointer; text-align: left; transition: background-color 0.2s; }
+    .section-btn:hover { background-color: var(--slate-100); }
+    .section-btn h2 { font-size: 1.25rem; font-weight: 700; color: var(--slate-800); margin: 0; }
+    .section-btn svg { width: 1.25rem; height: 1.25rem; color: var(--slate-500); }
+    .section-body { padding: 1.5rem; border-top: 1px solid var(--slate-100); display: flex; flex-direction: column; gap: 1.5rem; }
+
+    /* 設問コンポーネント */
+    .q-label-wrap { margin-bottom: 0.5rem; }
+    .q-label { display: block; color: var(--slate-800); font-weight: 600; font-size: 1.125rem; }
+    .q-num { margin-right: 0.5rem; color: var(--slate-500); }
+    .q-desc { font-size: 0.875rem; color: var(--slate-600); margin: 0.25rem 0 0 0; }
+
+    .form-textarea { width: 100%; padding: 0.75rem; border: 1px solid var(--slate-300); border-radius: 0.25rem; outline: none; resize: vertical; font-size: 1rem; }
+    .form-textarea:focus { border-color: var(--blue-500); box-shadow: 0 0 0 2px var(--blue-200); }
+
+    .cb-group { background-color: var(--slate-50); padding: 1rem; border-radius: 0.25rem; border: 1px solid var(--slate-200); }
+    .cb-grid { display: grid; grid-template-columns: 1fr; gap: 0.75rem; }
+    @media (min-width: 640px) { .cb-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 768px) { .cb-grid { grid-template-columns: repeat(3, 1fr); } }
+    .cb-item { display: flex; align-items: center; gap: 0.5rem; }
+    .cb-input { width: 1rem; height: 1rem; accent-color: var(--blue-600); cursor: pointer; }
+    .cb-label { color: var(--slate-700); cursor: pointer; font-size: 1rem; }
+    .cb-other { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem; }
+    @media (min-width: 640px) { .cb-other { grid-column: span 2; } }
+    @media (min-width: 768px) { .cb-other { grid-column: span 3; } }
+    .cb-other-label { color: var(--slate-700); white-space: nowrap; font-size: 1rem; }
+    .cb-other-input { flex: 1; padding: 0.5rem; border: 1px solid var(--slate-300); border-radius: 0.25rem; outline: none; }
+    .cb-other-input:focus { border-color: var(--blue-500); box-shadow: 0 0 0 2px var(--blue-200); }
+
+    .range-wrap { background-color: var(--slate-50); padding: 1rem; border-radius: 0.25rem; border: 1px solid var(--slate-200); }
+    .range-input { width: 100%; height: 0.5rem; background-color: var(--slate-300); border-radius: 0.5rem; appearance: none; cursor: pointer; accent-color: var(--blue-600); }
+    .range-input::-webkit-slider-thumb { appearance: none; width: 1rem; height: 1rem; background: var(--blue-600); border-radius: 50%; }
+    .range-labels { display: flex; justify-content: space-between; align-items: center; font-size: 0.875rem; color: var(--slate-600); margin-top: 0.5rem; font-weight: 500; }
+    .range-val { font-size: 1.125rem; color: var(--blue-700); font-weight: 700; }
+
+    /* テーブル・まとめ欄 */
+    .table-desc { font-size: 0.875rem; color: var(--slate-600); margin: 0 0 1rem 0; }
+    .table-wrap { overflow-x: auto; }
+    .score-table { width: 100%; border-collapse: collapse; border: 1px solid var(--slate-300); }
+    .score-table th { background-color: var(--slate-100); border: 1px solid var(--slate-300); padding: 0.75rem; text-align: left; }
+    .score-table th.center { text-align: center; width: 25%; }
+    .score-table td { border: 1px solid var(--slate-300); padding: 0.75rem; }
+    .score-table td.nopad { padding: 0; }
+    .td-label { font-weight: 500; }
+    .td-number { width: 100%; padding: 0.5rem; border: 1px solid var(--slate-300); border-radius: 0.25rem; text-align: center; outline: none; }
+    .td-memo { width: 100%; height: 100%; min-height: 2.5rem; padding: 0.75rem; border: none; outline: none; box-sizing: border-box; }
+    .td-memo:focus { box-shadow: inset 0 0 0 2px var(--blue-500); }
+
+    .summary-box { background-color: var(--blue-50); padding: 1.5rem; border-radius: 0.5rem; border: 1px solid var(--blue-200); font-size: 1.125rem; line-height: 1.75; color: var(--slate-800); }
+    .inline-input { display: inline-block; border: none; border-bottom: 2px solid var(--blue-400); background: transparent; padding: 0.25rem 0.5rem; margin: 0 0.5rem; width: 12rem; outline: none; transition: all 0.2s; font-size: 1.125rem; }
+    @media (min-width: 640px) { .inline-input { width: 16rem; } }
+    .inline-input:focus { border-color: var(--blue-600); background-color: white; }
+    .summary-box-bottom { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--blue-200); }
+    .break-sm { display: block; margin-top: 0.5rem; }
+    @media (min-width: 640px) { .break-sm { display: none; } }
+
+    .bottom-actions { display: flex; flex-direction: column; align-items: center; padding-top: 2rem; margin-top: 1rem; border-top: 1px solid var(--slate-200); gap: 1.5rem; }
+
+    /* 結果確認画面 */
+    .result-container { display: flex; flex-direction: column; gap: 1.5rem; color: var(--slate-800); }
+    .result-actions { background-color: var(--slate-50); border: 1px solid var(--slate-200); padding: 1rem; border-radius: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; margin-bottom: 2rem; }
+    .result-actions-title { display: flex; align-items: center; color: var(--slate-700); font-weight: 600; }
+    .result-actions-title svg { color: var(--blue-600); margin-right: 0.5rem; width: 1.25rem; height: 1.25rem; }
+    .result-btn-group { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+    .file-input-label { cursor: pointer; display: inline-flex; }
+
+    .result-info { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 2rem; font-size: 0.875rem; }
+    @media (min-width: 768px) { .result-info { grid-template-columns: repeat(4, 1fr); } }
+    .result-info-item { border-bottom: 1px solid var(--slate-300); padding-bottom: 0.25rem; }
+    .result-info-label { color: var(--slate-500); margin-right: 0.5rem; }
+    .result-info-val { font-weight: 500; font-size: 1rem; }
+
+    .result-section { margin-bottom: 1.5rem; break-inside: avoid; }
+    .result-section-title { font-size: 1.125rem; font-weight: 700; border-bottom: 1px solid var(--slate-300); padding-bottom: 0.25rem; margin: 0 0 0.75rem 0; }
+    .result-item { background-color: var(--slate-50); padding: 0.75rem; border-radius: 0.25rem; margin-bottom: 0.75rem; }
+    .result-item-q { font-weight: 600; color: var(--slate-700); font-size: 0.875rem; margin: 0 0 0.25rem 0; }
+    .result-item-val { white-space: pre-wrap; }
+    .result-val-empty { color: var(--slate-400); }
+    .result-val-score { font-weight: 700; font-size: 1.125rem; }
+    .result-summary-blank { font-weight: 700; border-bottom: 1px solid var(--blue-400); padding: 0 0.25rem; margin: 0 0.25rem; }
+
+    /* サマリー画面のテーブル */
+    .result-table { width: 100%; border-collapse: collapse; border: 1px solid var(--slate-300); font-size: 0.875rem; }
+    .result-table th { background-color: var(--slate-100); border: 1px solid var(--slate-300); padding: 0.5rem; text-align: left; }
+    .result-table th.center { text-align: center; width: 6rem; }
+    .result-table td { border: 1px solid var(--slate-300); padding: 0.5rem; }
+    .result-table td.label { font-weight: 500; }
+    .result-table td.center { text-align: center; font-weight: 700; }
+
+    /* サマリー画面の最後のまとめ */
+    .result-summary-box { background-color: var(--blue-50); padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--blue-200); }
+    .result-summary-p { font-size: 1.125rem; line-height: 1.75; margin: 0; color: var(--slate-800); }
+    .result-summary-p + .result-summary-p { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--blue-200); }
+
+    /* モーダル */
+    .modal-overlay { position: fixed; inset: 0; background-color: rgba(15, 23, 42, 0.5); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 1rem; backdrop-filter: blur(4px); }
+    .modal-content-lg { background-color: white; border-radius: 0.75rem; padding: 2rem; max-width: 28rem; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); position: relative; overflow: hidden; }
+    .modal-content-sm { background-color: white; border-radius: 0.5rem; padding: 1.5rem; max-width: 28rem; width: 100%; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+    .modal-top-bar { position: absolute; top: 0; left: 0; width: 100%; height: 0.5rem; background-color: var(--blue-400); }
+    .modal-icon-center { width: 3rem; height: 3rem; color: var(--blue-500); margin: 0 auto 1rem; display: block; }
+    .modal-title-center { font-size: 1.25rem; font-weight: 700; margin: 0 0 1rem 0; color: var(--slate-800); text-align: center; }
+    .modal-text-center { color: var(--slate-600); margin-bottom: 2rem; line-height: 1.625; text-align: center; font-size: 0.875rem; }
+    @media (min-width: 640px) { .modal-text-center { font-size: 1rem; } }
+    .modal-text-center p { margin: 0 0 0.5rem 0; }
+    .modal-actions-center { display: flex; flex-direction: column; gap: 0.75rem; }
+    @media (min-width: 640px) { .modal-actions-center { flex-direction: row; justify-content: center; } }
+    .btn-modal-dark { padding: 0.75rem 1.5rem; background-color: var(--slate-800); color: white; border-radius: 0.5rem; font-weight: 500; border: none; cursor: pointer; width: 100%; transition: background-color 0.2s; }
+    .btn-modal-dark:hover { background-color: var(--slate-700); }
+    @media (min-width: 640px) { .btn-modal-dark { width: auto; } }
+    .btn-modal-outline { padding: 0.75rem 1.5rem; background-color: white; color: var(--slate-600); border: 1px solid var(--slate-300); border-radius: 0.5rem; font-weight: 500; cursor: pointer; width: 100%; transition: background-color 0.2s; }
+    .btn-modal-outline:hover { background-color: var(--slate-50); }
+    @media (min-width: 640px) { .btn-modal-outline { width: auto; } }
+
+    .modal-title-left { font-size: 1.25rem; font-weight: 700; margin: 0 0 0.75rem 0; color: var(--slate-800); display: flex; align-items: center; }
+    .modal-title-left svg { width: 1.25rem; height: 1.25rem; margin-right: 0.5rem; color: var(--red-600); }
+    .modal-text-left { color: var(--slate-600); margin-bottom: 1.5rem; line-height: 1.625; }
+    .modal-actions-right { display: flex; justify-content: flex-end; gap: 0.75rem; }
+
+    /* トースト */
+    .toast-wrap { position: fixed; top: 1.25rem; left: 50%; transform: translateX(-50%); z-index: 50; width: min(92vw, 34rem); display: flex; justify-content: center; pointer-events: none; }
+    .toast-box { background-color: #312e81; color: #f8fafc; border: 1px solid rgba(199, 210, 254, 0.55); padding: 0.75rem 1.25rem; border-radius: 9999px; box-shadow: 0 16px 34px -14px rgba(49,46,129,0.65); font-weight: 500; display: flex; align-items: center; justify-content: center; line-height: 1.5; text-align: center; max-width: 100%; transition: opacity 0.3s; }
+    .toast-box svg { width: 1.25rem; height: 1.25rem; margin-right: 0.5rem; flex-shrink: 0; color: #ddd6fe; }
+    .toast-box.toast-error { background-color: #fff7ed; color: #7c2d12; border-color: #fed7aa; box-shadow: 0 16px 34px -14px rgba(124,45,18,0.35); }
+    .toast-box.toast-error svg { color: #c2410c; }
+
+    /* =========================================================
+       全体CSS統一パス: 見た目のみの低リスク調整
+       ========================================================= */
+    :where(button, .btn, .btn-primary, .btn-secondary, .btn-outline, .btn-dark, .btn-main, .btn-text, .btn-action, .btn-action-primary, .btn-nav-next, .btn-nav-prev, .btn-add, .btn-focus, .btn-reset, .chip, .menu-item, .radio-btn, .mode-btn) {
+      min-height: 44px;
+      border-radius: 12px;
+      font-family: inherit;
+      line-height: 1.35;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :where(button, .btn, .btn-primary, .btn-secondary, .btn-outline, .btn-dark, .btn-main, .btn-text, .btn-action, .btn-action-primary, .btn-nav-next, .btn-nav-prev, .btn-add, .btn-focus, .btn-reset, .chip, .menu-item, .radio-btn, .mode-btn):focus-visible {
+      outline: 3px solid rgba(37, 99, 235, 0.32);
+      outline-offset: 3px;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.18);
+    }
+
+    :where(input[type="text"], input[type="date"], input[type="number"], textarea, select, .form-input, .form-textarea, .input-text) {
+      min-height: 44px;
+      border-radius: 12px;
+      border-color: #cbd5e1;
+      background-color: #ffffff;
+      line-height: 1.55;
+      font-family: inherit;
+    }
+
+    :where(input[type="text"], input[type="date"], input[type="number"], textarea, select, .form-input, .form-textarea, .input-text):focus-visible {
+      outline: 3px solid rgba(37, 99, 235, 0.24);
+      outline-offset: 1px;
+      border-color: #3b82f6;
+    }
+
+    :where(.card, .section, .main-card, .box-panel, .box-panel-light, .info-box, .feedback-box, .form-section, .status, .modal-content, .step-container) {
+      border-radius: 16px;
+    }
+
+    :where(.info-box, .notice-text, .message-box-primary, .feedback-box) {
+      line-height: 1.7;
+    }
+
+    :where(.action-buttons, .modal-actions, .footer-actions, .btn-group, .header-actions, .control-actions) {
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    @media (max-width: 640px) {
+      html, body { overflow-x: hidden; }
+      :where(.app-wrapper, .app-container, #app-container, main, .content-wrapper, .wide-wrapper, .container, .main-card, .card, .section, .panel) { max-width: 100%; }
+      :where(.action-buttons, .modal-actions, .footer-actions, .btn-group, .header-actions, .control-actions) { flex-direction: column; align-items: stretch; }
+      :where(button, .btn, .btn-primary, .btn-secondary, .btn-outline, .btn-dark, .btn-main, .btn-text, .btn-action, .btn-action-primary, .btn-nav-next, .btn-nav-prev, .btn-add, .btn-focus, .btn-reset, .mode-btn) { width: 100%; justify-content: center; white-space: normal; }
+      :where(input, textarea, select) { max-width: 100%; }
+    }
+
+    .btn { padding: 0.72rem 1.05rem; border-radius: 12px; gap: 0.45rem; }
+    .btn-link { border-radius: 10px; }
+    .btn-red, .btn-link:hover { color: #991b1b; }
+    .btn-red { background-color: #fee2e2; border: 1px solid #fecaca; }
+    .btn-red:hover { background-color: #fecaca; }
+    .section, .info-grid, .cb-group { border-color: #dbe3ee; }
+    .info-box { border-left-width: 5px; background: #eff6ff; }
+    .support-note { margin-top: 0.75rem; color: var(--slate-600); font-size: 0.92rem; line-height: 1.7; }
+    .supplement-details { margin-top: 0.9rem; padding-top: 0.75rem; border-top: 1px solid var(--blue-200); color: var(--slate-700); }
+    .supplement-details summary { cursor: pointer; font-weight: 700; color: var(--blue-700); }
+    .supplement-details ul { margin-top: 0.75rem; }
+    .form-input, .form-textarea { padding: 0.72rem 0.85rem; }
+    @media (max-width: 640px) { .app-wrapper { padding: 1rem 0.75rem 1.5rem; } .header { align-items: flex-start; gap: 1rem; flex-direction: column; } .content-pad, .section-body { padding: 1.1rem; } }
+</style>
+
+  <script crossorigin="anonymous" src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+  <script crossorigin="anonymous" src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script>
+    const { useState, useEffect } = React;
+    const e = React.createElement;
+
+    // --- アイコンコンポーネント ---
+    const Icon = ({ children, className = "", ...props }) => {
+      return e('svg', { xmlns: "http://www.w3.org/2000/svg", width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round", className: className, ...props }, children);
+    };
+    const FileText = (props) => e(Icon, props, e('path', { d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" }), e('path', { d: "M14 2v4a2 2 0 0 0 2 2h4" }), e('path', { d: "M10 9H8" }), e('path', { d: "M16 13H8" }), e('path', { d: "M16 17H8" }));
+    const Printer = (props) => e(Icon, props, e('polyline', { points: "6 9 6 2 18 2 18 9" }), e('path', { d: "M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" }), e('rect', { width: "12", height: "8", x: "6", y: "14" }));
+    const ArrowLeft = (props) => e(Icon, props, e('path', { d: "m12 19-7-7 7-7" }), e('path', { d: "M19 12H5" }));
+    const CheckSquare = (props) => e(Icon, props, e('path', { d: "m9 11 3 3L22 4" }), e('path', { d: "M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" }));
+    const ChevronDown = (props) => e(Icon, props, e('path', { d: "m6 9 6 6 6-6" }));
+    const ChevronUp = (props) => e(Icon, props, e('path', { d: "m18 15-6-6-6 6" }));
+    const Trash2 = (props) => e(Icon, props, e('path', { d: "M3 6h18" }), e('path', { d: "M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" }), e('path', { d: "M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" }), e('line', { x1: "10", x2: "10", y1: "11", y2: "17" }), e('line', { x1: "14", x2: "14", y1: "11", y2: "17" }));
+    const Info = (props) => e(Icon, props, e('circle', { cx: "12", cy: "12", r: "10" }), e('path', { d: "M12 16v-4" }), e('path', { d: "M12 8h.01" }));
+    const Download = (props) => e(Icon, props, e('path', { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" }), e('polyline', { points: "7 10 12 15 17 10" }), e('line', { x1: "12", x2: "12", y1: "15", y2: "3" }));
+    const Upload = (props) => e(Icon, props, e('path', { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" }), e('polyline', { points: "17 8 12 3 7 8" }), e('line', { x1: "12", x2: "12", y1: "3", y2: "15" }));
+    const Copy = (props) => e(Icon, props, e('rect', { width: "14", height: "14", x: "8", y: "8", rx: "2", ry: "2" }), e('path', { d: "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" }));
+    const Share2 = (props) => e(Icon, props, e('circle', { cx: "18", cy: "5", r: "3" }), e('circle', { cx: "6", cy: "12", r: "3" }), e('circle', { cx: "18", cy: "19", r: "3" }), e('line', { x1: "8.59", x2: "15.42", y1: "13.51", y2: "17.49" }), e('line', { x1: "15.41", x2: "8.59", y1: "6.51", y2: "10.49" }));
+    const Coffee = (props) => e(Icon, props, e('path', { d: "M17 8h1a4 4 0 1 1 0 8h-1" }), e('path', { d: "M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" }), e('line', { x1: "6", x2: "6", y1: "2", y2: "4" }), e('line', { x1: "10", x2: "10", y1: "2", y2: "4" }), e('line', { x1: "14", x2: "14", y1: "2", y2: "4" }));
+
+    // --- 初期状態の定義 ---
+    const initialData = {
+      name: "", date: "", staff: "", count: "",
+      q1: "", q2: "",
+      q3: [], q3Other: "", q4: "",
+      q5: "", q6: 5, q7: [], q7Other: "",
+      q8: [], q8Other: "", q9: [], q9Other: "", q10: 5,
+      q11: [], q11Other: "", q12: "", q13: "",
+      q14: [], q14Other: "", q15: "",
+      q16: "", q17: "",
+      q18_1: "", q18_1_memo: "",
+      q18_2: "", q18_2_memo: "",
+      q18_3: "", q18_3_memo: "",
+      q18_4: "", q18_4_memo: "",
+      q19: "", q20: "",
+      q21_1: "", q21_2: "", q21_3: "", q21_4: "", q21_5: ""
+    };
+
+    const optionsList = {
+      q3: ['通所前', '学習を始める前', '課題でつまずいたとき', '質問・相談したいとき', '報連相が必要なとき', '応募準備のとき', '面接や実習の前', '失敗したあと', '人と比べたとき', '疲れているとき'],
+      q7: ['最悪の予想', '自分へのダメ出し', '過去の失敗の思い出', '先のことを考えすぎる', '「〜すべき」「〜してはいけない」', '人にどう見られるかの不安', '白か黒かで考える'],
+      q8: ['不安', '緊張', '焦り', '恥ずかしさ', '落ち込み', 'いらだち', '無力感', '疲労感'],
+      q9: ['胸が苦しい', '肩や首がこわばる', '胃が重い', '頭が重い', 'そわそわする', '力が入りにくい', '眠気が強い', '涙が出そう'],
+      q11: ['先延ばしした', 'やめた', '席を外した', '別のことをした', '相談しなかった', '質問しなかった', '休んだ', 'ごまかした', 'なんとか少しだけやった'],
+      q14: ['通所', '学習開始', '難しい課題', '質問', '相談', '報連相', '応募', '面接準備', '人との関わり', '振り返り']
+    };
+
+    const STORAGE_KEY = 'worksheet_auto_save_v1';
+    const BACKUP_META = { app: 'mental-care-workbook', workId: 1, schemaVersion: 1 };
+    const BACKUP_ERROR_MESSAGE = 'このワークで保存したバックアップファイルを選んでください。';
+
+    function isValidWorkbookBackup(parsed) {
+      const meta = parsed?._workbookBackup;
+      return meta?.app === BACKUP_META.app && meta?.workId === BACKUP_META.workId && meta?.schemaVersion === BACKUP_META.schemaVersion;
+    }
+
+    function withoutBackupMeta(parsed) {
+      const { _workbookBackup, ...content } = parsed;
+      return content;
+    }
+
+    function App() {
+      const [data, setData] = useState(() => {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (saved) return { ...initialData, ...JSON.parse(saved) };
+        } catch (err) {
+          console.error("ローカルストレージの読み込みに失敗しました", err);
+        }
+        return initialData;
+      });
+      const [viewMode, setViewMode] = useState('edit');
+      const [showClearConfirm, setShowClearConfirm] = useState(false);
+      const [showFinishConfirm, setShowFinishConfirm] = useState(false);
+      const [toastMessage, setToastMessage] = useState(null);
+
+      const targetFields = [
+        'name', 'q1', 'q2', 'q3', 'q4', 'q5', 'q7', 'q8', 'q9',
+        'q11', 'q12', 'q13', 'q14', 'q15', 'q16', 'q17',
+        'q18_1', 'q18_2', 'q18_3', 'q18_4', 'q19', 'q20',
+        'q21_1', 'q21_2', 'q21_3', 'q21_4', 'q21_5'
+      ];
+
+      const calculateProgress = () => {
+        let filledCount = 0;
+        targetFields.forEach(field => {
+          const val = data[field];
+          if (Array.isArray(val)) {
+            if (val.length > 0) filledCount++;
+          } else if (typeof val === 'string' || typeof val === 'number') {
+            if (String(val).trim() !== "") filledCount++;
+          }
+        });
+        return Math.round((filledCount / targetFields.length) * 100);
+      };
+      const progressPercent = calculateProgress();
+
+      const getToastType = (msg) => /ではありません|できません|失敗|読み込めません|バックアップファイル/.test(msg) ? 'error' : 'success';
+
+      const showToast = (msg) => {
+        setToastMessage({ message: msg, type: getToastType(msg) });
+        setTimeout(() => setToastMessage(null), 3000);
+      };
+
+      useEffect(() => {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        } catch (err) {
+          console.error("ローカルストレージへの保存に失敗しました", err);
+        }
+      }, [data]);
+
+      useEffect(() => {
+        const handleProfileMessage = (event) => {
+          if (event.origin !== window.location.origin) return;
+          if (event.data?.type !== 'mental-care-profile') return;
+          const name = event.data.profile?.name || '';
+          setData(prev => prev.name === name ? prev : { ...prev, name });
+        };
+        window.addEventListener('message', handleProfileMessage);
+        return () => window.removeEventListener('message', handleProfileMessage);
+      }, []);
+
+      const handleChange = (field, value) => {
+        setData(prev => ({ ...prev, [field]: value }));
+      };
+
+      const handleNumberChange = (field, value) => {
+        if (value === "") return handleChange(field, "");
+        const num = parseInt(value, 10);
+        if (!isNaN(num)) handleChange(field, Math.max(0, Math.min(10, num)));
+      };
+
+      const handleCheckboxChange = (field, option) => {
+        setData(prev => {
+          const list = prev[field];
+          if (list.includes(option)) return { ...prev, [field]: list.filter(item => item !== option) };
+          return { ...prev, [field]: [...list, option] };
+        });
+      };
+
+      const handleClearData = () => {
+        setData(initialData);
+        setShowClearConfirm(false);
+      };
+
+      const handleCloseWindow = () => {
+        window.close();
+        // 閉じられなかった場合のフォールバック
+        setTimeout(() => {
+          showToast("今日はここまでにしました。入力内容は保存されています。");
+          setShowFinishConfirm(false);
+        }, 300);
+      };
+
+      const generateTextFormat = () => {
+        return `【困っていることを整理する】
+名前: ${data.name || '未記入'}
+記入日: ${data.date || '未記入'}
+
+0. 今いちばん困っていること
+Q1: ${data.q1}
+Q2: ${data.q2}
+
+1. その問題が起きやすい場面を特定する
+Q3: ${[...data.q3, data.q3Other].filter(Boolean).join(', ')}
+Q4: ${data.q4}
+
+2. 頭の中で何が起きていたか
+Q5: ${data.q5}
+Q6: ${data.q6} / 10
+Q7: ${[...data.q7, data.q7Other].filter(Boolean).join(', ')}
+
+3. 気持ち・身体反応・しんどさ
+Q8: ${[...data.q8, data.q8Other].filter(Boolean).join(', ')}
+Q9: ${[...data.q9, data.q9Other].filter(Boolean).join(', ')}
+Q10: ${data.q10} / 10
+
+4. その後、何をしたか
+Q11: ${[...data.q11, data.q11Other].filter(Boolean).join(', ')}
+Q12: ${data.q12}
+Q13: ${data.q13}
+
+5. 何を避けるようになっているか
+Q14: ${[...data.q14, data.q14Other].filter(Boolean).join(', ')}
+Q15: ${data.q15}
+
+6. 問題を広げている背景を整理する
+Q16: ${data.q16}
+Q17: ${data.q17}
+
+7. あなたの問題がどれくらい生活に影響が出ているか
+仕事・学び: ${data.q18_1}
+人間関係: ${data.q18_2}
+健康・生活管理: ${data.q18_3}
+余暇・休息: ${data.q18_4}
+
+8. 本当はどうなりたいか
+Q19: ${data.q19}
+Q20: ${data.q20}
+
+9. 最後のまとめ
+私は、【${data.q21_1 || '　'}】という場面で、【${data.q21_2 || '　'}】に引っぱられて、【${data.q21_3 || '　'}】を避けやすくなっている。それでも、【${data.q21_4 || '　'}】のために、まずは【${data.q21_5 || '　'}】を試してみよう。`;
+      };
+
+      const handleCopyText = () => {
+        const text = generateTextFormat();
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showToast("まとめをコピーしました。");
+      };
+
+      const handleExportJson = () => {
+        const backupData = { ...data, _workbookBackup: BACKUP_META };
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+        const a = document.createElement('a');
+        a.href = dataStr;
+        a.download = `worksheet_${data.name || 'data'}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        showToast("入力内容のバックアップを保存しました。");
+      };
+
+      const handleImportJson = (ev) => {
+        const file = ev.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.readAsText(file, "UTF-8");
+        reader.onload = (event) => {
+          try {
+            const parsed = JSON.parse(event.target.result);
+            if (!isValidWorkbookBackup(parsed)) {
+              showToast(BACKUP_ERROR_MESSAGE);
+              return;
+            }
+            setData(prev => ({ ...prev, ...withoutBackupMeta(parsed) }));
+            showToast("バックアップを読み込みました。");
+          } catch (err) {
+            showToast("バックアップを読み込めませんでした。");
+          }
+        };
+        ev.target.value = null;
+      };
+
+      // --- コンポーネント部品 ---
+      const Section = ({ title, defaultOpen = true, children }) => {
+        const [isOpen, setIsOpen] = useState(defaultOpen);
+        return e('section', { className: "section" },
+          e('button', { onClick: () => setIsOpen(!isOpen), className: "section-btn", type: "button" },
+            e('h2', null, title),
+            isOpen ? e(ChevronUp) : e(ChevronDown)
+          ),
+          isOpen ? e('div', { className: "section-body" }, children) : null
+        );
+      };
+
+      const QuestionLabel = ({ qNum, title, description, htmlFor }) => (
+        e('div', { className: "q-label-wrap" },
+          e('label', { htmlFor: htmlFor, className: "q-label" },
+            e('span', { className: "q-num" }, qNum), title
+          ),
+          description ? e('p', { className: "q-desc" }, description) : null
+        )
+      );
+
+      const TextAreaField = ({ field, rows = 3, placeholder }) => (
+        e('textarea', {
+          id: field, className: "form-textarea", rows: rows,
+          value: data[field], onChange: (ev) => handleChange(field, ev.target.value),
+          placeholder: placeholder
+        })
+      );
+
+      const CheckboxGroup = ({ field, options, otherField }) => (
+        e('fieldset', { className: "cb-group" },
+          e('div', { className: "cb-grid" },
+            ...options.map((option, idx) => {
+              const id = `${field}_${idx}`;
+              return e('div', { key: option, className: "cb-item" },
+                e('input', { id: id, type: "checkbox", className: "cb-input", checked: data[field].includes(option), onChange: () => handleCheckboxChange(field, option) }),
+                e('label', { htmlFor: id, className: "cb-label" }, option)
+              );
+            }),
+            otherField ? e('div', { className: "cb-other" },
+              e('label', { htmlFor: otherField, className: "cb-other-label" }, "その他："),
+              e('input', { id: otherField, type: "text", className: "cb-other-input", value: data[otherField], onChange: (ev) => handleChange(otherField, ev.target.value) })
+            ) : null
+          )
+        )
+      );
+
+      const RangeSlider = ({ field, minLabel, maxLabel }) => (
+        e('div', { className: "range-wrap" },
+          e('input', { id: field, type: "range", min: "0", max: "10", className: "range-input", value: data[field], onChange: (ev) => handleChange(field, parseInt(ev.target.value)) }),
+          e('div', { className: "range-labels" },
+            e('span', null, `0 (${minLabel})`),
+            e('span', { className: "range-val" }, data[field]),
+            e('span', null, `10 (${maxLabel})`)
+          )
+        )
+      );
+
+      const RenderSummaryValue = ({ value }) => {
+        if (Array.isArray(value)) return value.length > 0 ? value.join(', ') : e('span', { className: "result-val-empty" }, "未選択");
+        return value ? value : e('span', { className: "result-val-empty" }, "未入力");
+      };
+
+      // --- UI構築部分 ---
+      const coffeeButton = null;
+
+      const header = e('div', { className: "header print-hidden" },
+        e('div', { className: "header-title-wrap" }, e(FileText, { className: "header-icon" }), e('h1', { className: "header-title" }, "困っていることを整理する")),
+        e('div', { className: "header-actions" },
+          viewMode === 'edit'
+            ? e('button', { onClick: () => setViewMode('summary'), className: "btn btn-blue" }, e(CheckSquare), "まとめを確認")
+            : e(React.Fragment, null,
+                e('button', { onClick: () => setViewMode('edit'), className: "btn btn-slate" }, e(ArrowLeft), "入力に戻る"),
+                e('button', { onClick: () => window.print(), className: "btn btn-emerald" }, e(Printer), "印刷・PDF保存")
+              )
+        )
+      );
+
+      const printHeader = e('div', { className: "print-only-header" },
+        e('h1', { className: "print-only-title" }, "困っていることを整理する")
+      );
+
+      const progressBar = viewMode === 'edit' ? e('div', { className: "progress-wrap print-hidden" },
+        e('div', { className: "progress-text" }, e('span', null, "入力の進捗状況"), e('span', null, `${progressPercent}%`)),
+        e('div', { className: "progress-bg" }, e('div', { className: "progress-fill", style: { width: `${progressPercent}%` } }))
+      ) : null;
+
+      // 編集モードUI
+      const infoBox = e('div', { className: "info-box" },
+        e('p', null, e(Info), "記入にあたって"),
+        e('ul', null,
+          e('li', null, e('strong', null, "まずすること："), "今いちばん困っていることを、短く書けるところから整理します。"),
+          e('li', null, e('strong', null, "途中で止めてよいこと："), "書いていてしんどさが強くなったら、いったん止めて大丈夫です。職員に声をかけてもかまいません。"),
+          e('li', null, e('strong', null, "保存について："), "入力内容はこの端末に自動保存されます。外部には送信されません。")
+        ),
+        e('p', { className: "support-note" }, "全部を埋めなくても大丈夫です。今書けるところだけで進めます。"),
+        e('details', { className: "supplement-details" },
+          e('summary', null, "くわしい説明を見る"),
+          e('ul', null,
+            e('li', null, e('strong', null, "このワークの目的："), "今つらいこと・うまくいかないことを、ただ「自分がだめだから」とまとめずに、どんな場面で何が自分を止めているのかを見える形にすることです。"),
+            e('li', null, "最後まで書くことや、きれいにまとめることが目的ではありません。"),
+            e('li', null, "思い出しにくい項目は、空欄のまま進めてもかまいません。")
+          )
+        )
+      );
+
+      const infoGrid = e('div', { className: "info-grid" },
+        e('div', null,
+          e('label', { htmlFor: "info_name", className: "label-title" }, "名前"),
+          e('input', { id: "info_name", type: "text", className: "form-input", value: data.name, readOnly: true, placeholder: "表紙で入力" }),
+          e('p', { style: { fontSize: '0.75rem', color: 'var(--slate-500)', marginTop: '0.25rem' } }, "表紙から反映されます")
+        ),
+        e('div', null, e('label', { htmlFor: "info_date", className: "label-title" }, "記入日"), e('input', { id: "info_date", type: "date", className: "form-input", value: data.date, onChange: ev => handleChange('date', ev.target.value) })),
+        e('div', null, e('label', { htmlFor: "info_staff", className: "label-title" }, "担当職員"), e('input', { id: "info_staff", type: "text", className: "form-input", value: data.staff, onChange: ev => handleChange('staff', ev.target.value) })),
+        e('div', null, e('label', { htmlFor: "info_count", className: "label-title" }, "回数"), e('input', { id: "info_count", type: "text", className: "form-input", value: data.count, onChange: ev => handleChange('count', ev.target.value) }))
+      );
+
+      const sec0 = e(Section, { title: "0. 今いちばん困っていること" },
+        e('div', null, e(QuestionLabel, { qNum: "Q1.", title: "今、いちばん困っていることは何ですか。1〜2文で書いてください。", htmlFor: "q1" }), e(TextAreaField, { field: "q1" })),
+        e('div', null, e(QuestionLabel, { qNum: "Q2.", title: "それは生活や就労準備にどう影響していますか。", htmlFor: "q2" }), e(TextAreaField, { field: "q2" }))
+      );
+
+      const sec1 = e(Section, { title: "1. その問題が起きやすい場面を特定する" },
+        e('div', null, e(QuestionLabel, { qNum: "Q3.", title: "あなたの困っていることはどんなときに起きやすいですか。（複数可）" }), e(CheckboxGroup, { field: "q3", options: optionsList.q3, otherField: "q3Other" })),
+        e('div', null, e(QuestionLabel, { qNum: "Q4.", title: "直近で困っていることが起きた時の具体例を1つ書いてください。", htmlFor: "q4" }), e(TextAreaField, { field: "q4" }))
+      );
+
+      const sec2 = e(Section, { title: "2. 頭の中で何が起きていたか" },
+        e('div', null, e(QuestionLabel, { qNum: "Q5.", title: "そのとき、頭の中ではどんな通知が出ていましたか。", description: "※通知＝頭の中に自動で浮かぶ言葉やイメージのことです。", htmlFor: "q5" }), e(TextAreaField, { field: "q5", rows: 2 })),
+        e('div', null, e(QuestionLabel, { qNum: "Q6.", title: "どのくらいその通知が頭の中を埋めつくしていたか、0点～10点で表現してみてください。", htmlFor: "q6" }), e(RangeSlider, { field: "q6", minLabel: "ほとんどない", maxLabel: "ほとんどすべて" })),
+        e('div', null, e(QuestionLabel, { qNum: "Q7.", title: "他に思い浮かぶ通知はどんなタイプが多いですか。（複数可）" }), e(CheckboxGroup, { field: "q7", options: optionsList.q7, otherField: "q7Other" }))
+      );
+
+      const sec3 = e(Section, { title: "3. 気持ち・身体反応・しんどさ" },
+        e('div', null, e(QuestionLabel, { qNum: "Q8.", title: "困ったことが起きた時、どんな気持ちがありましたか。（複数可）" }), e(CheckboxGroup, { field: "q8", options: optionsList.q8, otherField: "q8Other" })),
+        e('div', null, e(QuestionLabel, { qNum: "Q9.", title: "気持ちとともに、体にはどんな反応が出ていましたか。（複数可）" }), e(CheckboxGroup, { field: "q9", options: optionsList.q9, otherField: "q9Other" })),
+        e('div', null, e(QuestionLabel, { qNum: "Q10.", title: "感じた気持ちを消したくなった強さはどれくらいでしたか。0点～10点で表現してみてください。", htmlFor: "q10" }), e(RangeSlider, { field: "q10", minLabel: "ほとんどない", maxLabel: "とても強い" }))
+      );
+
+      const sec4 = e(Section, { title: "4. その後、何をしたか" },
+        e('div', null, e(QuestionLabel, { qNum: "Q11.", title: "その困っていることが起きた場面で、あなたは実際にどんな行動をとりましたか。（複数可）" }), e(CheckboxGroup, { field: "q11", options: optionsList.q11, otherField: "q11Other" })),
+        e('div', null, e(QuestionLabel, { qNum: "Q12.", title: "その行動で、その場では何が楽になりましたか。", htmlFor: "q12" }), e(TextAreaField, { field: "q12", rows: 2 })),
+        e('div', null, e(QuestionLabel, { qNum: "Q13.", title: "その行動は、長い目で見ると何にどう影響しましたか。", htmlFor: "q13" }), e(TextAreaField, { field: "q13", rows: 2 }))
+      );
+
+      const sec5 = e(Section, { title: "5. 何を避けるようになっているか" },
+        e('div', null, e(QuestionLabel, { qNum: "Q14.", title: "最近、避けることが増えているものは何ですか。（複数可）" }), e(CheckboxGroup, { field: "q14", options: optionsList.q14, otherField: "q14Other" })),
+        e('div', null, e(QuestionLabel, { qNum: "Q15.", title: "本当は必要だと思っているのに後回しになっていることは何ですか。", htmlFor: "q15" }), e(TextAreaField, { field: "q15", rows: 2 }))
+      );
+
+      const sec6 = e(Section, { title: "6. 問題を広げている背景を整理する" },
+        e('div', null, e(QuestionLabel, { qNum: "Q16.", title: "ここで出ている問題に関係しそうな自分の考え・思考以外の事情はありますか。", htmlFor: "q16" }), e(TextAreaField, { field: "q16" })),
+        e('div', null, e(QuestionLabel, { qNum: "Q17.", title: "スキルややり方の問題はありますか。", htmlFor: "q17" }), e(TextAreaField, { field: "q17" }))
+      );
+
+      const sec7 = e(Section, { title: "7. あなたの問題がどれくらい生活に影響が出ているか" },
+        e('p', { className: "table-desc" }, "（0 = ほとんどない / 10 = とても強い）"),
+        e('div', { className: "table-wrap" },
+          e('table', { className: "score-table" },
+            e('thead', null, e('tr', null, e('th', null, "領域"), e('th', { className: "center" }, "点数 (0-10)"), e('th', null, "メモ"))),
+            e('tbody', null,
+              [{ id: 'q18_1', label: '仕事・学び' }, { id: 'q18_2', label: '人間関係' }, { id: 'q18_3', label: '健康・生活管理' }, { id: 'q18_4', label: '余暇・休息' }].map(item =>
+                e('tr', { key: item.id },
+                  e('td', { className: "td-label" }, e('label', { htmlFor: item.id }, item.label)),
+                  e('td', { className: "center nopad" }, e('div', { style: { padding: '0.75rem' } }, e('input', { id: item.id, type: "number", min: "0", max: "10", className: "td-number", value: data[item.id], onChange: (ev) => handleNumberChange(item.id, ev.target.value) }))),
+                  e('td', { className: "nopad" }, e('input', { id: `${item.id}_memo`, type: "text", className: "td-memo", placeholder: "メモを入力...", value: data[`${item.id}_memo`], onChange: (ev) => handleChange(`${item.id}_memo`, ev.target.value) }))
+                )
+              )
+            )
+          )
+        )
+      );
+
+      const sec8 = e(Section, { title: "8. 本当はどうなりたいか" },
+        e('div', null, e(QuestionLabel, { qNum: "Q19.", title: "このしんどさがあっても、少しでも向かいたいことは何ですか。", htmlFor: "q19" }), e(TextAreaField, { field: "q19" })),
+        e('div', null, e(QuestionLabel, { qNum: "Q20.", title: "その向かい方に近づくために、今できる最小の一歩は何ですか。", htmlFor: "q20" }), e(TextAreaField, { field: "q20" }))
+      );
+
+      const sec9 = e(Section, { title: "9. 最後のまとめ" },
+        e(QuestionLabel, { qNum: "Q21.", title: "この問題の中心を一言でまとめると何ですか。" }),
+        e('div', { className: "summary-box" },
+          "私は、", e('input', { id: "q21_1", type: "text", className: "inline-input", placeholder: "（場面）", value: data.q21_1, onChange: (ev) => handleChange('q21_1', ev.target.value) }), "という場面で、", e('br', { className: "break-sm" }),
+          e('input', { id: "q21_2", type: "text", className: "inline-input", placeholder: "（考えやしんどさ）", value: data.q21_2, onChange: (ev) => handleChange('q21_2', ev.target.value) }), "に引っぱられて、", e('br', { className: "break-sm" }),
+          e('input', { id: "q21_3", type: "text", className: "inline-input", placeholder: "（避ける行動）", value: data.q21_3, onChange: (ev) => handleChange('q21_3', ev.target.value) }), "を避けやすくなっている。",
+          e('div', { className: "summary-box-bottom" },
+            "それでも、", e('input', { id: "q21_4", type: "text", className: "inline-input", placeholder: "（向かいたい方向）", value: data.q21_4, onChange: (ev) => handleChange('q21_4', ev.target.value) }), "のために、まずは",
+            e('input', { id: "q21_5", type: "text", className: "inline-input", placeholder: "（小さな行動）", value: data.q21_5, onChange: (ev) => handleChange('q21_5', ev.target.value) }), "を試してみよう。"
+          )
+        )
+      );
+
+      const editModeUI = e(React.Fragment, null,
+        infoBox, infoGrid, sec0, sec1, sec2, sec3, sec4, sec5, sec6, sec7, sec8, sec9,
+        e('div', { className: "bottom-actions" },
+          e('button', { onClick: () => { setViewMode('summary'); window.scrollTo(0, 0); }, className: "btn-large" }, e(CheckSquare), "入力した内容を確認する"),
+          e('button', { onClick: () => setShowClearConfirm(true), className: "btn-link" }, e(Trash2), "入力内容をすべて消去する")
+        )
+      );
+
+      // サマリーモードUI
+      const summaryItems = [
+        { title: "0. 今いちばん困っていること", items: [{ q: "Q1. 今、いちばん困っていることは何ですか。", val: data.q1 }, { q: "Q2. それは生活や就労準備にどう影響していますか。", val: data.q2 }]},
+        { title: "1. その問題が起きやすい場面を特定する", items: [{ q: "Q3. 困っていることはどんなときに起きやすいですか。", val: [...data.q3, data.q3Other ? `その他：${data.q3Other}` : null].filter(Boolean) }, { q: "Q4. 直近で困っていることが起きた時の具体例", val: data.q4 }]},
+        { title: "2. 頭の中で何が起きていたか", items: [{ q: "Q5. 頭の中ではどんな通知が出ていましたか。", val: data.q5 }, { q: "Q6. その通知が頭の中を埋めつくしていたか (0-10)", val: e('span', { className: "result-val-score" }, `${data.q6} / 10`) }, { q: "Q7. 他に思い浮かぶ通知はどんなタイプが多いですか。", val: [...data.q7, data.q7Other ? `その他：${data.q7Other}` : null].filter(Boolean) }]},
+        { title: "3. 気持ち・身体反応・しんどさ", items: [{ q: "Q8. どんな気持ちがありましたか。", val: [...data.q8, data.q8Other ? `その他：${data.q8Other}` : null].filter(Boolean) }, { q: "Q9. 体にはどんな反応が出ていましたか。", val: [...data.q9, data.q9Other ? `その他：${data.q9Other}` : null].filter(Boolean) }, { q: "Q10. 気持ちを消したくなった強さ (0-10)", val: e('span', { className: "result-val-score" }, `${data.q10} / 10`) }]},
+        { title: "4. その後、何をしたか", items: [{ q: "Q11. 実際にどんな行動をとりましたか。", val: [...data.q11, data.q11Other ? `その他：${data.q11Other}` : null].filter(Boolean) }, { q: "Q12. その行動で、その場では何が楽になりましたか。", val: data.q12 }, { q: "Q13. その行動は、長い目で見ると何にどう影響しましたか。", val: data.q13 }]},
+        { title: "5. 何を避けるようになっているか", items: [{ q: "Q14. 最近、避けることが増えているものは何ですか。", val: [...data.q14, data.q14Other ? `その他：${data.q14Other}` : null].filter(Boolean) }, { q: "Q15. 本当は必要だと思っているのに後回しになっていること", val: data.q15 }]},
+        { title: "6. 問題を広げている背景を整理する", items: [{ q: "Q16. 自分の考え・思考以外の事情", val: data.q16 }, { q: "Q17. スキルややり方の問題", val: data.q17 }]}
+      ];
+
+      const summaryModeUI = e('div', { className: "result-container" },
+        e('div', { className: "result-actions print-hidden" },
+          e('div', { className: "result-actions-title" }, e(Share2), "まとめを残す"),
+          e('div', { className: "result-btn-group" },
+            e('button', { onClick: handleCopyText, className: "btn btn-outline" }, e(Copy), "まとめをコピー")
+          )
+        ),
+        e('div', { className: "result-info" },
+          e('div', { className: "result-info-item" }, e('span', { className: "result-info-label" }, "名前:"), e('span', { className: "result-info-val" }, data.name || '　')),
+          e('div', { className: "result-info-item" }, e('span', { className: "result-info-label" }, "日付:"), e('span', { className: "result-info-val" }, data.date || '　')),
+          e('div', { className: "result-info-item" }, e('span', { className: "result-info-label" }, "担当:"), e('span', { className: "result-info-val" }, data.staff || '　')),
+          e('div', { className: "result-info-item" }, e('span', { className: "result-info-label" }, "回数:"), e('span', { className: "result-info-val" }, data.count || '　'))
+        ),
+        e('div', { className: "print-block" },
+          summaryItems.map((section, idx) =>
+            e('div', { key: idx, className: "result-section" },
+              e('h3', { className: "result-section-title" }, section.title),
+              e('div', null, section.items.map((item, i) =>
+                e('div', { key: i, className: "result-item" },
+                  e('p', { className: "result-item-q" }, item.q),
+                  e('div', { className: "result-item-val" }, e(RenderSummaryValue, { value: item.val }))
+                )
+              ))
+            )
+          ),
+          e('div', { className: "result-section" },
+            e('h3', { className: "result-section-title" }, "7. あなたの問題がどれくらい生活に影響が出ているか"),
+            e('table', { className: "result-table" },
+              e('thead', null, e('tr', null, e('th', null, "領域"), e('th', { className: "center" }, "点数"), e('th', null, "メモ"))),
+              e('tbody', null,
+                [{ id: 'q18_1', label: '仕事・学び' }, { id: 'q18_2', label: '人間関係' }, { id: 'q18_3', label: '健康・生活管理' }, { id: 'q18_4', label: '余暇・休息' }].map(item =>
+                  e('tr', { key: item.id },
+                    e('td', { className: "label" }, item.label), e('td', { className: "center" }, data[item.id]), e('td', null, data[`${item.id}_memo`])
+                  )
+                )
+              )
+            )
+          ),
+          e('div', { className: "result-section" },
+            e('h3', { className: "result-section-title" }, "8. 本当はどうなりたいか"),
+            e('div', null,
+              e('div', { className: "result-item" }, e('p', { className: "result-item-q" }, "Q19. このしんどさがあっても、少しでも向かいたいことは何ですか。"), e('div', { className: "result-item-val" }, e(RenderSummaryValue, { value: data.q19 }))),
+              e('div', { className: "result-item" }, e('p', { className: "result-item-q" }, "Q20. その向かい方に近づくために、今できる最小の一歩は何ですか。"), e('div', { className: "result-item-val" }, e(RenderSummaryValue, { value: data.q20 })))
+            )
+          ),
+          e('div', { className: "result-section" },
+            e('h3', { className: "result-section-title" }, "9. 最後のまとめ"),
+            e('div', { className: "result-summary-box" },
+              e('p', { className: "result-summary-p" }, "私は、", e('span', { className: "result-summary-blank" }, data.q21_1 || '＿＿＿＿'), "という場面で、", e('span', { className: "result-summary-blank" }, data.q21_2 || '＿＿＿＿'), "という考えやしんどさに引っぱられて、", e('span', { className: "result-summary-blank" }, data.q21_3 || '＿＿＿＿'), "を避けやすくなっている。"),
+              e('p', { className: "result-summary-p" }, "それでも、", e('span', { className: "result-summary-blank" }, data.q21_4 || '＿＿＿＿'), "のために、まずは", e('span', { className: "result-summary-blank" }, data.q21_5 || '＿＿＿＿'), "を試してみよう。")
+            )
+          )
+        )
+      );
+
+      // モーダル・トースト
+      const finishConfirmModal = showFinishConfirm ? e('div', { className: "modal-overlay print-hidden" },
+        e('div', { className: "modal-content-lg" },
+          e('div', { className: "modal-top-bar" }),
+          e(Coffee, { className: "modal-icon-center" }),
+          e('h3', { className: "modal-title-center" }, "今日はここまでにしますか？"),
+          e('div', { className: "modal-text-center" }, e('p', null, "入力内容は保存されています。"), e('p', null, "続きは、また余裕のあるときで大丈夫です。")),
+          e('div', { className: "modal-actions-center" },
+            e('button', { onClick: handleCloseWindow, className: "btn-modal-dark" }, "このまま閉じる"),
+            e('button', { onClick: () => setShowFinishConfirm(false), className: "btn-modal-outline" }, "戻る")
+          )
+        )
+      ) : null;
+
+      const clearConfirmModal = showClearConfirm ? e('div', { className: "modal-overlay print-hidden" },
+        e('div', { className: "modal-content-sm" },
+          e('h3', { className: "modal-title-left" }, e(Trash2), "入力内容の消去"),
+          e('p', { className: "modal-text-left" }, "これまで入力した内容と、この端末に保存された内容をすべて消去します。", e('br'), "この操作は取り消せません。よろしいですか？"),
+          e('div', { className: "modal-actions-right" },
+            e('button', { onClick: () => setShowClearConfirm(false), className: "btn-ghost" }, "キャンセル"),
+            e('button', { onClick: handleClearData, className: "btn-red" }, "すべて消去する")
+          )
+        )
+      ) : null;
+
+      const toast = toastMessage ? e('div', { className: "toast-wrap print-hidden" },
+        e('div', { className: `toast-box toast-${toastMessage.type}` }, e(Info), toastMessage.message)
+      ) : null;
+
+      return e('div', { className: "app-wrapper" },
+        coffeeButton,
+        e('div', { className: "app-container" },
+          header, printHeader, progressBar,
+          e('div', { className: "content-pad" }, viewMode === 'edit' ? editModeUI : summaryModeUI)
+        ),
+        finishConfirmModal, clearConfirmModal, toast
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(e(App));
+    function completeMentalCareFinish() {
+      try {
+        if (typeof saveToStorage === 'function') saveToStorage();
+        if (typeof saveState === 'function') saveState();
+        if (typeof saveAppState === 'function') saveAppState();
+      } catch (err) {
+        console.warn('終了時の保存処理に失敗しました', err);
+      }
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'mental-care-finish-complete' }, window.location.origin);
+      }
+    }
+
+    window.addEventListener('message', (event) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== 'mental-care-finish') return;
+      completeMentalCareFinish();
+    });
+</script>
+</body>
+</html>
