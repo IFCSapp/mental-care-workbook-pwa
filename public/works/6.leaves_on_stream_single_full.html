@@ -569,7 +569,8 @@
         @media (hover: none) and (pointer: coarse) {
             #screen-main #main-guide,
             #screen-main .watch-entry-note,
-            #screen-main .control-bar { display: none !important; }
+            #screen-main .control-bar,
+            #screen-main #btn-add-leaf { display: none !important; }
         }
         .viewing-mode .control-bar { display: none; }
         @media (orientation: landscape) and (max-height: 560px) {
@@ -927,7 +928,7 @@
                 
                 <div id="input-container">
                     <label for="leaf-input" class="input-label">今、頭の中に浮かんでいる言葉を短く書きます</label>
-                    <input type="text" id="leaf-input" placeholder="短く書きます..." autocomplete="off">
+                    <input type="text" id="leaf-input" placeholder="短く書きます..." autocomplete="off" enterkeyhint="enter">
                     <button id="btn-add-leaf" class="primary" style="width: 100%; margin-right: 0;">葉に乗せる</button>
                 </div>
 
