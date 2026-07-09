@@ -562,6 +562,10 @@
         .watch-entry-note { font-size: 13px; line-height: 1.6; margin: 6px 0 0; opacity: 0.78; }
         .watch-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
         .watch-controls button { margin: 0; }
+        @media (hover: hover) and (pointer: fine) {
+            .watch-controls,
+            .watch-entry-note { display: none; }
+        }
         .viewing-mode .control-bar { display: none; }
         @media (orientation: landscape) and (max-height: 560px) {
             #screen-main.viewing-mode .main-layout { flex: 1 1 auto; }
