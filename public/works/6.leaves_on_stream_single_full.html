@@ -566,6 +566,11 @@
             .watch-controls,
             .watch-entry-note { display: none; }
         }
+        @media (hover: none) and (pointer: coarse) {
+            #screen-main #main-guide,
+            #screen-main .watch-entry-note,
+            #screen-main .control-bar { display: none !important; }
+        }
         .viewing-mode .control-bar { display: none; }
         @media (orientation: landscape) and (max-height: 560px) {
             #screen-main.viewing-mode .main-layout { flex: 1 1 auto; }
@@ -1097,6 +1102,10 @@
                 layer.style.setProperty('--canopy-duration', `${duration}s`);
                 layer.style.setProperty('--canopy-shift-x', `${shiftX}px`);
                 layer.style.setProperty('--canopy-shift-y', `${shiftY}px`);
+            },
+
+            isMobileTouch() {
+                return window.matchMedia('(hover: none) and (pointer: coarse)').matches;
             },
 
             // ==========================================
@@ -1807,7 +1816,7 @@
                     this.drawDebugCorridor(river.clientWidth, river.clientHeight);
                 }
 
-                this.setMode('guide');
+                this.setMode(this.isMobileTouch() ? 'input' : 'guide');
                 this.startAutoLeaves();
             },
 
