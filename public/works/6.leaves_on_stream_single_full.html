@@ -571,6 +571,60 @@
             #screen-main.viewing-mode .main-layout { flex: 1 1 auto; }
             #screen-main.viewing-mode .river-area { height: auto; }
             #screen-main.viewing-mode .ui-area { right: 12px; bottom: 14px; width: min(340px, 44vw); max-height: calc(100vh - 28px); }
+
+            #screen-main:not(.viewing-mode) .main-layout {
+                min-height: 0;
+                overflow: hidden;
+            }
+            #screen-main:not(.viewing-mode) .river-area {
+                min-height: 150px;
+            }
+            #screen-main:not(.viewing-mode) .ui-area {
+                min-height: 0;
+                overflow-y: auto;
+                padding: 12px 16px;
+            }
+            #screen-main:not(.viewing-mode) .guide-text {
+                min-height: 0;
+                margin-bottom: 10px;
+                font-size: 15px;
+                line-height: 1.5;
+            }
+            #screen-main:not(.viewing-mode) #input-container { margin-top: 8px; }
+            #screen-main:not(.viewing-mode) .input-label { margin-bottom: 6px; }
+            #screen-main:not(.viewing-mode) input[type="text"] { min-height: 40px; }
+
+            #screen-main:not(.viewing-mode) .control-bar {
+                height: 52px;
+                min-height: 52px;
+                flex-shrink: 0;
+                padding: 4px 12px;
+                gap: 8px;
+                overflow-x: auto;
+                overflow-y: hidden;
+                white-space: nowrap;
+                -webkit-overflow-scrolling: touch;
+            }
+            #screen-main:not(.viewing-mode) .mode-selector,
+            #screen-main:not(.viewing-mode) .control-actions {
+                gap: 6px;
+                margin-left: 0;
+                flex-wrap: nowrap;
+            }
+            #screen-main:not(.viewing-mode) .mode-btn,
+            #screen-main:not(.viewing-mode) #btn-finish-main {
+                min-height: 40px;
+                height: 40px;
+                padding: 6px 12px;
+                margin: 0;
+                font-size: 14px;
+                line-height: 1.25;
+                white-space: nowrap;
+            }
+            #screen-main:not(.viewing-mode) #btn-finish-main {
+                flex: 0 0 auto;
+                margin-left: auto;
+            }
         }
         @media (max-width: 768px) {
             #screen-main.viewing-mode .main-layout { flex-direction: column; }
