@@ -142,13 +142,18 @@ try {
   record('React and ReactDOM bundled locally', localReact && !externalReact, { localReact, externalReact });
 
   // PWA repository contract: keep deploy/base-path files and scope-safe registration intact.
-  const [indexHtml, mainJs, viteConfig, manifestText, swText, pagesWorkflow] = await Promise.all([
+  const [indexHtml, mainJs, viteConfig, manifestText, swText, pagesWorkflow, policyJs, finishBridge, headersText, releaseOriginScript, packageText] = await Promise.all([
     readFile(path.join(root, 'index.html'), 'utf8'),
     readFile(path.join(root, 'src/main.js'), 'utf8'),
     readFile(path.join(root, 'vite.config.js'), 'utf8'),
     readFile(path.join(root, 'public/manifest.webmanifest'), 'utf8'),
     readFile(path.join(root, 'public/sw.js'), 'utf8'),
     readFile(path.join(root, '.github/workflows/pages.yml'), 'utf8'),
+    readFile(path.join(root, 'src/work-data-policy.js'), 'utf8'),
+    readFile(path.join(root, 'public/works/finish-handshake.js'), 'utf8'),
+    readFile(path.join(root, 'public/_headers'), 'utf8'),
+    readFile(path.join(root, 'scripts/verify-release-origin.mjs'), 'utf8'),
+    readFile(path.join(root, 'package.json'), 'utf8'),
   ]);
   const manifest = JSON.parse(manifestText);
   const iconFiles = await Promise.all(['icon.svg', 'icon-192.png', 'icon-512.png'].map(async file => {
@@ -162,76 +167,116 @@ try {
   const work6PwaMarkers = ['btn-watch-landscape', 'enterViewingMode()', 'requestFullscreen', "screen.orientation.lock('landscape')", 'viewing-mode', 'btn-close-viewing-mode'];
   record('work6 PWA viewing mode and fail-soft landscape entry preserved', work6PwaMarkers.every(marker => allWorkFiles[5].includes(marker)), { markers: work6PwaMarkers });
 
+  const expectedModes = ['persisted', 'persisted', 'ephemeral', 'ephemeral', 'persisted', 'ephemeral', 'ephemeral', 'persisted'];
   const finishContracts = allWorkFiles.map((content, index) => ({
     work: index + 1,
-    listens: content.includes("event.data?.type !== 'mental-care-finish'"),
-    completes: content.includes("type: 'mental-care-finish-complete'"),
+    sharedBridge: content.includes('finish-handshake.js'),
+    mode: content.includes(`workId: ${index + 1}, mode: '${expectedModes[index]}'`),
   }));
-  record('all eight works keep finish/save handshake', finishContracts.every(item => item.listens && item.completes), { finishContracts });
-  record('work1 staged sections keep only section 0 initially open', allWorkFiles[0].includes('defaultOpen = false') && allWorkFiles[0].includes('title: "0. 今いちばん困っていること", defaultOpen: true'), {});
+  const bridgeContract = ["event.data?.type !== 'mental-care-finish'", "type: 'mental-care-finish-result'", 'savedAt', 'errorCode', 'requires an explicit save callback', 'getRecoveryText'].every(marker => finishBridge.includes(marker));
+  record('P0-03 all eight works use result handshake', finishContracts.every(item => item.sharedBridge && item.mode) && bridgeContract && mainJs.includes("event.data?.type !== 'mental-care-finish-result'"), { finishContracts, bridgeContract });
 
-  // Work 1 regression: input state updates must not remount controls or reset disclosure state.
+  const policyModes = [1, 2, 5, 8].every(id => policyJs.includes(`${id}: Object.freeze({ mode: 'persisted'`))
+    && [3, 4, 6, 7].every(id => policyJs.includes(`${id}: Object.freeze({ mode: 'ephemeral'`));
+  record('P0-02 single work data policy matches persisted and ephemeral works', policyModes && policyJs.includes("storageKey: 'worksheet_auto_save_v1'") && policyJs.includes("storageKey: 'control_map_state_v1'"), {});
+
+  const boundaryMarkers = ['診断や治療でもありません', '危険や暴力、不当な状況にとどまることではありません', '記録型', '体験型', 'work1・2・5・8', 'work3・4・6・7', '本人の明示的な同意なく内容をコピー・印刷・提出しないでください'];
+  record('P0-01/P0-07/P0-09 purpose, safety, data and supporter boundaries are visible', boundaryMarkers.every(marker => mainJs.includes(marker)), { boundaryMarkers });
+
+  const forbiddenClaims = [/治ります/g, /改善します/g, /効果があります/g, /正しい考え/g, /今回わかった事実/g, /下がらない[」』\s]*という事実/g, /人生(?:の可能性)?を狭め(?:る|て)/g];
+  const learnerSource = [mainJs, ...allWorkFiles].join('\n');
+  const claimHits = forbiddenClaims.flatMap(pattern => Array.from(learnerSource.matchAll(pattern), match => match[0]));
+  record('P0-04 claim inventory has zero prohibited deterministic claims', claimHits.length === 0, { claimHits });
+
+  const work4Neutral = !allWorkFiles[3].includes('reboundBaseWords') && !allWorkFiles[3].includes('spawnReboundNotification') && !allWorkFiles[3].includes("className = 'status safe'") && !allWorkFiles[3].includes("className = 'status alert'");
+  record('P0-05 work4 has no automatic negative notifications or evaluative toggle state', work4Neutral, {});
+  record('P0-06 work7 keeps the authored action and states non-save behavior', allWorkFiles[6].includes('state.actionText = actionInput.value') && allWorkFiles[6].includes('あなたが入力したこと') && allWorkFiles[6].includes('このワークの入力は保存されません'), {});
+
+  const thirdPartyScripts = allWorkFiles.flatMap((content, index) => Array.from(content.matchAll(/<script[^>]+src=["'](https?:\/\/[^"']+)/gi), match => ({ work: index + 1, src: match[1] })));
+  const releasePackage = JSON.parse(packageText);
+  const releaseBoundary = releasePackage.scripts['build:release']?.includes('verify-release-origin.mjs') && releaseOriginScript.includes('VITE_PRODUCT_ORIGIN') && releaseOriginScript.includes('sharedOrigins') && headersText.includes("script-src 'self'") && thirdPartyScripts.length === 0;
+  record('P0-10 dedicated release origin gate and self-only third-party script boundary', releaseBoundary, { thirdPartyScripts });
+  record('P1A work1 starts with five visible fields and optional detail disclosure', ['basicScene', 'basicNotice', 'basicAction', 'basicImmediate', 'basicLater', 'もう少し詳しく整理する（任意）'].every(marker => allWorkFiles[0].includes(marker)) && !allWorkFiles[0].includes('入力の進捗'), {});
+  record('P1A work2 records function by selected behavior without category verdict', ['behaviorContexts', '助けになった場面・条件', '負担が増えた場面・条件', '大切なことへの影響', 'カテゴリを選んだだけで、良い・悪いの結論は出しません'].every(marker => allWorkFiles[1].includes(marker)), {});
+  record('P1A work5 uses learner-selected support focus instead of importance/execution UI', ['supportFocus', '難しくする条件', '助けになる条件', '使えるとよい支えや資源', '休む、頼む、延期する、やらない'].every(marker => allWorkFiles[4].includes(marker)) && !allWorkFiles[4].includes('全くできていない (0)') && !allWorkFiles[4].includes('十分にできている (10)'), {});
+  record('P1A work8 uses condition-based labels and non-numeric continuation checks', ['今の条件で、自分だけでは動かしにくいこと', '今の条件で、人や環境に働きかけられるかもしれないこと', '今の条件で、自分が選べる可能性があること', 'continuation-status', 'continuation-support', 'continuation-alternative'].every(marker => allWorkFiles[7].includes(marker)) && !allWorkFiles[7].includes('id="distress-before"'), {});
+
+  const { migrateWorkData, migrateStoredEntries, migrateWorkbookStorage } = await import(path.join(root, 'src/work-data-policy.js'));
+  const legacyFixtures = {
+    1: { q1: '旧work1', untouched: { nested: true } },
+    2: { dots: { D: { checks: ['テレビを見る'], other: '' } }, impact: { shortTermHelp: '旧work2' } },
+    5: { domainData: { 健康: { importance: 8, execution: 3, memo: '旧work5' } } },
+    8: { distress: { before: '9', afterStep4: '7', end: '8' }, nextStep: { action: '旧work8' } },
+  };
+  const migratedFixtures = Object.fromEntries(Object.entries(legacyFixtures).map(([id, fixture]) => [id, migrateWorkData(Number(id), fixture)]));
+  const migrationPreservesLegacy = migratedFixtures[1].q1 === '旧work1'
+    && migratedFixtures[1].untouched.nested
+    && migratedFixtures[2].dots.D.checks[0] === 'テレビを見る'
+    && migratedFixtures[2].impact.shortTermHelp === '旧work2'
+    && migratedFixtures[5].domainData.健康.importance === 8
+    && migratedFixtures[5].domainData.健康.execution === 3
+    && migratedFixtures[8].distress.before === '9'
+    && migratedFixtures[8].nextStep.action === '旧work8';
+  record('schema v1 to v2 migration preserves every legacy value and adds P1A fields', migrationPreservesLegacy
+    && Object.values(migratedFixtures).every(value => value.schemaVersion === 2)
+    && 'behaviorContexts' in migratedFixtures[2]
+    && migratedFixtures[5].domainData.健康.supportFocus === false
+    && migratedFixtures[8].continuation.status === '', { migratedFixtures });
+  const v2RoundTrip = migrateWorkData(8, migratedFixtures[8]);
+  record('schema v2 migration is idempotent and rejects unknown future schema', JSON.stringify(v2RoundTrip) === JSON.stringify(migratedFixtures[8]) && (() => {
+    try { migrateWorkData(1, { schemaVersion: 99 }); return false; } catch { return true; }
+  })(), {});
+  const migratedEntries = migrateStoredEntries([
+    ['worksheet_auto_save_v1', JSON.stringify(legacyFixtures[1])],
+    ['control_map_state_v1', JSON.stringify(legacyFixtures[8])],
+  ]);
+  record('backup import entry migration upgrades known storage keys before commit', migratedEntries.every(([, value]) => JSON.parse(value).schemaVersion === 2), { keys: migratedEntries.map(([key]) => key) });
+  const rollbackSeed = new Map([
+    ['worksheet_auto_save_v1', JSON.stringify(legacyFixtures[1])],
+    ['dots_work_state_v3', JSON.stringify(legacyFixtures[2])],
+  ]);
+  let setCount = 0;
+  const failingStorage = {
+    getItem: key => rollbackSeed.get(key) ?? null,
+    setItem: (key, value) => {
+      setCount += 1;
+      if (setCount === 2) throw new Error('QUOTA');
+      rollbackSeed.set(key, value);
+    },
+  };
+  let rollbackError = false;
+  try { migrateWorkbookStorage(failingStorage); } catch { rollbackError = true; }
+  record('schema migration rolls back all writes when storage commit fails', rollbackError
+    && rollbackSeed.get('worksheet_auto_save_v1') === JSON.stringify(legacyFixtures[1])
+    && rollbackSeed.get('dots_work_state_v3') === JSON.stringify(legacyFixtures[2]), { rollbackError, setCount });
+
+  // P1A work 1: five-field quick path, optional detail disclosure and autosave.
   {
     const page = await browser.newPage({ viewport: views[0] });
     await page.goto(`${base}/#work/1`, { waitUntil: 'networkidle' });
     const frame = page.frameLocator('#work-frame');
-    const sectionButtons = frame.locator('.section-btn');
-
-    await sectionButtons.nth(1).click();
-    const q4Text = '二十文字以上を連続して入力しても欄が閉じないことを確認します。';
-    await frame.locator('#q4').click();
-    await page.keyboard.type(q4Text, { delay: 15 });
-    await page.keyboard.press('Enter');
-    await page.keyboard.insertText('日本語IME変換後の二行目');
-    const q4Expected = `${q4Text}\n日本語IME変換後の二行目`;
-    const q4State = await frame.locator('#q4').evaluate(element => ({
-      value: element.value,
-      focused: document.activeElement === element,
-      expanded: element.closest('.section')?.querySelector('.section-btn')?.getAttribute('aria-expanded'),
-    }));
-
-    for (const id of ['#q3_0', '#q3_1', '#q3_2']) await frame.locator(id).click();
-    const checkboxState = await frame.locator('#q3_0').evaluate(() => ({
-      checked: ['q3_0', 'q3_1', 'q3_2'].map(id => document.getElementById(id)?.checked),
-      expanded: document.querySelectorAll('.section-btn')[1]?.getAttribute('aria-expanded'),
-    }));
-
-    await sectionButtons.nth(2).click();
-    await frame.locator('#q6').focus();
-    for (let i = 0; i < 3; i += 1) await page.keyboard.press('ArrowRight');
-    const rangeState = await frame.locator('#q6').evaluate(element => ({
-      value: element.value,
-      focused: document.activeElement === element,
-      expanded: element.closest('.section')?.querySelector('.section-btn')?.getAttribute('aria-expanded'),
-    }));
-
-    await sectionButtons.nth(1).click();
-    await sectionButtons.nth(1).click();
-    const revisitState = await frame.locator('#q4').evaluate(element => ({
-      value: element.value,
-      checked: ['q3_0', 'q3_1', 'q3_2'].map(id => document.getElementById(id)?.checked),
-      expanded: element.closest('.section')?.querySelector('.section-btn')?.getAttribute('aria-expanded'),
-    }));
-
-    record('work1 text/IME/multiline input keeps section open and focus', q4State.value === q4Expected && q4State.focused && q4State.expanded === 'true', { q4State, expectedLength: q4Expected.length });
-    record('work1 checkbox multi-select and range changes keep sections open', checkboxState.checked.every(Boolean) && checkboxState.expanded === 'true' && rangeState.value === '8' && rangeState.focused && rangeState.expanded === 'true', { checkboxState, rangeState });
-    record('work1 values remain after explicit section navigation', revisitState.value === q4Expected && revisitState.checked.every(Boolean) && revisitState.expanded === 'true', { revisitState });
+    const values = {
+      basicScene: '通所前の朝',
+      basicNotice: '胸が重く、休みたいと考えた',
+      basicAction: '支援者へ連絡した',
+      basicImmediate: '予定を相談できた',
+      basicLater: '午後から参加できた',
+    };
+    for (const [id, value] of Object.entries(values)) await frame.locator(`#${id}`).fill(value);
+    const focusState = await frame.locator('#basicLater').evaluate(element => ({ value: element.value, focused: document.activeElement === element }));
+    const detailToggle = frame.getByRole('button', { name: 'もう少し詳しく整理する（任意）' });
+    await detailToggle.click();
+    const detailOpen = await frame.getByRole('button', { name: '詳しい項目を閉じる' }).getAttribute('aria-expanded');
+    record('work1 quick path keeps five fields visible and optional details explicit', focusState.value === values.basicLater && focusState.focused && detailOpen === 'true', { focusState, detailOpen });
 
     await page.reload({ waitUntil: 'networkidle' });
     const reloadedFrame = page.frameLocator('#work-frame');
-    await reloadedFrame.locator('.section-btn').nth(1).click();
-    const reloadState = await reloadedFrame.locator('#q4').evaluate(element => ({
-      value: element.value,
-      checked: ['q3_0', 'q3_1', 'q3_2'].map(id => document.getElementById(id)?.checked),
-    }));
-    await reloadedFrame.locator('.section-btn').nth(2).click();
-    const reloadedRange = await reloadedFrame.locator('#q6').inputValue();
-    record('work1 autosave reload restores text, checkboxes and range', reloadState.value === q4Expected && reloadState.checked.every(Boolean) && reloadedRange === '8', { reloadState, reloadedRange });
+    const reloaded = Object.fromEntries(await Promise.all(Object.keys(values).map(async id => [id, await reloadedFrame.locator(`#${id}`).inputValue()])));
+    record('work1 schema v2 autosave reload restores all five quick fields', Object.entries(values).every(([key, value]) => reloaded[key] === value), { reloaded });
 
     await reloadedFrame.locator('.header-actions .btn-blue').click();
     const summaryText = await reloadedFrame.locator('.result-container').innerText();
-    const summaryPass = summaryText.includes(q4Text) && ['通所前', '学習を始める前', '課題でつまずいたとき'].every(text => summaryText.includes(text)) && summaryText.includes('8 / 10');
-    record('work1 summary confirmation keeps entered values', summaryPass, { includesQ4: summaryText.includes(q4Text), includesSelections: ['通所前', '学習を始める前', '課題でつまずいたとき'].map(text => summaryText.includes(text)), includesRange: summaryText.includes('8 / 10') });
+    record('work1 summary mirrors five quick fields without scoring', Object.values(values).every(value => summaryText.includes(value)) && !summaryText.includes('入力の進捗'), { summaryText: summaryText.slice(0, 500) });
     await page.close();
   }
 
@@ -251,12 +296,15 @@ try {
       ariaModal: document.querySelector('[role="dialog"]')?.getAttribute('aria-modal'),
     }));
     await page.keyboard.press('Shift+Tab');
-    const wrappedBack = await page.evaluate(() => document.activeElement?.id);
+    const wrappedBack = await page.evaluate(() => ({
+      id: document.activeElement?.id,
+      insideDialog: !!document.activeElement?.closest('[role="dialog"]'),
+    }));
     await page.keyboard.press('Tab');
     const wrappedForward = await page.evaluate(() => document.activeElement?.id);
     await page.keyboard.press('Escape');
     const restored = await page.evaluate(() => ({ activeClass: document.activeElement?.className, dialog: !!document.querySelector('[role="dialog"]'), inert: document.getElementById('app')?.hasAttribute('inert') }));
-    record('start modal keyboard semantics', initial.active === 'confirm-cancel' && initial.inert && initial.ariaModal === 'true' && wrappedBack === 'confirm-start' && wrappedForward === 'confirm-cancel' && !restored.dialog && !restored.inert && String(restored.activeClass).includes('work-card'), { initial, wrappedBack, wrappedForward, restored });
+    record('start modal keyboard semantics', initial.active === 'confirm-cancel' && initial.inert && initial.ariaModal === 'true' && wrappedBack.insideDialog && wrappedBack.id !== 'confirm-cancel' && wrappedForward === 'confirm-cancel' && !restored.dialog && !restored.inert && String(restored.activeClass).includes('work-card'), { initial, wrappedBack, wrappedForward, restored });
 
     await page.goto(`${base}/#work/1`);
     await page.click('#finish-work');
@@ -292,6 +340,203 @@ try {
   }
 
   // Work 6 mobile/landscape: input-only float, placeholder guidance, Enter leaf, retained focus and safe placement.
+  // P0-01/02/07/09: policy and supporter choices are visible without writing learner data.
+  {
+    const page = await browser.newPage({ viewport: views[0] });
+    await page.goto(`${base}/#home`);
+    const homePolicy = await page.evaluate(() => ({
+      cards: document.querySelectorAll('.work-card').length,
+      persisted: Array.from(document.querySelectorAll('.work-data-label')).filter(element => element.textContent.includes('記録型')).length,
+      ephemeral: Array.from(document.querySelectorAll('.work-data-label')).filter(element => element.textContent.includes('体験型')).length,
+      text: document.body.innerText,
+    }));
+    const before = await page.evaluate(() => ({ ...localStorage }));
+    await page.locator('.work-card').first().click();
+    await page.locator('input[name="use-with"][value="supporter"]').click();
+    const supporterBoundary = await page.locator('#support-boundary-start').innerText();
+    const after = await page.evaluate(() => ({ ...localStorage }));
+    await page.screenshot({ path: path.join(out, 'p0-start-boundary-supporter.png') });
+    record('P0-01/P0-02/P0-07/P0-09 home and start boundary runtime', homePolicy.cards === 8 && homePolicy.persisted === 4 && homePolicy.ephemeral === 4 && homePolicy.text.includes('診断や治療でもありません') && supporterBoundary.includes('誰が入力するか') && supporterBoundary.includes('本人の明示的な同意なく') && JSON.stringify(before) === JSON.stringify(after), { homePolicy: { ...homePolicy, text: undefined }, supporterBoundary, storageUnchanged: JSON.stringify(before) === JSON.stringify(after) });
+    await page.close();
+  }
+
+  // P0-03: persisted/ephemeral success, explicit storage failure and timeout branches.
+  {
+    const page = await browser.newPage({ viewport: views[0] });
+    await page.goto(`${base}/#work/1`, { waitUntil: 'networkidle' });
+    await page.click('#finish-work');
+    await page.click('#finish-confirm');
+    await page.locator('.save-status-success').waitFor();
+    const persistedText = await page.locator('.save-status-success').innerText();
+    await page.screenshot({ path: path.join(out, 'p0-finish-persisted-success.png') });
+    record('P0-03 persisted work reports success only after save result', /このブラウザに保存しました（\d{2}:\d{2}）/.test(persistedText), { persistedText });
+
+    await page.goto(`${base}/#work/3`, { waitUntil: 'networkidle' });
+    const beforeKeys = await page.evaluate(() => Object.keys(localStorage).sort());
+    await page.click('#finish-work');
+    await page.click('#finish-confirm');
+    await page.locator('.save-status-success').waitFor();
+    const ephemeralText = await page.locator('.save-status-success').innerText();
+    const afterKeys = await page.evaluate(() => Object.keys(localStorage).sort());
+    record('P0-03 ephemeral work reports non-save and creates no work key', ephemeralText === 'このワークの入力は保存されません。閉じると消えます。' && JSON.stringify(beforeKeys) === JSON.stringify(afterKeys), { ephemeralText, beforeKeys, afterKeys });
+    await page.close();
+  }
+
+  // P0-02/P0-03: every work can be ended from its empty initial state, and each result follows the shared policy.
+  {
+    const storageKeys = {
+      1: 'worksheet_auto_save_v1',
+      2: 'dots_work_state_v3',
+      5: 'act_worksheet_standalone_data',
+      8: 'control_map_state_v1',
+    };
+    const emptyFinishEvidence = [];
+    for (let workId = 1; workId <= 8; workId += 1) {
+      const context = await browser.newContext({ viewport: views[0] });
+      const page = await context.newPage();
+      await page.goto(`${base}/#work/${workId}`, { waitUntil: 'networkidle' });
+      const frame = frameFor(page);
+      const initialText = (await frame.locator('body').innerText()).trim();
+      const beforeKeys = await page.evaluate(() => Object.keys(localStorage).sort());
+      await page.click('#finish-work');
+      await page.click('#finish-confirm');
+      await page.locator('.save-status-success').waitFor();
+      const resultText = await page.locator('.save-status-success').innerText();
+      const afterKeys = await page.evaluate(() => Object.keys(localStorage).sort());
+      const mode = expectedModes[workId - 1];
+      const modeMatches = mode === 'persisted'
+        ? /このブラウザに保存しました（\d{2}:\d{2}）/.test(resultText) && afterKeys.includes(storageKeys[workId])
+        : resultText === 'このワークの入力は保存されません。閉じると消えます。' && JSON.stringify(beforeKeys) === JSON.stringify(afterKeys);
+      emptyFinishEvidence.push({ workId, mode, initialTextLength: initialText.length, resultText, beforeKeys, afterKeys, pass: initialText.length > 0 && modeMatches });
+      await context.close();
+    }
+    record('P0-02/P0-03 all eight empty/interrupted finish paths follow data policy', emptyFinishEvidence.every(item => item.pass), { emptyFinishEvidence });
+  }
+
+  {
+    const page = await browser.newPage({ viewport: views[0] });
+    await page.goto(`${base}/#work/2`, { waitUntil: 'networkidle' });
+    const frame = frameFor(page);
+    await frame.evaluate(() => {
+      const original = Storage.prototype.setItem;
+      window.__restoreSetItem = () => { Storage.prototype.setItem = original; };
+      Storage.prototype.setItem = () => { throw new DOMException('quota test', 'QuotaExceededError'); };
+    });
+    await page.click('#finish-work');
+    await page.click('#finish-confirm');
+    await page.locator('.save-status-error').waitFor();
+    const failureUi = await page.evaluate(() => ({
+      alert: document.querySelector('[role="alert"]')?.innerText,
+      actions: ['finish-result-retry', 'finish-result-copy', 'finish-result-file', 'finish-result-close'].every(id => !!document.getElementById(id)),
+    }));
+    await page.screenshot({ path: path.join(out, 'p0-finish-storage-failure.png') });
+    record('P0-03 storage failure blocks close and offers recovery actions', failureUi.alert?.includes('保存できませんでした') && failureUi.alert?.includes('保存容量') && failureUi.actions, failureUi);
+    await page.close();
+  }
+
+  {
+    const page = await browser.newPage({ viewport: views[0] });
+    await page.goto(`${base}/#work/3`, { waitUntil: 'networkidle' });
+    await page.locator('#work-frame').evaluate(frame => { frame.src = 'about:blank'; });
+    await page.waitForTimeout(100);
+    await page.click('#finish-work');
+    await page.click('#finish-confirm');
+    await page.locator('.save-status-error').waitFor({ timeout: 4000 });
+    const timeoutText = await page.locator('.save-status-error').innerText();
+    record('P0-03 handshake timeout does not show false success', timeoutText.includes('保存結果が返りませんでした') && !timeoutText.includes('保存しました'), { timeoutText });
+    await page.close();
+  }
+
+  // P0-04: all five exercises share all five neutral result branches.
+  {
+    const page = await browser.newPage({ viewport: views[0] });
+    await page.goto(`${base}/#work/3`, { waitUntil: 'networkidle' });
+    const frame = frameFor(page);
+    const exercises = ['emotion', 'whitebear', 'slider', 'strategy', 'weather'];
+    const branches = [
+      ['lower', '下がった'], ['same', 'ほぼ同じ'], ['higher', '上がった'], ['fluctuated', '行き来した'], ['unknown', '分からない'],
+    ];
+    const branchEvidence = [];
+    for (const exercise of exercises) {
+      for (const [value, label] of branches) {
+        await frame.evaluate(({ exercise }) => {
+          state.exerciseId = exercise;
+          state.step = 'result_summary';
+          state.observedChange = '';
+          render();
+        }, { exercise });
+        await frame.locator(`input[name="neutral-change"][value="${value}"]`).click();
+        const summary = await frame.locator('[data-neutral-summary]').innerText();
+        const selected = await frame.locator('[data-selected-change]').getAttribute('data-selected-change');
+        const file = path.join(out, `p0-work3-${exercise}-${value}.png`);
+        await page.waitForTimeout(600);
+        await page.screenshot({ path: file });
+        branchEvidence.push({ exercise, value, selected, file, complete: summary.includes(label) && summary.includes('あなたが入力・選択したこと') && summary.includes('一つの見方') && summary.includes('次に選べること') });
+      }
+    }
+    record('P0-04 five exercises expose five equal neutral branches', branchEvidence.length === 25 && branchEvidence.every(item => item.selected === item.value && item.complete), { branchEvidence });
+
+    await frame.evaluate(() => {
+      state.exerciseId = 'slider';
+      state.step = 'reflection';
+      render();
+    });
+    await frame.locator('#chk-immediate-safety').click();
+    const crisisText = await frame.locator('[role="alert"]').innerText();
+    await page.waitForTimeout(600);
+    await page.screenshot({ path: path.join(out, 'p0-work3-crisis-route.png') });
+    record('P0-08 work3 self-harm choice opens crisis route without detailed input', crisisText.includes('安全の確保を優先') && crisisText.includes('相談先') && crisisText.includes('119') && await frame.locator('#crisis-close').count() === 1, { crisisText });
+    await page.close();
+  }
+
+  // P0-05: repeated dragging never manufactures additional negative notifications.
+  {
+    const page = await browser.newPage({ viewport: views[0] });
+    await page.goto(`${base}/#work/4`, { waitUntil: 'networkidle' });
+    const frame = frameFor(page);
+    await frame.locator('#btn-add').click();
+    const emptyCount = await frame.locator('.notification').count();
+    await frame.locator('#notification-input').fill('本人が入力した通知');
+    await frame.locator('#btn-add').click();
+    const before = await frame.locator('.notification').count();
+    await frame.locator('.notification').first().evaluate((element) => {
+      for (let index = 0; index < 100; index += 1) {
+        const start = new MouseEvent('mousedown', { bubbles: true, clientX: 240, clientY: 200 });
+        element.dispatchEvent(start);
+        document.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: 260 + (index % 5), clientY: 210 }));
+        document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, clientX: 260, clientY: 210 }));
+      }
+    });
+    const after = await frame.locator('.notification').count();
+    const statusTexts = [];
+    statusTexts.push(await frame.locator('#status-text').innerText());
+    await frame.locator('#btn-anchor').click();
+    statusTexts.push(await frame.locator('#status-text').innerText());
+    const authoredTexts = await frame.locator('.notification').allInnerTexts();
+    const anchorState = await frame.locator('#btn-anchor').getAttribute('aria-pressed');
+    record('P0-05 empty input and 100 drags add no automatic notification; toggle stays descriptive', emptyCount === 0 && before === 1 && before === after && authoredTexts.every(text => text === '本人が入力した通知') && statusTexts.every(text => text.startsWith('表示:')) && anchorState === 'true', { emptyCount, before, after, authoredTexts, statusTexts, anchorState });
+    await page.close();
+  }
+
+  // P0-06: the learner-authored action survives backward/forward navigation and is summarized verbatim.
+  {
+    const page = await browser.newPage({ viewport: views[0] });
+    await page.goto(`${base}/#work/7`, { waitUntil: 'networkidle' });
+    const frame = frameFor(page);
+    await frame.evaluate(() => { state.currentStep = 4; state.actionText = ''; render(); });
+    const action = '支援者に相談する時間を決める';
+    await frame.locator('#input-action').fill(action);
+    await frame.evaluate(() => goToStep(3));
+    await frame.evaluate(() => goToStep(4));
+    const restoredAction = await frame.locator('#input-action').inputValue();
+    await frame.locator('.btn-main').click();
+    const endText = await frame.locator('#step-content').innerText();
+    await page.waitForTimeout(600);
+    await page.screenshot({ path: path.join(out, 'p0-work7-authored-action.png') });
+    record('P0-06 work7 preserves and summarizes the authored action', restoredAction === action && endText.includes(`あなたが入力したこと：${action}`) && endText.includes('このワークの入力は保存されません'), { restoredAction, endText });
+    await page.close();
+  }
+
   for (const viewport of [views[1], views[2]]) {
     const page = await browser.newPage({ viewport });
     await page.goto(`${base}/#work/6`);
@@ -397,8 +642,15 @@ try {
     const file = path.join(out, 'compatibility-backup.json');
     await download.saveAs(file);
     const downloaded = JSON.parse(await (await import('node:fs/promises')).readFile(file, 'utf8'));
-    const same = Object.entries(seeded).every(([key, value]) => downloaded.storage[key] === value);
-    record('backup schema and stored values compatible', downloaded._workbookBackup?.schemaVersion === 1 && same, { keys: Object.keys(downloaded.storage), schemaVersion: downloaded._workbookBackup?.schemaVersion });
+    const decoded = Object.fromEntries(Object.entries(downloaded.storage).map(([key, value]) => [key, JSON.parse(value)]));
+    const preserved = decoded.mentalCareWorkbookProfile.name === 'QAテスト'
+      && decoded.worksheet_auto_save_v1.q1 === '互換性テスト'
+      && decoded.dots_work_state_v3.currentStep === 2
+      && decoded.act_worksheet_standalone_data.sample === true
+      && decoded.control_map_state_v1.sample === 'ok';
+    const upgraded = ['worksheet_auto_save_v1', 'dots_work_state_v3', 'act_worksheet_standalone_data', 'control_map_state_v1']
+      .every(key => decoded[key].schemaVersion === 2);
+    record('backup schema v2 preserves stored v1 values', downloaded._workbookBackup?.schemaVersion === 2 && preserved && upgraded, { keys: Object.keys(downloaded.storage), schemaVersion: downloaded._workbookBackup?.schemaVersion, preserved, upgraded });
     await page.close();
   }
 

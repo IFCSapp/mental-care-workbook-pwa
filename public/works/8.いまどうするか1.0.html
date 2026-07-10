@@ -754,7 +754,7 @@
           <div class="card">
             <p>このワークでは、頭の中にある気がかりを少しずつ見える形にしていきます。</p>
             <p>正解に分ける必要はありません。いまの自分にとって「扱いやすい置き場所」を見つければ十分です。</p>
-            <p>しんどくなったら、いつでも途中でやめて大丈夫です。入力内容はこの端末に自動保存されます。外部には送信されません。</p>
+            <p>しんどくなったら、いつでも途中でやめて大丈夫です。入力はこのブラウザ内への保存を試みます。保存結果は上部の「ここまで」から確認できます。入力内容をアプリのサーバーへ送る処理はありません。</p>
           </div>
 
           <div class="card">
@@ -769,14 +769,14 @@
           </div>
 
           <div class="card">
-            <h3>いまのしんどさメーター（開始前）</h3>
-            <p>いま、どのくらい気がかりでしんどさを感じていますか？直感で選んでみてください。</p>
-            <div class="form-group range-container">
-              <span style="font-size: 0.9rem; color: var(--text-sub);">おだやか (0)</span>
-              <input type="range" id="distress-before" min="0" max="10" step="1">
-              <span style="font-size: 0.9rem; color: var(--text-sub);">とてもしんどい (10)</span>
-              <div id="distress-before-val" class="range-value">5</div>
-            </div>
+            <h3>今、続けられそうですか</h3>
+            <p>つらさの点数ではなく、続ける・休む・ここまでにする判断に使います。</p>
+            <select id="continuation-status">
+              <option value="">今は選ばない</option>
+              <option value="continue">このまま続けられそう</option>
+              <option value="pause">少し休んでから考える</option>
+              <option value="stop">今日はここまでにする</option>
+            </select>
           </div>
         </div>
       </section>
@@ -828,19 +828,17 @@
           <h2 tabindex="-1">Step 3: 気がかりを3つに分ける</h2>
 
           <div class="card">
-            <p>気がかりの中にあるものを、3つの場所に分けてみましょう。<br>自分で決められないものを何とかしようとしつづけるより、今できることに力を向けるための整理です。</p>
+            <p>気がかりの中にあるものを、3つの場所に分けてみましょう。<br>能力、権限、周りの人、環境、使える支えを含めて、今の条件での置き場所を考えます。</p>
             <p>正解を探す必要はありません。迷ったら、いまの自分にとってしっくりくる場所に置いてみてください。あとで置き直しても大丈夫です。</p>
             <p style="font-size:0.9rem; color:var(--text-sub);">※項目はドラッグして動かすことも、クリック（またはEnterキー）して置き場所を選ぶこともできます。</p>
 
-            <p style="font-size: 0.9rem; color: var(--primary); font-weight: bold; margin-bottom: 12px;">自分で決められないものを無理に動かそうとしつづけるより、今の自分にできることを見つけるための目印です。</p>
-
-            <p style="font-size: 0.9rem; color: var(--primary); font-weight: bold; margin-bottom: 12px;">今ここで、自分が決められることは何かを探してみましょう。</p>
+            <p style="font-size: 0.9rem; color: var(--primary); font-weight: bold; margin-bottom: 12px;">本人だけで動かすことを前提にせず、支えや環境調整と一緒なら選べることも探します。</p>
 
             <details>
               <summary>迷ったら…</summary>
-              <p><strong>今すぐは決められないこと：</strong> その場では自分で決められないもの（過去、他の人の気持ち、わいてくる感情など）</p>
-              <p><strong>自分から働きかけられること：</strong> いまは自分では決められないが、自分の言い方や行動で少し変わるかもしれないもの（伝え方の工夫、相談、準備のしかたなど）</p>
-              <p><strong>今ここで自分が決められること：</strong> 今ここで、自分が選んでできること（休む、注意を向ける、5分だけやる、相談する、伝えるなど）</p>
+              <p><strong>今の条件で、自分だけでは動かしにくいこと：</strong> 過去、他の人の気持ち、わいてくる感情など</p>
+              <p><strong>今の条件で、人や環境に働きかけられるかもしれないこと：</strong> 伝え方の工夫、相談、準備のしかたなど</p>
+              <p><strong>今の条件で、自分が選べる可能性があること：</strong> 休む、注意を向ける、5分だけやる、相談する、伝えるなど</p>
             </details>
           </div>
 
@@ -856,49 +854,43 @@
 
           <div class="grid-3">
             <div class="zone-card" id="zone1-drop-zone">
-              <div class="zone-header">今すぐは決められないこと</div>
-              <div class="zone-desc">その場では自分で決められないもの</div>
+              <div class="zone-header">今の条件で、自分だけでは動かしにくいこと</div>
+              <div class="zone-desc">能力や権限があることを前提にせず整理します</div>
               <div id="chip-zone1-container" class="chip-container"></div>
             </div>
             <div class="zone-card" id="zone2-drop-zone">
-              <div class="zone-header">自分から働きかけられること</div>
-              <div class="zone-desc">いまは自分では決められないが、自分の言い方や行動で少し変わるかもしれないもの</div>
+              <div class="zone-header">今の条件で、人や環境に働きかけられるかもしれないこと</div>
+              <div class="zone-desc">人の助けや環境調整を含めます</div>
               <div id="chip-zone2-container" class="chip-container"></div>
             </div>
             <div class="zone-card" id="zone3-drop-zone">
-              <div class="zone-header">今ここで自分が決められること</div>
-              <div class="zone-desc">今ここで、自分が選んでできること</div>
+              <div class="zone-header">今の条件で、自分が選べる可能性があること</div>
+              <div class="zone-desc">休む、頼む、延期する、やらないことも含めます</div>
               <div id="chip-zone3-container" class="chip-container"></div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- Step 4: 今すぐは決められないことがあっても、今どうするか -->
+      <!-- Step 4: 今の条件で動かしにくいことがあっても、今どうするか -->
       <section id="step-4" class="step-section">
         <div class="content-wrapper">
-          <h2 tabindex="-1">Step 4: 今すぐは決められないことがあっても、今どうするか</h2>
+          <h2 tabindex="-1">Step 4: 今の条件で動かしにくいことがあっても、今どうするか</h2>
 
           <div class="card">
-            <p>先ほど「今すぐは決められないこと」に置いた項目について、今どうするかを一つずつ選んでみましょう。</p>
-            <p style="font-size: 0.95rem; color: var(--text-sub); border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: 8px;">自分で決められないものを、今すぐなくそうとしなくても大丈夫です。</p>
+            <p>先ほど「今の条件で、自分だけでは動かしにくいこと」に置いた項目について、今どうするかを一つずつ選んでみましょう。</p>
+            <p style="font-size: 0.95rem; color: var(--text-sub); border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: 8px;">今の条件で動かしにくいものを、今すぐなくそうとしなくても大丈夫です。</p>
             <details>
               <summary>くわしい説明を見る</summary>
-              <p>自分で決められないものを何とかしようとしつづける代わりに、今の自分にできそうな向き合い方を選びます。ここで選んだ向き合い方をふまえて、次は今ここでできる一歩を見つけます。</p>
+              <p>今の条件で動かしにくいものを無理に動かそうとせず、保留する、距離をとる、助けを借りる、環境を変えるなどの向き合い方を選べます。</p>
             </details>
           </div>
 
           <div id="responses-container"></div>
 
           <div class="card">
-            <h3>いまのしんどさメーター（途中）</h3>
-            <p>しんどさが下がらなくても大丈夫です。今日の目的は、力を向ける先を見つけることです。</p>
-            <div class="form-group range-container">
-              <span style="font-size: 0.9rem; color: var(--text-sub);">おだやか (0)</span>
-              <input type="range" id="distress-after" min="0" max="10" step="1">
-              <span style="font-size: 0.9rem; color: var(--text-sub);">とてもしんどい (10)</span>
-              <div id="distress-after-val" class="range-value">5</div>
-            </div>
+            <h3>続けるために、あると助かる支え</h3>
+            <textarea id="continuation-support" placeholder="人の助け、道具、休憩、時間、場所など"></textarea>
           </div>
         </div>
       </section>
@@ -931,7 +923,7 @@
             <p>選んだ指針に沿って、今できることを一つだけ書きます。10分以内でできる小さな一歩にします。</p>
             <details>
               <summary>くわしい説明を見る</summary>
-              <p>自分で決められないものを何とかしつづけるより、選んだ指針に沿って、今できることに力を向けてみましょう。今ここで自分が決められることから、一つだけ選びます。長い目で見て、自分の助けになりそうな一歩かも少し考えてみましょう。</p>
+              <p>動かしにくいものを何とかしつづけるより、今の条件で選べる可能性があることから、一つだけ選びます。長い目で見て、自分の助けになりそうかも考えてみましょう。</p>
             </details>
             <div class="form-group">
               <label for="next-action">今日の一歩（行動）</label>
@@ -953,6 +945,14 @@
               <input type="text" id="next-ifHard" placeholder="例: 一旦深呼吸する、温かいお茶を飲む">
             </div>
             <div class="form-group">
+              <label for="next-help">誰や何の助けと一緒なら試せそうですか？</label>
+              <input type="text" id="next-help" placeholder="例: 支援者に時間を確認してもらう">
+            </div>
+            <div class="form-group">
+              <label for="next-alternative">難しい場合は、何に替えますか？</label>
+              <input type="text" id="next-alternative" placeholder="例: 今日は休み、明日の午前に見直す">
+            </div>
+            <div class="form-group">
               <label for="next-selfCompassion">3. 自分へのひとこと</label>
               <p style="font-size:0.9rem; color:var(--text-sub); margin-bottom:8px;">取り組もうとしている自分へ、やさしい言葉をかけてあげましょう。</p>
               <input type="text" id="next-selfCompassion" placeholder="例: しんどい中、よく向き合おうとしてるね">
@@ -967,18 +967,13 @@
           <h2 tabindex="-1" class="no-print">Step 6: 振り返りと出力</h2>
 
           <div class="card no-print">
-            <h3>いまのしんどさメーター（終了時）</h3>
-            <p>しんどさが下がっていなくても大丈夫です。自分で決められないものがそのままでも、今日決めた一歩がこれからの助けになるかもしれません。</p>
-            <div class="form-group range-container">
-              <span style="font-size: 0.9rem; color: var(--text-sub);">おだやか (0)</span>
-              <input type="range" id="distress-end" min="0" max="10" step="1">
-              <span style="font-size: 0.9rem; color: var(--text-sub);">とてもしんどい (10)</span>
-              <div id="distress-end-val" class="range-value">5</div>
-            </div>
+            <h3>難しい場合の代わり</h3>
+            <textarea id="continuation-alternative" placeholder="休む、頼む、延期する、やらないことも選べます"></textarea>
           </div>
 
           <div class="card" id="print-area">
             <h2 style="text-align: center; border-bottom: 1px solid var(--border-color); padding-bottom: 16px; margin-bottom: 24px;">今できる一歩を選ぶ</h2>
+            <h3 style="color: var(--primary); margin-bottom: 20px;">あなたが入力したこと</h3>
 
             <div class="summary-section">
               <h3>基本情報</h3>
@@ -996,21 +991,21 @@
 
             <div class="summary-section grid-3">
               <div>
-                <h4 style="color: var(--text-sub); margin-bottom: 8px;">今すぐは決められないこと</h4>
+                <h4 style="color: var(--text-sub); margin-bottom: 8px;">今の条件で、自分だけでは動かしにくいこと</h4>
                 <ul id="sum-zone1" class="summary-list"></ul>
               </div>
               <div>
-                <h4 style="color: var(--text-sub); margin-bottom: 8px;">自分から働きかけられること</h4>
+                <h4 style="color: var(--text-sub); margin-bottom: 8px;">今の条件で、人や環境に働きかけられるかもしれないこと</h4>
                 <ul id="sum-zone2" class="summary-list"></ul>
               </div>
               <div>
-                <h4 style="color: var(--text-sub); margin-bottom: 8px;">今ここで自分が決められること</h4>
+                <h4 style="color: var(--text-sub); margin-bottom: 8px;">今の条件で、自分が選べる可能性があること</h4>
                 <ul id="sum-zone3" class="summary-list"></ul>
               </div>
             </div>
 
             <div class="summary-section">
-              <h3>今すぐは決められないことがあっても、今どうするか</h3>
+              <h3>今の条件で動かしにくいことがあっても、今どうするか</h3>
               <div id="sum-responses"></div>
             </div>
 
@@ -1025,17 +1020,26 @@
               <div><span class="summary-label">いつ:</span> <span id="sum-when"></span></div>
               <div><span class="summary-label">どこで:</span> <span id="sum-where"></span></div>
               <div><span class="summary-label">しんどくなったら:</span> <span id="sum-ifHard"></span></div>
+              <div><span class="summary-label">一緒に使う助け:</span> <span id="sum-help"></span></div>
+              <div><span class="summary-label">難しい場合の代わり:</span> <span id="sum-alternative"></span></div>
               <div style="margin-top: 12px;"><span class="summary-label">自分へのひとこと:</span> <span id="sum-selfCompassion" style="font-weight: bold;"></span></div>
             </div>
 
             <div class="summary-section">
-              <h3>しんどさメーター</h3>
-              <div>
-                開始前: <strong id="sum-distress-before"></strong> /
-                途中: <strong id="sum-distress-after"></strong> /
-                終了時: <strong id="sum-distress-end"></strong>
-              </div>
-              <p style="text-align: center; color: var(--text-sub); font-size: 0.9rem; margin-top: 16px;">自分で決められないものがあっても、今ここで力を向けられることはあります。</p>
+              <h3>続け方と支え</h3>
+              <div><span class="summary-label">続けられそうか:</span> <span id="sum-continuation-status"></span></div>
+              <div><span class="summary-label">あると助かる支え:</span> <span id="sum-continuation-support"></span></div>
+              <div><span class="summary-label">難しい場合の代わり:</span> <span id="sum-continuation-alternative"></span></div>
+            </div>
+
+            <div class="summary-section">
+              <h3>一つの見方</h3>
+              <p>同じ気がかりでも、今の条件、権限、周りの助け、使える時間によって置き場所や選べる行動は変わります。</p>
+            </div>
+
+            <div class="summary-section">
+              <h3>次に選べること</h3>
+              <p>試す、休む、頼む、延期する、やらない、条件を変える、今は決めない、のどれも選べます。</p>
             </div>
           </div>
 
@@ -1060,9 +1064,9 @@
     <div class="modal-content">
       <h3 id="chip-modal-target-name" style="text-align: center; color: var(--primary); margin-bottom: 16px;"></h3>
       <p style="text-align: center; margin-bottom: 20px;">どこに分けますか？</p>
-      <button class="btn-outline move-trigger" data-zone="cannotDirectlyControl">今すぐは決められないこと</button>
-      <button class="btn-outline move-trigger" data-zone="mayInfluence">自分から働きかけられること</button>
-      <button class="btn-outline move-trigger" data-zone="canChooseNow">今ここで自分が決められること</button>
+      <button class="btn-outline move-trigger" data-zone="cannotDirectlyControl">今の条件で、自分だけでは動かしにくいこと</button>
+      <button class="btn-outline move-trigger" data-zone="mayInfluence">今の条件で、人や環境に働きかけられるかもしれないこと</button>
+      <button class="btn-outline move-trigger" data-zone="canChooseNow">今の条件で、自分が選べる可能性があること</button>
       <div style="height: 16px;"></div>
       <button class="btn-outline move-trigger" data-zone="available" style="border-style: dashed;">未配置に戻す</button>
       <div class="modal-actions">
@@ -1103,12 +1107,12 @@
        状態管理 (State)
        ========================================================================== */
     const STORAGE_KEY = 'control_map_state_v1';
-    const BACKUP_META = { app: 'mental-care-workbook', workId: 8, schemaVersion: 1 };
+    const BACKUP_META = { app: 'mental-care-workbook', workId: 8, schemaVersion: 2 };
     const BACKUP_ERROR_MESSAGE = 'このワークで保存したバックアップファイルを選んでください。';
 
     function isValidWorkbookBackup(parsed) {
       const meta = parsed?._workbookBackup;
-      return meta?.app === BACKUP_META.app && meta?.workId === BACKUP_META.workId && meta?.schemaVersion === BACKUP_META.schemaVersion;
+      return meta?.app === BACKUP_META.app && meta?.workId === BACKUP_META.workId && [1, BACKUP_META.schemaVersion].includes(meta?.schemaVersion);
     }
 
     function stripBackupMeta(parsed) {
@@ -1127,8 +1131,10 @@
     ];
 
     let state = {
+      schemaVersion: 2,
       basic: { name: "", date: "", staff: "", count: "" },
       distress: { before: "5", afterStep4: "5", end: "5" },
+      continuation: { status: "", support: "", alternative: "" },
       concern: { title: "", details: "" },
       chips: {
         available: [...initialChips],
@@ -1139,7 +1145,7 @@
       customChips: [],
       responses: [],
       direction: { guideline: "", customGuideline: "" },
-      nextStep: { action: "", when: "", where: "", ifHard: "", selfCompassion: "" }
+      nextStep: { action: "", when: "", where: "", ifHard: "", help: "", alternative: "", selfCompassion: "" }
     };
 
     let currentStep = 1;
@@ -1201,6 +1207,7 @@
     function mergeState(parsed) {
       if (parsed.basic) Object.assign(state.basic, parsed.basic);
       if (parsed.distress) Object.assign(state.distress, parsed.distress);
+      if (parsed.continuation) Object.assign(state.continuation, parsed.continuation);
       if (parsed.concern) Object.assign(state.concern, parsed.concern);
       if (parsed.chips) {
         state.chips.available = parsed.chips.available || [];
@@ -1348,8 +1355,13 @@
         { id: 'next-when', sec: 'nextStep', key: 'when' },
         { id: 'next-where', sec: 'nextStep', key: 'where' },
         { id: 'next-ifHard', sec: 'nextStep', key: 'ifHard' },
+        { id: 'next-help', sec: 'nextStep', key: 'help' },
+        { id: 'next-alternative', sec: 'nextStep', key: 'alternative' },
         { id: 'next-selfCompassion', sec: 'nextStep', key: 'selfCompassion' },
-        { id: 'custom-guideline', sec: 'direction', key: 'customGuideline' }
+        { id: 'custom-guideline', sec: 'direction', key: 'customGuideline' },
+        { id: 'continuation-status', sec: 'continuation', key: 'status' },
+        { id: 'continuation-support', sec: 'continuation', key: 'support' },
+        { id: 'continuation-alternative', sec: 'continuation', key: 'alternative' }
       ];
 
       inputs.forEach(item => {
@@ -1366,6 +1378,7 @@
       // メーター
       ['before', 'after', 'end'].forEach(key => {
         const el = document.getElementById(`distress-${key}`);
+        if (!el) return;
         const realKey = key === 'after' ? 'afterStep4' : key;
         el.addEventListener('input', (e) => {
           updateDistress(realKey, e.target.value);
@@ -1632,16 +1645,15 @@
       document.getElementById('basic-count').value = state.basic.count;
       document.getElementById('concern-title').value = state.concern.title;
       document.getElementById('concern-details').value = state.concern.details;
-      document.getElementById('distress-before').value = state.distress.before;
-      document.getElementById('distress-before-val').innerText = state.distress.before;
-      document.getElementById('distress-after').value = state.distress.afterStep4;
-      document.getElementById('distress-after-val').innerText = state.distress.afterStep4;
-      document.getElementById('distress-end').value = state.distress.end;
-      document.getElementById('distress-end-val').innerText = state.distress.end;
+      document.getElementById('continuation-status').value = state.continuation.status;
+      document.getElementById('continuation-support').value = state.continuation.support;
+      document.getElementById('continuation-alternative').value = state.continuation.alternative;
       document.getElementById('next-action').value = state.nextStep.action;
       document.getElementById('next-when').value = state.nextStep.when;
       document.getElementById('next-where').value = state.nextStep.where;
       document.getElementById('next-ifHard').value = state.nextStep.ifHard;
+      document.getElementById('next-help').value = state.nextStep.help;
+      document.getElementById('next-alternative').value = state.nextStep.alternative;
       document.getElementById('next-selfCompassion').value = state.nextStep.selfCompassion;
       document.getElementById('custom-guideline').value = state.direction.customGuideline;
     }
@@ -1657,7 +1669,7 @@
       targets.forEach(t => { if (!state.responses.find(r => r.target === t)) state.responses.push({ target: t, mode: "", note: "" }); });
       saveState();
       if (targets.length === 0) {
-        container.innerHTML = '<div class="card"><p style="color:var(--text-sub); text-align:center;">「今すぐは決められないこと」に置かれた項目はありません。</p></div>';
+        container.innerHTML = '<div class="card"><p style="color:var(--text-sub); text-align:center;">「今の条件で、自分だけでは動かしにくいこと」に置かれた項目はありません。</p></div>';
         return;
       }
       const modes = [
@@ -1697,10 +1709,11 @@
       rList('sum-zone1', s.chips.cannotDirectlyControl); rList('sum-zone2', s.chips.mayInfluence); rList('sum-zone3', s.chips.canChooseNow);
       document.getElementById('sum-responses').innerHTML = s.responses.length ? s.responses.map(r => `<div style="margin-bottom:12px; border-bottom:1px dashed var(--border-color); padding-bottom:8px;"><div><strong>対象:</strong> ${escapeHtml(r.target)}</div><div><strong>今どうするか:</strong> ${escapeHtml(r.mode || '未選択')}</div>${r.note ? `<div><strong>メモ:</strong> ${escapeHtml(r.note)}</div>` : ''}</div>`).join('') : '<p>なし</p>';
       document.getElementById('sum-guideline').innerText = (s.direction.guideline === '自由入力' ? s.direction.customGuideline : s.direction.guideline) || '未選択';
-      ['action', 'when', 'where', 'ifHard', 'selfCompassion'].forEach(k => document.getElementById(`sum-${k}`).innerText = s.nextStep[k] || '未記入');
-      document.getElementById('sum-distress-before').innerText = s.distress.before;
-      document.getElementById('sum-distress-after').innerText = s.distress.afterStep4;
-      document.getElementById('sum-distress-end').innerText = s.distress.end;
+      ['action', 'when', 'where', 'ifHard', 'help', 'alternative', 'selfCompassion'].forEach(k => document.getElementById(`sum-${k}`).innerText = s.nextStep[k] || '未記入');
+      const statusLabels = { continue: 'このまま続けられそう', pause: '少し休んでから考える', stop: '今日はここまでにする' };
+      document.getElementById('sum-continuation-status').innerText = statusLabels[s.continuation.status] || '未選択';
+      document.getElementById('sum-continuation-support').innerText = s.continuation.support || s.nextStep.help || '未記入';
+      document.getElementById('sum-continuation-alternative').innerText = s.continuation.alternative || s.nextStep.alternative || '未記入';
     }
 
     /* ==========================================================================
@@ -1742,7 +1755,7 @@
             showToast(BACKUP_ERROR_MESSAGE);
             return;
           }
-          state = { basic:{}, distress:{before:"5",afterStep4:"5",end:"5"}, concern:{}, chips:{available:[...initialChips],cannotDirectlyControl:[],mayInfluence:[],canChooseNow:[]}, customChips:[], responses:[], direction:{}, nextStep:{} };
+          state = { schemaVersion:2, basic:{}, distress:{before:"5",afterStep4:"5",end:"5"}, continuation:{status:"",support:"",alternative:""}, concern:{}, chips:{available:[...initialChips],cannotDirectlyControl:[],mayInfluence:[],canChooseNow:[]}, customChips:[], responses:[], direction:{}, nextStep:{} };
           mergeState(stripBackupMeta(p)); skipConfirm = {step2:false,step3:false,step5:false}; saveState(); renderCurrentStep(); showToast('バックアップを読み込みました');
         } catch(err) { showToast('バックアップを読み込めませんでした'); }
       }; r.readAsText(f); e.target.value = '';
@@ -1750,7 +1763,7 @@
     function copyText() {
       const s = state;
       const g = s.direction.guideline === '自由入力' ? s.direction.customGuideline : s.direction.guideline;
-      const txt = `【今できる一歩を選ぶ】\n\n■基本情報\n記入日: ${s.basic.date}\n名前: ${s.basic.name}\n担当職員: ${s.basic.staff}\n実施回数: ${s.basic.count}\n\n■気がかり\nタイトル: ${s.concern.title}\n詳細: ${s.concern.details}\n\n■今すぐは決められないこと\n${s.chips.cannotDirectlyControl.length ? s.chips.cannotDirectlyControl.map(i=>`・${i}`).join('\n') : 'なし'}\n\n■自分から働きかけられること\n${s.chips.mayInfluence.length ? s.chips.mayInfluence.map(i=>`・${i}`).join('\n') : 'なし'}\n\n■今ここで自分が決められること\n${s.chips.canChooseNow.length ? s.chips.canChooseNow.map(i=>`・${i}`).join('\n') : 'なし'}\n\n■今どうするか\n${s.responses.length ? s.responses.map(r=>`対象: ${r.target}\n今どうするか: ${r.mode}\nメモ: ${r.note}\n`).join('\n') : 'なし'}\n■行動の指針\n${g || '未選択'}\n\n■今日の一歩\n行動: ${s.nextStep.action}\nいつ: ${s.nextStep.when}\nどこで: ${s.nextStep.where}\nしんどくなったら: ${s.nextStep.ifHard}\n自分へのひとこと: ${s.nextStep.selfCompassion}\n\n■メーター\n開始前: ${s.distress.before} / 途中: ${s.distress.afterStep4} / 終了時: ${s.distress.end}`;
+      const txt = `【今できる一歩を選ぶ】\n\n■基本情報\n記入日: ${s.basic.date}\n名前: ${s.basic.name}\n担当職員: ${s.basic.staff}\n実施回数: ${s.basic.count}\n\n■気がかり\nタイトル: ${s.concern.title}\n詳細: ${s.concern.details}\n\n■今の条件で、自分だけでは動かしにくいこと\n${s.chips.cannotDirectlyControl.length ? s.chips.cannotDirectlyControl.map(i=>`・${i}`).join('\n') : 'なし'}\n\n■今の条件で、人や環境に働きかけられるかもしれないこと\n${s.chips.mayInfluence.length ? s.chips.mayInfluence.map(i=>`・${i}`).join('\n') : 'なし'}\n\n■今の条件で、自分が選べる可能性があること\n${s.chips.canChooseNow.length ? s.chips.canChooseNow.map(i=>`・${i}`).join('\n') : 'なし'}\n\n■今どうするか\n${s.responses.length ? s.responses.map(r=>`対象: ${r.target}\n今どうするか: ${r.mode}\nメモ: ${r.note}\n`).join('\n') : 'なし'}\n■行動の指針\n${g || '未選択'}\n\n■今日の一歩\n行動: ${s.nextStep.action}\nいつ: ${s.nextStep.when}\nどこで: ${s.nextStep.where}\nしんどくなったら: ${s.nextStep.ifHard}\n助け: ${s.nextStep.help}\n難しい場合の代わり: ${s.nextStep.alternative}\n自分へのひとこと: ${s.nextStep.selfCompassion}\n\n■続け方と支え\n状態: ${s.continuation.status}\n支え: ${s.continuation.support}\n難しい場合の代わり: ${s.continuation.alternative}`;
       navigator.clipboard.writeText(txt).then(() => showToast('コピーしました')).catch(() => { const t = document.createElement('textarea'); t.value = txt; document.body.appendChild(t); t.select(); document.execCommand('copy'); t.remove(); showToast('コピーしました'); });
     }
 
@@ -1763,24 +1776,8 @@
     });
 
     document.addEventListener('DOMContentLoaded', init);
-    function completeMentalCareFinish() {
-      try {
-        if (typeof saveToStorage === 'function') saveToStorage();
-        if (typeof saveState === 'function') saveState();
-        if (typeof saveAppState === 'function') saveAppState();
-      } catch (err) {
-        console.warn('終了時の保存処理に失敗しました', err);
-      }
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'mental-care-finish-complete' }, window.location.origin);
-      }
-    }
-
-    window.addEventListener('message', (event) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.type !== 'mental-care-finish') return;
-      completeMentalCareFinish();
-    });
 </script>
+<script src="./finish-handshake.js"></script>
+<script>MentalCareFinish.install({ workId: 8, mode: 'persisted', save: () => saveState(), serialize: () => JSON.stringify(state, null, 2) });</script>
 </body>
 </html>

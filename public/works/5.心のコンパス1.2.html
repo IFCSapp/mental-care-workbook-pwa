@@ -1425,12 +1425,12 @@
       const [showResetConfirm, setShowResetConfirm] = useState(false);
       const [keywordWarning, setKeywordWarning] = useState("");
       const fileInputRef = useRef(null);
-      const BACKUP_META = { app: 'mental-care-workbook', workId: 5, schemaVersion: 1 };
+      const BACKUP_META = { app: 'mental-care-workbook', workId: 5, schemaVersion: 2 };
       const BACKUP_ERROR_MESSAGE = 'このワークで保存したバックアップファイルを選んでください。';
 
       const isValidWorkbookBackup = (parsed) => {
         const meta = parsed?._workbookBackup;
-        return meta?.app === BACKUP_META.app && meta?.workId === BACKUP_META.workId && meta?.schemaVersion === BACKUP_META.schemaVersion;
+        return meta?.app === BACKUP_META.app && meta?.workId === BACKUP_META.workId && [1, BACKUP_META.schemaVersion].includes(meta?.schemaVersion);
       };
 
       const getToastType = (message) => /ではありません|できません|失敗|読み込めません|バックアップファイル/.test(message) ? 'error' : 'success';
@@ -1448,6 +1448,19 @@
       const resetFileInput = () => {
         if (fileInputRef.current) fileInputRef.current.value = "";
       };
+
+      const currentStoredState = {
+        schemaVersion: 2,
+        availableDomains,
+        selectedDomains,
+        domainData,
+        step,
+        currentDomainIndex
+      };
+      window.__mentalCareWork5Save = () => {
+        localStorage.setItem('act_worksheet_standalone_data', JSON.stringify(currentStoredState));
+      };
+      window.__mentalCareWork5Serialize = () => JSON.stringify(currentStoredState, null, 2);
 
       // データのロードと保存
       useEffect(() => {
@@ -1468,6 +1481,7 @@
 
       useEffect(() => {
         const dataToSave = {
+          schemaVersion: 2,
           availableDomains,
           selectedDomains,
           domainData,
@@ -1487,7 +1501,10 @@
               keywords: [],
               deepen_guideline: "", deepen_meaning: "", deepen_action: "",
               importance: 5, execution: 5,
-              barriers: "", // 行動指針を難しくしているもの
+              supportFocus: false,
+              difficultConditions: "", helpfulConditions: "", resourcesNeeded: "",
+              actionChoice: "", actionConditions: "",
+              barriers: "", // 旧版互換
               next_small_step: "",
               // 過去の一場面ワーク用のデータ
               calmScene: "", calmSelfRelation: "", calmKeywordsLike: "", calmGuideline: "", calmNextAction: "",
@@ -1533,7 +1550,7 @@
           setKeywordWarning(""); // 減らした時は警告を消す
         } else {
           if (currentKeywords.length >= 5) {
-            setKeywordWarning("行動指針のキーワードは5個までです。たくさんある場合は、優先順位をつけて今の自分に特に大切な5個に絞り込んでみましょう。");
+            setKeywordWarning("この画面で扱う言葉は5個までです。選ばなかった言葉が大切でないという意味ではありません。");
             return;
           }
           updateCurrentDomainData('keywords', [...currentKeywords, keyword]);
@@ -1546,7 +1563,7 @@
           const currentKeywords = domainData[domain]?.keywords || [];
           if (!currentKeywords.includes(newKeyword)) {
             if (currentKeywords.length >= 5) {
-              setKeywordWarning("行動指針のキーワードは5個までです。たくさんある場合は、優先順位をつけて今の自分に特に大切な5個に絞り込んでみましょう。");
+              setKeywordWarning("この画面で扱う言葉は5個までです。選ばなかった言葉が大切でないという意味ではありません。");
               return;
             }
             updateCurrentDomainData('keywords', [...currentKeywords, newKeyword]);
@@ -1673,9 +1690,12 @@
           if (data.deepen_meaning) text += `・その意味:\n  ${data.deepen_meaning}\n`;
           if (data.deepen_action) text += `・表れる小さな行動:\n  ${data.deepen_action}\n`;
 
-          text += `・大切さ: ${data.importance} / 実行度: ${data.execution}\n`;
-
-          if (data.barriers) text += `・行動指針に沿うのを難しくしているもの:\n  ${data.barriers}\n`;
+          if (data.supportFocus) text += `・もう少し支えがあると扱いやすい領域として選択\n`;
+          if (data.difficultConditions) text += `・難しくする条件:\n  ${data.difficultConditions}\n`;
+          if (data.helpfulConditions) text += `・助けになる条件:\n  ${data.helpfulConditions}\n`;
+          if (data.resourcesNeeded) text += `・使えるとよい支えや資源:\n  ${data.resourcesNeeded}\n`;
+          if (data.actionChoice) text += `・今選ぶこと:\n  ${data.actionChoice}\n`;
+          if (data.actionConditions) text += `・試せそうな条件:\n  ${data.actionConditions}\n`;
           if (data.next_small_step) text += `・次の一歩:\n  ${data.next_small_step}\n`;
         });
 
@@ -1768,12 +1788,6 @@
         return Object.keys(counts).filter(kw => counts[kw] > 1);
       };
 
-      const getGapDomains = () => {
-        return selectedDomains.filter(domain => {
-          const data = domainData[domain];
-          return data && data.importance >= 7 && data.execution <= 4;
-        });
-      };
 
       // --- 画面レンダリング (JSX -> プレーンな JavaScript の React.createElement への完全な書き換え) ---
       if (step === 'intro') {
@@ -1901,7 +1915,7 @@
             e("div", { className: "sticky-header" },
               e("div", { className: "header-status" },
                 e("span", null, `${currentDomainIndex + 1} / ${selectedDomains.length}`),
-                e("span", { className: "status-badge" }, e(Save, { size: 16, className: "icon" }), " この端末に自動保存中")
+                e("span", { className: "status-badge" }, e(Save, { size: 16, className: "icon" }), " 記録型・保存対象")
               ),
               e("h2", { className: "header-domain-name" }, domain)
             ),
@@ -2170,60 +2184,42 @@
                 )
               ),
 
-              // 現在地をみつめる（数値）
+              // 本人が選ぶ支え・資源・環境条件
               e("div", { className: "status-block" },
                 e("div", { className: "status-title-group" },
-                  e("h3", { className: "status-title" }, "現在地をみつめる"),
-                  e("p", { className: "status-desc" }, "これは評価ではなく、今の状態の確認です。体調や状況によって変わってよいものです。")
+                  e("h3", { className: "status-title" }, "今の条件と、あると助かる支え"),
+                  e("p", { className: "status-desc" }, "点数で判定せず、本人が扱いやすくする条件を選びます。")
                 ),
 
-                e("div", { className: "status-group" },
-                  e("div", { className: "status-header" },
-                    e("label", { className: "status-label" }, "今の時点で、この領域はどのくらい「大切」ですか？"),
-                    e("span", { className: "status-value" }, data.importance)
-                  ),
-                  e("input", {
-                    type: "range", min: "0", max: "10",
-                    value: data.importance || 5,
-                    onChange: (e) => updateCurrentDomainData('importance', parseInt(e.target.value)),
-                    className: "range-slider"
-                  }),
-                  e("div", { className: "range-labels" },
-                    e("span", null, "全く大切でない (0)"),
-                    e("span", null, "非常に大切 (10)")
-                  )
+                e("label", { className: "checkbox-item" },
+                  e("input", { type: "checkbox", checked: !!data.supportFocus, onChange: e => updateCurrentDomainData('supportFocus', e.target.checked), className: "checkbox-input" }),
+                  e("span", { className: "checkbox-text" }, "もう少し支えがあると扱いやすい領域として選ぶ")
                 ),
-
-                e("div", { className: "status-group status-group-divider" },
-                  e("div", { className: "status-header" },
-                    e("label", { className: "status-label" }, "今の生活の中で、どのくらい行動指針に沿って「ふるまえている」と感じますか？"),
-                    e("span", { className: "status-value" }, data.execution)
-                  ),
-                  e("p", { className: "status-note" }, "※実行度が低いことは失敗ではなく、少しの助けや工夫が必要なサインかもしれません。"),
-                  e("input", {
-                    type: "range", min: "0", max: "10",
-                    value: data.execution || 5,
-                    onChange: (e) => updateCurrentDomainData('execution', parseInt(e.target.value)),
-                    className: "range-slider"
-                  }),
-                  e("div", { className: "range-labels" },
-                    e("span", null, "全くできていない (0)"),
-                    e("span", null, "十分にできている (10)")
-                  )
-                )
+                e("label", { className: "form-label" }, "難しくする条件"),
+                e("textarea", { value: data.difficultConditions || "", onChange: e => updateCurrentDomainData('difficultConditions', e.target.value), className: "textarea-field", placeholder: "時間、疲労、費用、移動、権限など" }),
+                e("label", { className: "form-label" }, "助けになる条件"),
+                e("textarea", { value: data.helpfulConditions || "", onChange: e => updateCurrentDomainData('helpfulConditions', e.target.value), className: "textarea-field", placeholder: "道具、人の助け、場所、時間の余裕など" }),
+                e("label", { className: "form-label" }, "使えるとよい支えや資源"),
+                e("textarea", { value: data.resourcesNeeded || "", onChange: e => updateCurrentDomainData('resourcesNeeded', e.target.value), className: "textarea-field" })
               ),
 
               // 行動指針に沿うのを難しくしているもの
               e("div", { className: "barriers-block" },
                 e("div", { className: "barriers-title-group" },
                   e("h3", { className: "barriers-title" }, e(Cloud, { size: 20, className: "icon-stone" }), " 行動指針に沿うのを難しくしているもの"),
-                  e("p", { className: "barriers-desc" }, "大切にしたい行動指針に向かおうとするとき、どんな気持ちや考え、あるいは周囲の状況がそれを邪魔することがありますか？", e("br", null), "「こうあるべきだという考え」「不安な気持ち」「忙しさ」など、思い当たるものを軽く書き出してみましょう。")
+                  e("p", { className: "barriers-desc" }, "休む、頼む、延期する、やらないことも候補にできます。今の条件で選べそうなものを書ける範囲で。")
                 ),
                 e("textarea", {
-                  value: data.barriers || "",
-                  onChange: (e) => updateCurrentDomainData('barriers', e.target.value),
+                  value: data.actionChoice || "",
+                  onChange: (e) => updateCurrentDomainData('actionChoice', e.target.value),
                   className: "textarea-field",
-                  placeholder: "例：つい完璧にやろうとして動けなくなる、など..."
+                  placeholder: "例：今日は休む、支援者に頼む、来週に延期する"
+                }),
+                e("label", { className: "form-label" }, "いつ、どこで、どれくらい、何の助けがあれば試せそうですか"),
+                e("textarea", {
+                  value: data.actionConditions || "",
+                  onChange: (e) => updateCurrentDomainData('actionConditions', e.target.value),
+                  className: "textarea-field"
                 })
               ),
 
@@ -2257,14 +2253,14 @@
       if (step === 'summary') {
         const coreGuidelines = getCoreGuidelines();
         const customGuidelines = getCustomGuidelines();
-        const gapDomains = getGapDomains();
+
 
         return e("div", { className: "summary-app-wrapper fade-in" },
           e("div", { className: "summary-container" },
 
             e("div", { className: "summary-header" },
-              e("h2", { className: "summary-title" }, "おつかれさまでした"),
-              e("p", { className: "summary-desc" }, "あなたが大切にしたい行動指針の輪郭が、少しずつ見えてきたのではないでしょうか。", e("br", null), "全体をやさしく振り返ってみましょう。")
+              e("h2", { className: "summary-title" }, "あなたが入力したこと"),
+              e("p", { className: "summary-desc" }, "選んだ領域、言葉、条件、支え、次に選んだことをそのまままとめています。")
             ),
 
             coreGuidelines.length > 0 && e("div", { className: "core-guidelines-block" },
@@ -2301,24 +2297,18 @@
                         data.selfGuideline && e("p", null, `・${data.selfGuideline}`)
                       )
                     ),
-                    e("div", { className: "domain-summary-status" },
-                      e("div", { className: "domain-summary-status-item" }, "大切さ: ", e("span", { className: "domain-summary-status-value" }, data.importance)),
-                      e("div", { className: "domain-summary-status-item" }, "実行度: ", e("span", { className: "domain-summary-status-value" }, data.execution))
-                    )
+                    data.supportFocus && e("div", { className: "domain-summary-status" }, "もう少し支えがあると扱いやすい領域"),
+                    data.helpfulConditions && e("p", { className: "domain-summary-status-item" }, `助けになる条件: ${data.helpfulConditions}`),
+                    data.resourcesNeeded && e("p", { className: "domain-summary-status-item" }, `支えや資源: ${data.resourcesNeeded}`)
                   );
                 })
               )
             ),
 
-            gapDomains.length > 0 && e("div", { className: "gap-domains-block" },
-              e("h3", { className: "gap-domains-title" }, "今の自分を受けとめる"),
-              e("p", { className: "gap-domains-desc" }, e("strong", null, gapDomains.join('、')), " の領域は、あなたにとって大切である反面、今は少し、目指す行動指針から距離があると感じているかもしれませんね。"),
-              e("p", { className: "gap-domains-desc" }, "できない自分を責める必要はありません。「今はそういう時期なのかもしれない」と、まずはその事実をやさしく受けとめてみましょう。大切にしたいという気持ちがあること自体が、素晴らしい第一歩です。")
-            ),
 
             e("div", { className: "next-steps-block" },
-              e("h3", { className: "next-steps-title" }, e(Target, { size: 24, className: "icon-stone-light" }), " 持ち帰る「次の一歩」"),
-              e("p", { className: "next-steps-desc" }, "あなたが各領域で設定した小さな一歩です。今日この後、あるいは明日のどこかで試してみてください。"),
+              e("h3", { className: "next-steps-title" }, e(Target, { size: 24, className: "icon-stone-light" }), " 一つの見方"),
+              e("p", { className: "next-steps-desc" }, "同じ方向を大切にしていても、今の条件や使える支えによって、選べる行動は変わります。"),
 
               e("div", { className: "next-step-list" },
                 selectedDomains.map(domain => {
@@ -2331,11 +2321,12 @@
                 }),
 
                 selectedDomains.every(domain => !domainData[domain]?.next_small_step) && e("div", { className: "next-step-fallback" },
-                  e("p", { className: "next-step-fallback-text" }, "今日選んだ「行動指針」を一つだけ思い浮かべながら、深呼吸を3回おこなう。")
+                  e("p", { className: "next-step-fallback-text" }, "今は行動を決めずに、条件や支えを見直すことも選べます。")
                 )
               ),
 
-              e("p", { className: "next-step-footer" }, "どんなに小さな一歩でも、それはあなたが望む方向へ進むための、確かな足跡となります。")
+              e("h3", { className: "next-steps-title" }, "次に選べること"),
+              e("p", { className: "next-step-footer" }, "試す、休む、頼む、延期する、やらない、条件を変える。どれを選ぶかは本人が決めます。")
             ),
 
             // アクションボタン群
@@ -2371,24 +2362,8 @@
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(e(ActWorksheetApp));
-    function completeMentalCareFinish() {
-      try {
-        if (typeof saveToStorage === 'function') saveToStorage();
-        if (typeof saveState === 'function') saveState();
-        if (typeof saveAppState === 'function') saveAppState();
-      } catch (err) {
-        console.warn('終了時の保存処理に失敗しました', err);
-      }
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'mental-care-finish-complete' }, window.location.origin);
-      }
-    }
-
-    window.addEventListener('message', (event) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.type !== 'mental-care-finish') return;
-      completeMentalCareFinish();
-    });
 </script>
+<script src="./finish-handshake.js"></script>
+<script>MentalCareFinish.install({ workId: 5, mode: 'persisted', save: () => window.__mentalCareWork5Save(), serialize: () => window.__mentalCareWork5Serialize() });</script>
 </body>
 </html>

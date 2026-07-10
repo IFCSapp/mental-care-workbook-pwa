@@ -77,15 +77,10 @@
       border-radius: 999px;
       font-size: 0.875rem;
       font-weight: 500;
+      color: #334155;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
       transition: all 0.3s ease;
-    }
-    .status.alert {
-      background: var(--danger-light);
-      color: var(--danger);
-    }
-    .status.safe {
-      background: var(--success-light);
-      color: var(--success);
     }
 
     /* ===== フォーム群 ===== */
@@ -352,9 +347,7 @@
       background: var(--danger);
     }
     
-    .notification-rebound {
-      background: #334155;
-    }
+
 
     .notification-highlight {
       transform: scale(1.15);
@@ -503,22 +496,12 @@
     .btn-anchor {
       font-weight: 700;
       min-width: 200px;
-    }
-    .btn-anchor-off {
       background: #f1f5f9;
       color: #334155;
       border-color: #cbd5e1;
     }
-    .btn-anchor-off:hover {
+    .btn-anchor:hover {
       background: #e2e8f0;
-    }
-    .btn-anchor-on {
-      background: #ecfdf5;
-      color: var(--success);
-      border-color: #a7f3d0;
-    }
-    .btn-anchor-on:hover {
-      background: #d1fae5;
     }
 
     .btn-focus {
@@ -608,8 +591,8 @@
     <div class="header-container">
       <div class="header-top">
         <h1>頭の中を少し離れて見る</h1>
-        <div id="status-container" class="status alert">
-          <span id="status-text">状態: 通知が前面に出ています</span>
+        <div id="status-container" class="status">
+          <span id="status-text">表示: 通知を画面の中央に置いています</span>
         </div>
       </div>
       
@@ -620,7 +603,7 @@
             <input type="text" id="value-input" placeholder="例: 誠実さ、家族を大切にする、学び続ける">
           </div>
           <div class="input-wrapper">
-            <label for="action-input">行動指針に沿った行動:</label>
+            <label for="action-input">今の条件で選べそうな行動:</label>
             <input type="text" id="action-input" placeholder="例: 元気よく挨拶する、5分だけ本を開く">
           </div>
         </div>
@@ -669,14 +652,14 @@
         通知が頭に浮かぶ
       </button>
 
-      <button id="btn-anchor" class="btn-anchor btn-anchor-off">
+      <button id="btn-anchor" class="btn-anchor" aria-pressed="false">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path></svg>
-        <span>現在に触れる (オフ)</span>
+        <span>周りの情報も表示する</span>
       </button>
 
       <button id="btn-focus" class="btn-focus">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-        行動指針に沿って一歩進む
+        今の条件で選べそうな行動を画面に置く
       </button>
 
       <button id="btn-reset" class="btn-reset">
@@ -691,10 +674,8 @@
     let connectionInterval = null;
     let observerPositionX = 50; 
     
-    const defaultWords = ['不安', '焦り', '逃げたい', '胸の圧迫感', 'どうせダメだ', '失敗する', '動悸', '怖い', 'やめたい'];
     let customWords = [];
 
-    const reboundBaseWords = ['感情は消せない', '感情はコントロールできない', '考えても変わらない', '何をしても戻る', '努力してもどかせない'];
     const worldInfoWords = ['風の音', '床の感触', '部屋の明るさ', '呼吸のリズム', '遠くの車の音', '空気の温度', '時計の針の音', '椅子の背もたれ', '服の肌触り'];
 
     const monitor = document.getElementById('monitor');
@@ -735,21 +716,16 @@
 
     function updateNotificationTexts() {
       notifications.forEach(el => {
-        const baseText = el.dataset.baseText;
-        if (isAnchorOn) {
-          if (el.classList.contains('notification-rebound')) {
-            el.textContent = baseText + 'からそのまま置いておく';
-          } else {
-            el.textContent = baseText + '、という考えが出ている';
-          }
-        } else {
-          el.textContent = baseText;
-        }
+        el.textContent = el.dataset.baseText;
       });
     }
 
     function spawnNotification() {
-      const wordList = customWords.length > 0 ? customWords : defaultWords;
+      if (customWords.length === 0) {
+        notificationInput.focus();
+        return;
+      }
+      const wordList = customWords;
       const text = wordList[Math.floor(Math.random() * wordList.length)];
       
       if (isAnchorOn) {
@@ -770,7 +746,7 @@
       el.className = 'notification notification-normal';
       
       el.dataset.baseText = text;
-      el.textContent = isAnchorOn ? text + '、という考えが出ている' : text;
+      el.textContent = text;
       
       monitor.appendChild(el);
       notifications.push(el);
@@ -781,44 +757,6 @@
       });
     }
 
-    function spawnReboundNotification() {
-      const baseWord = reboundBaseWords[Math.floor(Math.random() * reboundBaseWords.length)];
-      const text = baseWord;
-      
-      if (isAnchorOn) {
-        const existing = notifications.find(el => el.dataset.baseText === text && el.classList.contains('notification-rebound'));
-        if (existing) {
-          existing.style.transition = 'transform 0.2s ease';
-          existing.classList.add('notification-highlight');
-          setTimeout(() => {
-            existing.classList.remove('notification-highlight');
-            existing.style.transform = 'translate(-50%, -50%) scale(1)';
-            existing.style.transition = 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
-          }, 300);
-          return;
-        }
-      }
-
-      const el = document.createElement('div');
-      el.className = 'notification notification-rebound';
-      
-      el.dataset.baseText = text;
-      el.textContent = isAnchorOn ? text + 'からそのまま置いておく' : text;
-      
-      monitor.appendChild(el);
-      notifications.push(el);
-      makeDraggable(el);
-      
-      el.style.transition = 'none';
-      const randomX = Math.random() * 80 + 10;
-      el.style.top = '-50px';
-      el.style.left = `${randomX}%`;
-      void el.offsetHeight; 
-      el.style.transition = 'all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
-      
-      updateAllPositions();
-      el.style.opacity = isAnchorOn ? '0.4' : '1';
-    }
 
     function spawnWorldInfo() {
       if (!isAnchorOn) return;
@@ -854,11 +792,10 @@
 
     function makeDraggable(el) {
       let startX, startY, initialLeft, initialTop;
-      let hasMoved = false;
 
       const onDown = (e) => {
         el.classList.add('is-dragging');
-        hasMoved = false;
+
         const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
         const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
         startX = clientX;
@@ -885,9 +822,6 @@
         const clientY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
         const dx = clientX - startX;
         const dy = clientY - startY;
-        if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
-          hasMoved = true;
-        }
         el.style.left = `${initialLeft + dx}px`;
         el.style.top = `${initialTop + dy}px`;
       };
@@ -901,12 +835,7 @@
           el.style.top = el.dataset.targetTop;
         });
         
-        if (hasMoved) {
-          setTimeout(() => {
-            spawnReboundNotification();
-          }, 150);
-        }
-        
+
         document.removeEventListener('mousemove', onMove);
         document.removeEventListener('touchmove', onMove);
         document.removeEventListener('mouseup', onUp);
@@ -954,6 +883,7 @@
 
     btnAnchor.addEventListener('click', () => {
       isAnchorOn = !isAnchorOn;
+      btnAnchor.setAttribute('aria-pressed', String(isAnchorOn));
       
       if (isAnchorOn) {
         const uniqueBaseTexts = new Set();
@@ -969,10 +899,7 @@
         }
       }
 
-      const rebounds = document.querySelectorAll('.notification-rebound');
-
       if (isAnchorOn) {
-        rebounds.forEach(el => { el.style.opacity = '0.4'; });
         updateNotificationTexts();
 
         monitor.className = 'monitor-expanded';
@@ -985,16 +912,15 @@
         observerPositionX = 15; 
         observer.style.left = `${observerPositionX}%`;
 
-        statusContainer.className = 'status safe';
-        statusText.textContent = '状態: 気づきの範囲が広がっています';
+        statusContainer.className = 'status';
+        statusText.textContent = '表示: 通知に加えて、周りの感覚と行動の候補も表示しています';
         
-        btnAnchor.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path></svg><span>現在に触れる (オン)</span>';
-        btnAnchor.className = 'btn-anchor btn-anchor-on';
+        btnAnchor.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path></svg><span>通知だけ表示する</span>';
+        btnAnchor.className = 'btn-anchor';
 
         spawnWorldInfo();
         connectionInterval = setInterval(spawnWorldInfo, 2500);
       } else {
-        rebounds.forEach(el => { el.style.opacity = '1'; });
         updateNotificationTexts();
 
         monitor.className = 'monitor-normal';
@@ -1006,11 +932,11 @@
         observer.className = 'observer-fused';
         observer.style.left = '50%';
         
-        statusContainer.className = 'status alert';
-        statusText.textContent = '状態: 通知が前面に出ています';
+        statusContainer.className = 'status';
+        statusText.textContent = '表示: 通知を画面の中央に置いています';
         
-        btnAnchor.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path></svg><span>現在に触れる (オフ)</span>';
-        btnAnchor.className = 'btn-anchor btn-anchor-off';
+        btnAnchor.innerHTML = '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path></svg><span>周りの情報も表示する</span>';
+        btnAnchor.className = 'btn-anchor';
 
         if (connectionInterval) clearInterval(connectionInterval);
         document.querySelectorAll('.world-info').forEach(el => el.remove());
@@ -1057,24 +983,8 @@
       }
     });
 
-    function completeMentalCareFinish() {
-      try {
-        if (typeof saveToStorage === 'function') saveToStorage();
-        if (typeof saveState === 'function') saveState();
-        if (typeof saveAppState === 'function') saveAppState();
-      } catch (err) {
-        console.warn('終了時の保存処理に失敗しました', err);
-      }
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'mental-care-finish-complete' }, window.location.origin);
-      }
-    }
-
-    window.addEventListener('message', (event) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.type !== 'mental-care-finish') return;
-      completeMentalCareFinish();
-    });
 </script>
+<script src="./finish-handshake.js"></script>
+<script>MentalCareFinish.install({ workId: 4, mode: 'ephemeral' });</script>
 </body>
 </html>

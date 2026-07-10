@@ -904,8 +904,8 @@
                 ],
                 
                 reflectTitle: "少しふりかえる",
-                outroTitle: "おつかれさまでした",
-                outroDesc: "いま見えるものを少し見て、ここに戻ります。<br>この画面を閉じて、先ほど決めた小さな行動をひとつだけ始めてみます。"
+                outroTitle: "あなたが入力したこと",
+                outroDesc: "浮かんだ言葉と、ふりかえりで書いたことを、そのまま持ち帰れます。<br><strong>一つの見方：</strong>言葉を無理に消さず、いったん眺めたり、岸に置いたりする選び方もあります。<br><strong>次に選べること：</strong>今ここに戻る、休む、もう一度眺める、ここで終える、のどれも選べます。"
             },
 
             // 動作設定
@@ -1027,7 +1027,9 @@
             </div>
             <div class="control-actions">
                 <button id="btn-pause-resume" class="mode-btn">少し止める</button>
-                <button id="btn-clear-leaves" class="mode-btn">葉を消す</button>
+                <button id="btn-move-shore" class="mode-btn">岸に置く</button>
+                <button id="btn-restore-shore" class="mode-btn">岸から戻す</button>
+                <button id="btn-clear-leaves" class="mode-btn">すべて消す</button>
             </div>
             <div style="flex: 1;"></div>
             <button id="btn-finish-main" class="primary">眺め終えてふりかえりへ</button>
@@ -1051,7 +1053,7 @@
             <label for="ref-kind">今の自分に、やわらかくかけたい一言</label>
             <input type="text" id="ref-kind">
 
-            <label for="ref-action">このあと戻る行動を、ひとつだけ決めます</label>
+            <label for="ref-action">このあと選びたいことがあれば書きます（空欄でも大丈夫です）</label>
             <input type="text" id="ref-action" placeholder="例: お茶を飲む、窓を開ける">
 
             <div style="margin-top: 32px;">
@@ -1071,7 +1073,7 @@
             
             <div style="background: rgba(0,0,0,0.05); padding: 16px; border-radius: 8px; margin-bottom: 24px;">
                 <strong>次にする行動：</strong><br>
-                <span id="display-action">（とくに決めていない場合は、ゆっくり伸びをしてみます）</span>
+                <span id="display-action">（今は決めない）</span>
             </div>
 
             <button id="btn-back-home">最初の画面に戻る</button>
@@ -1099,6 +1101,7 @@
                 isReducedMotion: false,
                 isViewingMode: false,
                 isInputPanelOpen: false,
+                shoreLeaves: [],
             },
 
             updateRiverSize() {
@@ -1112,6 +1115,7 @@
             init() {
                 this.applyConfig();
                 this.bindEvents();
+                this.updateShoreControls();
                 this.setupImages();
                 this.setupWaterFlowVariation();
                 this.setupCanopyShadowVariation();
@@ -1191,6 +1195,30 @@
                 this.state.activeLeaves = [];
             },
 
+            updateShoreControls() {
+                const restoreButton = document.getElementById('btn-restore-shore');
+                if (!restoreButton) return;
+                const count = this.state.shoreLeaves.length;
+                restoreButton.textContent = count > 0 ? `岸から戻す (${count})` : '岸から戻す';
+                restoreButton.disabled = count === 0;
+            },
+
+            moveLeavesToShore() {
+                const texts = this.state.activeLeaves
+                    .map(item => item.text)
+                    .filter(text => text && text !== '...');
+                this.state.shoreLeaves.push(...texts);
+                this.clearRiverState();
+                this.updateShoreControls();
+            },
+
+            restoreLeavesFromShore() {
+                const texts = [...this.state.shoreLeaves];
+                this.state.shoreLeaves = [];
+                texts.forEach(text => this.createLeaf(text));
+                this.updateShoreControls();
+            },
+
             // 準備画面のタイマーを確実に止める
             clearPrepareTimers() {
                 this.state.prepareTimers.forEach(id => clearTimeout(id));
@@ -1250,7 +1278,7 @@
                 document.querySelectorAll('.reflect-form input').forEach(input => input.value = '');
                 const actionDisplay = document.getElementById('display-action');
                 if (actionDisplay) {
-                    actionDisplay.textContent = '（とくに決めていない場合は、ゆっくり伸びをしてみます）';
+                    actionDisplay.textContent = '（今は決めない）';
                 }
             },
 
@@ -1792,8 +1820,13 @@
                     this.updateRiverPausedState();
                 });
 
+                document.getElementById('btn-move-shore').addEventListener('click', () => this.moveLeavesToShore());
+                document.getElementById('btn-restore-shore').addEventListener('click', () => this.restoreLeavesFromShore());
                 document.getElementById('btn-clear-leaves').addEventListener('click', () => {
+                    if (!window.confirm('川と岸にある言葉をすべて消します。元に戻せません。消しますか？')) return;
                     this.clearRiverState();
+                    this.state.shoreLeaves = [];
+                    this.updateShoreControls();
                 });
 
                 // 葉に乗せて流す処理 (keypress から keydownへ変更しIME発火防止)
@@ -2074,6 +2107,7 @@
                 // 物理演算管理用配列に追加
                 this.state.activeLeaves.push({
                     el: leaf,
+                    text,
                     width: width,
                     height: height,
                     colRadius: colRadius,
@@ -2118,24 +2152,8 @@
             App.init();
         });
 
-    function completeMentalCareFinish() {
-      try {
-        if (typeof saveToStorage === 'function') saveToStorage();
-        if (typeof saveState === 'function') saveState();
-        if (typeof saveAppState === 'function') saveAppState();
-      } catch (err) {
-        console.warn('終了時の保存処理に失敗しました', err);
-      }
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'mental-care-finish-complete' }, window.location.origin);
-      }
-    }
-
-    window.addEventListener('message', (event) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.type !== 'mental-care-finish') return;
-      completeMentalCareFinish();
-    });
 </script>
+<script src="./finish-handshake.js"></script>
+<script>MentalCareFinish.install({ workId: 6, mode: 'ephemeral' });</script>
 </body>
 </html>

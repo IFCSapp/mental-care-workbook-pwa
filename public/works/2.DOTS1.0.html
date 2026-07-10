@@ -403,7 +403,7 @@
     <div class="header-inner">
       <div class="header-title-group">
         <h1 class="header-title">つらさへの対処を振り返る</h1>
-        <span class="header-badge">この端末に自動保存中</span>
+        <span class="header-badge">記録型・保存対象</span>
       </div>
       <div class="header-actions">
         <button id="btn-finish" class="btn btn-header-finish btn-coffee-finish" aria-label="今日はここまで" title="今日はここまで">
@@ -483,6 +483,7 @@
 
     // --- 状態管理 ---
     const initialState = {
+      schemaVersion: 2,
       basic: { name: "", date: "", staff: "", count: "" },
       feelings: { unwanted: "", details: "" },
       dots: {
@@ -491,6 +492,7 @@
         T: { checks: [], other: "" },
         S: { checks: [], other: "" }
       },
+      behaviorContexts: {},
       impact: {
         shortTermHelp: "",
         longTermImpact: {
@@ -505,12 +507,12 @@
 
     let state = JSON.parse(JSON.stringify(initialState));
     let currentStep = 1;
-    const BACKUP_META = { app: 'mental-care-workbook', workId: 2, schemaVersion: 1 };
+    const BACKUP_META = { app: 'mental-care-workbook', workId: 2, schemaVersion: 2 };
     const BACKUP_ERROR_MESSAGE = 'このワークで保存したバックアップファイルを選んでください。';
 
     function isValidWorkbookBackup(imported) {
       const meta = imported?._workbookBackup;
-      return meta?.app === BACKUP_META.app && meta?.workId === BACKUP_META.workId && meta?.schemaVersion === BACKUP_META.schemaVersion;
+      return meta?.app === BACKUP_META.app && meta?.workId === BACKUP_META.workId && [1, 2].includes(meta?.schemaVersion);
     }
 
     function stripBackupMeta(imported) {
@@ -549,6 +551,7 @@
           if (imported.dots[k]) newState.dots[k] = { ...newState.dots[k], ...imported.dots[k] };
         });
       }
+      if (imported.behaviorContexts) newState.behaviorContexts = { ...imported.behaviorContexts };
       if (imported.impact) {
         newState.impact = { ...newState.impact, ...imported.impact };
         if (imported.impact.longTermImpact) {
@@ -707,7 +710,7 @@
               </li>
               <li class="list-item">
                 <span class="list-bullet">•</span>
-                <span class="text-body">入力内容はこの端末に自動保存されます。外部には送信されません。</span>
+                <span class="text-body">入力はこのブラウザ内への保存を試みます。保存結果は上部の「ここまで」から確認できます。入力内容をアプリのサーバーへ送る処理はありません。</span>
               </li>
             </ul>
             <p class="support-note">思いつくところだけで大丈夫です。あとで戻って書き足せます。</p>
@@ -807,6 +810,38 @@
       return html;
     }
 
+    function selectedBehaviors() {
+      return ['D', 'O', 'T', 'S'].flatMap(type => {
+        const selected = state.dots[type].checks.map(value => ({
+          key: `${type}_${DOTS_OPTIONS[type].indexOf(value)}`,
+          label: value,
+        }));
+        if (state.dots[type].other.trim()) selected.push({ key: `${type}_other`, label: state.dots[type].other.trim() });
+        return selected;
+      });
+    }
+
+    function createBehaviorContextCards() {
+      const behaviors = selectedBehaviors();
+      if (!behaviors.length) return '<div class="impact-card"><p class="text-muted">選んだ工夫はありません。空欄のまま進めます。</p></div>';
+      return behaviors.map(({ key, label }) => {
+        const context = state.behaviorContexts[key] || {};
+        return `<section class="impact-card" data-behavior-context="${key}">
+          <h3 class="title-sm border-bottom pb-4 mb-6">${escapeHtml(label)}</h3>
+          <label class="form-label">助けになった場面・条件</label>
+          <textarea data-model="behaviorContexts.${key}.helpfulConditions" class="form-control textarea-sm bg-light">${escapeHtml(context.helpfulConditions)}</textarea>
+          <label class="form-label">負担が増えた場面・条件</label>
+          <textarea data-model="behaviorContexts.${key}.burdenConditions" class="form-control textarea-sm bg-light">${escapeHtml(context.burdenConditions)}</textarea>
+          <label class="form-label">直後に起きたこと</label>
+          <textarea data-model="behaviorContexts.${key}.immediateResult" class="form-control textarea-sm bg-light">${escapeHtml(context.immediateResult)}</textarea>
+          <label class="form-label">数時間・数日後に起きたこと</label>
+          <textarea data-model="behaviorContexts.${key}.laterResult" class="form-control textarea-sm bg-light">${escapeHtml(context.laterResult)}</textarea>
+          <label class="form-label">大切なことへの影響</label>
+          <textarea data-model="behaviorContexts.${key}.valuedImpact" class="form-control textarea-sm bg-light">${escapeHtml(context.valuedImpact)}</textarea>
+        </section>`;
+      }).join('');
+    }
+
     function createStep3() {
       const div = document.createElement('div');
       div.className = 'step-container-wide';
@@ -836,7 +871,11 @@
       div.innerHTML = `
         <div class="step-header-box mb-6">
           <h2 class="title-md mb-2">3. そのやり方は、どう影響しましたか？</h2>
-          <p class="text-body">これまでに使ってきた工夫について、その場での助けと、長い目で見た時の影響を整理してみましょう。</p>
+          <p class="text-body">選んだ工夫ごとに、助けになった場面と負担が増えた場面の両方を整理できます。</p>
+        </div>
+
+        <div class="flex-col-gap6 mb-6" data-behavior-context-list>
+          ${createBehaviorContextCards()}
         </div>
 
         <div class="grid-2col items-stretch">
@@ -904,31 +943,22 @@
         <div class="icon-circle icon-lg mx-auto mb-6">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
         </div>
-        <h2 class="title-md border-bottom pb-6 mb-8">今回見えてきたこと</h2>
+        <h2 class="title-md border-bottom pb-6 mb-8">場面ごとの働きを見ます</h2>
 
         <div class="content-space-y text-left content-px">
-          <p class="text-body">ここまで振り返ってみて、いかがだったでしょうか。</p>
-
           <div class="message-box-primary text-body">
-            <p class="mb-5">今回整理したこれまでのやり方は、決して怠けや悪いことではなく、その時のしんどさをしのぐための、<strong>ご自身なりの精一杯の工夫</strong>だったのではないでしょうか。</p>
-
-            <p class="mb-5">こうしたやり方は、特別なことではありません。<strong>多くの人が、つらい気持ちを何とかしようとして、似た工夫を使います。</strong>短期的には、少し楽になったり、その場をやり過ごせたりと、確かに助かっていた面があったかと思います。その時は、そうするしかなかったのかもしれません。</p>
-
-            <p>一方で、長い目で見ると、同じしんどさが戻ってきたり、少しずつ生活の幅が狭まってしまったりすることも見えてきたかもしれません。</p>
+            <h3 class="title-sm">あなたが入力したこと</h3>
+            <p>選んだ工夫と、助けになった条件・負担が増えた条件・直後・後からの記録を、次のまとめ画面にそのまま表示します。</p>
           </div>
 
-          <!-- 悪循環の説明ボックス -->
           <div class="message-box-secondary text-body">
-            <p class="mb-2 font-medium" style="color: var(--text-main);">よくある流れ：</p>
-            <p>
-              つらさが出る → 何とかしようとして工夫を使う → その場では少し楽になる → でも長い目では同じしんどさが戻りやすい → さらに同じ工夫を増やしてしまう、という流れが起きることがあります。
-            </p>
+            <h3 class="title-sm">一つの見方</h3>
+            <p>同じ工夫でも、場面、使い方、時間、周りの助けによって働きは変わります。カテゴリを選んだだけで、良い・悪いの結論は出しません。</p>
           </div>
 
           <div class="border-top pt-4 mt-8">
-            <p class="text-lead text-left">
-              もし少し心に余裕ができたら、次は「しんどい気持ちをなくすこと」にエネルギーを使う代わりに、<strong>自分がどんな行動指針に向かいたいのか</strong>を見ていくことができるかもしれません。
-            </p>
+            <h3 class="title-sm">次に選べること</h3>
+            <p class="text-lead text-left">助けになった条件を残す、負担が増えた条件では別の方法や環境調整を探す、今は決めずにここまでにする、のどれも選べます。</p>
           </div>
         </div>
       `;
@@ -956,6 +986,18 @@
         return html || '<p class="text-muted" style="font-style: italic;">特に記入なし</p>';
       };
 
+      const renderContextsSummary = () => selectedBehaviors().map(({ key, label }) => {
+        const context = state.behaviorContexts[key] || {};
+        return `<div class="print-card mb-3">
+          <strong>${escapeHtml(label)}</strong>
+          <p><span class="print-item-label">助けになった条件:</span> ${escapeHtml(context.helpfulConditions) || '（未記入）'}</p>
+          <p><span class="print-item-label">負担が増えた条件:</span> ${escapeHtml(context.burdenConditions) || '（未記入）'}</p>
+          <p><span class="print-item-label">直後:</span> ${escapeHtml(context.immediateResult) || '（未記入）'}</p>
+          <p><span class="print-item-label">後から:</span> ${escapeHtml(context.laterResult) || '（未記入）'}</p>
+          <p><span class="print-item-label">大切なことへの影響:</span> ${escapeHtml(context.valuedImpact) || '（未記入）'}</p>
+        </div>`;
+      }).join('');
+
       div.innerHTML = `
         <div class="no-print action-bar mb-6">
           <p class="action-bar-text">まとめを残せます。見返し用のコピー・印刷/PDF保存ができます。</p>
@@ -973,6 +1015,7 @@
 
         <div id="print-content" class="print-area print-card-main">
           <h2 class="print-title border-bottom pb-6 mb-8 text-center">つらさへの対処を振り返る</h2>
+          <h3 class="print-section-title pl-3 mb-4">あなたが入力したこと</h3>
 
           <div class="print-basic-info mb-8">
             <div class="print-info-row border-bottom pb-2"><span class="print-info-label">名前:</span> <span class="print-info-value">${escapeHtml(state.basic.name) || '未記入'}</span></div>
@@ -996,6 +1039,7 @@
               <h3 class="print-section-title pl-3 mb-4">2. これまでのご自身なりの工夫（D.O.T.S.）</h3>
               <div class="print-box print-border">
                 ${renderDotsSummary()}
+                ${renderContextsSummary()}
               </div>
             </section>
 
@@ -1035,12 +1079,10 @@
             </section>
 
             <section class="page-break-inside-avoid border-top pt-8 mt-8 text-center">
-              <h3 class="title-sm mb-4">これからの行動指針へ</h3>
-              <p class="text-body max-w-2xl mx-auto">
-                これまでのやり方は、その時のしんどさをしのぐための精一杯の工夫でした。<br>
-                次は、しんどさをなくすことではなく、<br>
-                <strong style="color: var(--text-main);">自分がどんな行動指針に向かいたいのか</strong>を見ていくことができるかもしれません。
-              </p>
+              <h3 class="title-sm mb-4">一つの見方</h3>
+              <p class="text-body max-w-2xl mx-auto">同じ工夫でも、場面や使い方で働きが変わります。この記録だけから、良い・悪いの結論は出しません。</p>
+              <h3 class="title-sm mb-4 mt-8">次に選べること</h3>
+              <p class="text-body max-w-2xl mx-auto">助けになった条件を残す、負担が増えた条件では別の方法や環境調整を探す、今は決めない、のどれも選べます。</p>
             </section>
           </div>
         </div>
@@ -1070,6 +1112,11 @@
         return items.length > 0 ? items.join(' / ') : 'なし';
       };
 
+      const getBehaviorContextsText = () => selectedBehaviors().map(({ key, label }) => {
+        const context = state.behaviorContexts[key] || {};
+        return `[${label}]\n助けになった条件: ${context.helpfulConditions || '-'}\n負担が増えた条件: ${context.burdenConditions || '-'}\n直後: ${context.immediateResult || '-'}\n後から: ${context.laterResult || '-'}\n大切なことへの影響: ${context.valuedImpact || '-'}`;
+      }).join('\n\n');
+
       const text = `【つらさへの対処を振り返る】
 ■基本情報
 記入日: ${state.basic.date}
@@ -1089,6 +1136,8 @@ D (気をそらす): ${getArrayText('D')}
 O (身を引く・避ける): ${getArrayText('O')}
 T (考えることで何とかしようとする): ${getArrayText('T')}
 S (少し楽にするために使ってきたもの): ${getArrayText('S')}
+
+${getBehaviorContextsText()}
 
 ■3. そのやり方の影響
 [その場での助け（短期）]
@@ -1226,11 +1275,11 @@ ${state.impact.shortTermHelp}
       document.getElementById('btn-finish').addEventListener('click', () => {
         showModal({
           title: "今日はここまでにする",
-          message: "入力内容はこの端末に自動保存されています。\nここで終えても大丈夫です。続きは、また余裕のあるときに開けます。",
+          message: "保存結果は、上部の「ここまで」から確認できます。\nここで終えても大丈夫です。続きは、また余裕のあるときに開けます。",
           confirmText: "わかりました",
           confirmClass: "btn-modal-confirm-primary",
           onConfirm: () => {
-            showToast("入力内容は保存されています");
+            showToast("保存結果は上部の「ここまで」から確認できます");
           }
         });
       });
@@ -1263,24 +1312,8 @@ ${state.impact.shortTermHelp}
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
     }
-    function completeMentalCareFinish() {
-      try {
-        if (typeof saveToStorage === 'function') saveToStorage();
-        if (typeof saveState === 'function') saveState();
-        if (typeof saveAppState === 'function') saveAppState();
-      } catch (err) {
-        console.warn('終了時の保存処理に失敗しました', err);
-      }
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'mental-care-finish-complete' }, window.location.origin);
-      }
-    }
-
-    window.addEventListener('message', (event) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.type !== 'mental-care-finish') return;
-      completeMentalCareFinish();
-    });
 </script>
+<script src="./finish-handshake.js"></script>
+<script>MentalCareFinish.install({ workId: 2, mode: 'persisted', save: () => saveToStorage(), serialize: () => JSON.stringify(state, null, 2) });</script>
 </body>
 </html>

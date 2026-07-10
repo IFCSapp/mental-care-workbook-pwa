@@ -283,7 +283,7 @@
     const TEXT_DATA = {
       start: {
         title: "立ち止まったとき",
-        desc: "行動の前に、ふと立ち止まってしまったとき。\n頭の中に浮かんでいる言葉に気づき、少しだけ距離をとってみるワークです。",
+        desc: "行動の前に、ふと立ち止まってしまったとき。\n頭の中に浮かんでいる言葉に気づき、少しだけ距離をとってみるワークです。入力は保存されず、画面を閉じると消えます。",
         btn: "はじめてみる"
       },
       step1: {
@@ -313,7 +313,7 @@
       },
       step3: {
         title: "3. よく来る通知に名前をつける",
-        desc: "頭の中には、人に備わっている仕組みから、自動で通知のように来る言葉があります。\nそれは、身を守ろうとするときに出やすい反応のひとつです。\n少し距離をとりやすくするために、名前をつけてみます。",
+        desc: "頭の中の言葉は、危険を知らせるような形で出ることもあります。\n由来を決めず、今は『よく来る通知』として名前をつけます。",
         examples: ["ダメ出し通知", "先回りアラート", "完璧じゃないとダメ", "ブレーキ通知"],
         placeholder: "名前を入力してみる",
         actionBtn: "自分で”通知”に名前をつける",
@@ -323,15 +323,15 @@
       },
       step4: {
         title: "4. 小さな一歩",
-        desc: "その通知が来ていても、今、選びたいごく小さな行動を一つだけ決めてみます。",
-        examples: ["席に座る", "ファイルを開く", "5分だけ触る", "メモを1行だけ書く"],
-        placeholder: "行動を入力してみる",
-        actionBtn: "この一歩を決めて終わる",
+        desc: "その通知が来ていても、今の条件で選べるかもしれないことはありますか。休む、助けを頼む、後にする、何もしないも選べます。",
+        examples: ["席に座る", "助けを頼む", "後にする", "今回は決めない"],
+        placeholder: "今は空欄でもかまいません",
+        actionBtn: "ここまでを確認する",
         notice: "これは評価ではなく、選択です。"
       },
       end: {
         title: "おつかれさまでした",
-        desc: "通知は来ても大丈夫です。\n最後に決めた小さな行動へ、自分のペースで戻ってみてください。",
+        desc: "ここまでで気づいたことがあれば、1つだけ持ち帰れます。今は何もしない、あとで見直すことも選べます。",
         btn: "最初からもう一度"
       },
       common: {
@@ -406,6 +406,11 @@
     }
 
     function goToStep(stepNumber) {
+      if (state.currentStep === 4) {
+        const actionInput = document.getElementById('input-action');
+        if (actionInput) state.actionText = actionInput.value;
+        state.step4_done = stepNumber === 5;
+      }
       state.currentStep = stepNumber;
       render();
     }
@@ -575,7 +580,7 @@
       });
       html += `</div>`;
       html += `
-        <input type="text" id="input-action" class="input-text" placeholder="${d.placeholder}">
+        <input type="text" id="input-action" class="input-text" placeholder="${d.placeholder}" value="${escapeHTML(state.actionText)}" oninput="state.actionText = this.value">
         <p class="notice-text" style="margin-bottom: 24px;">${d.notice}</p>
         <button class="btn btn-main" onclick="goToStep(5)">${d.actionBtn}</button>
         <div class="back-action">
@@ -587,10 +592,15 @@
 
     function renderEnd() {
       const d = TEXT_DATA.end;
+      const actionSummary = state.actionText.trim()
+        ? `あなたが入力したこと：<strong>${escapeHTML(state.actionText)}</strong>`
+        : 'あなたが入力したこと：今回は決めない';
       return `
         <div class="step-container">
           <h2 class="step-title">${d.title}</h2>
           <p class="step-desc">${d.desc}</p>
+          <div class="feedback-box"><p>${actionSummary}</p></div>
+          <p class="notice-text">このワークの入力は保存されません。閉じると消えます。閉じる前に自分でコピーできます。</p>
           <button class="btn btn-main" onclick="resetApp()">${d.btn}</button>
         </div>
       `;
@@ -601,6 +611,7 @@
       const input = document.getElementById(inputId);
       if (input) {
         input.value = text;
+        if (inputId === 'input-action') state.actionText = text;
         input.focus();
       }
     }
@@ -621,24 +632,8 @@
     // 初回描画
     render();
 
-    function completeMentalCareFinish() {
-      try {
-        if (typeof saveToStorage === 'function') saveToStorage();
-        if (typeof saveState === 'function') saveState();
-        if (typeof saveAppState === 'function') saveAppState();
-      } catch (err) {
-        console.warn('終了時の保存処理に失敗しました', err);
-      }
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'mental-care-finish-complete' }, window.location.origin);
-      }
-    }
-
-    window.addEventListener('message', (event) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.type !== 'mental-care-finish') return;
-      completeMentalCareFinish();
-    });
 </script>
+<script src="./finish-handshake.js"></script>
+<script>MentalCareFinish.install({ workId: 7, mode: 'ephemeral' });</script>
 </body>
 </html>

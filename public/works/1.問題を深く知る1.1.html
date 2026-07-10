@@ -203,7 +203,7 @@
     /* 設問コンポーネント */
     .q-label-wrap { margin-bottom: 0.5rem; }
     .q-label { display: block; color: var(--slate-800); font-weight: 600; font-size: 1.125rem; }
-    .q-num { margin-right: 0.5rem; color: var(--slate-500); }
+    .q-num { margin-right: 0.5rem; color: var(--slate-600); }
     .q-desc { font-size: 0.875rem; color: var(--slate-600); margin: 0.25rem 0 0 0; }
 
     .form-textarea { width: 100%; padding: 0.75rem; border: 1px solid var(--slate-300); border-radius: 0.25rem; outline: none; resize: vertical; font-size: 1rem; }
@@ -254,6 +254,14 @@
 
     /* 結果確認画面 */
     .result-container { display: flex; flex-direction: column; gap: 1.5rem; color: var(--slate-800); }
+    .basic-flow { background: #eff6ff; border: 1px solid var(--blue-200); border-radius: 0.75rem; padding: 1.25rem; display: flex; flex-direction: column; gap: 1.25rem; }
+    .basic-flow h2, .result-layer h2 { margin: 0; color: var(--slate-800); font-size: 1.25rem; }
+    .basic-flow-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; }
+    .detail-toggle-note { color: var(--slate-600); margin: 0; }
+    .result-layer { border: 1px solid var(--slate-200); border-radius: 0.75rem; padding: 1.25rem; background: white; }
+    .result-layer-view { background: var(--blue-50); border-color: var(--blue-200); }
+    .result-layer-next { background: var(--slate-50); }
+    .result-layer ul { margin: 0.75rem 0 0; padding-left: 1.25rem; }
     .result-actions { background-color: var(--slate-50); border: 1px solid var(--slate-200); padding: 1rem; border-radius: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; margin-bottom: 2rem; }
     .result-actions-title { display: flex; align-items: center; color: var(--slate-700); font-weight: 600; }
     .result-actions-title svg { color: var(--blue-600); margin-right: 0.5rem; width: 1.25rem; height: 1.25rem; }
@@ -418,7 +426,9 @@
 
     // --- 初期状態の定義 ---
     const initialData = {
+      schemaVersion: 2,
       name: "", date: "", staff: "", count: "",
+      basicScene: "", basicNotice: "", basicAction: "", basicImmediate: "", basicLater: "",
       q1: "", q2: "",
       q3: [], q3Other: "", q4: "",
       q5: "", q6: 5, q7: [], q7Other: "",
@@ -444,12 +454,12 @@
     };
 
     const STORAGE_KEY = 'worksheet_auto_save_v1';
-    const BACKUP_META = { app: 'mental-care-workbook', workId: 1, schemaVersion: 1 };
+    const BACKUP_META = { app: 'mental-care-workbook', workId: 1, schemaVersion: 2 };
     const BACKUP_ERROR_MESSAGE = 'このワークで保存したバックアップファイルを選んでください。';
 
     function isValidWorkbookBackup(parsed) {
       const meta = parsed?._workbookBackup;
-      return meta?.app === BACKUP_META.app && meta?.workId === BACKUP_META.workId && meta?.schemaVersion === BACKUP_META.schemaVersion;
+      return meta?.app === BACKUP_META.app && meta?.workId === BACKUP_META.workId && [1, BACKUP_META.schemaVersion].includes(meta?.schemaVersion);
     }
 
     function withoutBackupMeta(parsed) {
@@ -526,30 +536,11 @@
         return initialData;
       });
       const [viewMode, setViewMode] = useState('edit');
+      const [showOptionalDetails, setShowOptionalDetails] = useState(false);
       const [showClearConfirm, setShowClearConfirm] = useState(false);
       const [showFinishConfirm, setShowFinishConfirm] = useState(false);
       const [toastMessage, setToastMessage] = useState(null);
 
-      const targetFields = [
-        'name', 'q1', 'q2', 'q3', 'q4', 'q5', 'q7', 'q8', 'q9',
-        'q11', 'q12', 'q13', 'q14', 'q15', 'q16', 'q17',
-        'q18_1', 'q18_2', 'q18_3', 'q18_4', 'q19', 'q20',
-        'q21_1', 'q21_2', 'q21_3', 'q21_4', 'q21_5'
-      ];
-
-      const calculateProgress = () => {
-        let filledCount = 0;
-        targetFields.forEach(field => {
-          const val = data[field];
-          if (Array.isArray(val)) {
-            if (val.length > 0) filledCount++;
-          } else if (typeof val === 'string' || typeof val === 'number') {
-            if (String(val).trim() !== "") filledCount++;
-          }
-        });
-        return Math.round((filledCount / targetFields.length) * 100);
-      };
-      const progressPercent = calculateProgress();
 
       const getToastType = (msg) => /ではありません|できません|失敗|読み込めません|バックアップファイル/.test(msg) ? 'error' : 'success';
 
@@ -604,7 +595,7 @@
         window.close();
         // 閉じられなかった場合のフォールバック
         setTimeout(() => {
-          showToast("今日はここまでにしました。入力内容は保存されています。");
+          showToast("保存結果は、上部の「ここまで」から確認できます。");
           setShowFinishConfirm(false);
         }, 300);
       };
@@ -613,6 +604,13 @@
         return `【困っていることを整理する】
 名前: ${data.name || '未記入'}
 記入日: ${data.date || '未記入'}
+
+■ 基本5項目
+場面: ${data.basicScene}
+気づいたこと: ${data.basicNotice}
+したこと: ${data.basicAction}
+直後: ${data.basicImmediate}
+後から: ${data.basicLater}
 
 0. 今いちばん困っていること
 Q1: ${data.q1}
@@ -658,6 +656,11 @@ Q20: ${data.q20}
 9. 最後のまとめ
 私は、【${data.q21_1 || '　'}】という場面で、【${data.q21_2 || '　'}】に引っぱられて、【${data.q21_3 || '　'}】を避けやすくなっている。それでも、【${data.q21_4 || '　'}】のために、まずは【${data.q21_5 || '　'}】を試してみよう。`;
       };
+
+      window.__mentalCareWork1Save = () => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      };
+      window.__mentalCareWork1Serialize = generateTextFormat;
 
       const handleCopyText = () => {
         const text = generateTextFormat();
@@ -727,9 +730,8 @@ Q20: ${data.q20}
         e('h1', { className: "print-only-title" }, "困っていることを整理する")
       );
 
-      const progressBar = viewMode === 'edit' ? e('div', { className: "progress-wrap print-hidden" },
-        e('div', { className: "progress-text" }, e('span', null, "入力の進捗状況"), e('span', null, `${progressPercent}%`)),
-        e('div', { className: "progress-bg" }, e('div', { className: "progress-fill", style: { width: `${progressPercent}%` } }))
+      const progressBar = viewMode === 'edit' ? e('div', { className: "progress-wrap print-hidden", role: "status" },
+        e('div', { className: "progress-text" }, e('span', null, "現在地"), e('span', null, showOptionalDetails ? "任意の詳しい項目" : "基本5項目"))
       ) : null;
 
       // 編集モードUI
@@ -738,7 +740,7 @@ Q20: ${data.q20}
         e('ul', null,
           e('li', null, e('strong', null, "まずすること："), "今いちばん困っていることを、短く書けるところから整理します。"),
           e('li', null, e('strong', null, "途中で止めてよいこと："), "書いていてしんどさが強くなったら、いったん止めて大丈夫です。職員に声をかけてもかまいません。"),
-          e('li', null, e('strong', null, "保存について："), "入力内容はこの端末に自動保存されます。外部には送信されません。")
+          e('li', null, e('strong', null, "保存について："), "入力はこのブラウザ内への保存を試みます。保存結果は上部の「ここまで」から確認できます。入力内容をアプリのサーバーへ送る処理はありません。")
         ),
         e('p', { className: "support-note" }, "全部を埋めなくても大丈夫です。今書けるところだけで進めます。"),
         e('details', { className: "supplement-details" },
@@ -760,6 +762,20 @@ Q20: ${data.q20}
         e('div', null, e('label', { htmlFor: "info_date", className: "label-title" }, "記入日"), e('input', { id: "info_date", type: "date", className: "form-input", value: data.date, onChange: ev => handleChange('date', ev.target.value) })),
         e('div', null, e('label', { htmlFor: "info_staff", className: "label-title" }, "担当職員"), e('input', { id: "info_staff", type: "text", className: "form-input", value: data.staff, onChange: ev => handleChange('staff', ev.target.value) })),
         e('div', null, e('label', { htmlFor: "info_count", className: "label-title" }, "回数"), e('input', { id: "info_count", type: "text", className: "form-input", value: data.count, onChange: ev => handleChange('count', ev.target.value) }))
+      );
+
+      const basicFlow = e('section', { className: "basic-flow", 'aria-labelledby': "basic-flow-title" },
+        e('h2', { id: "basic-flow-title" }, "まずは、この5項目だけで整理できます"),
+        e('p', { className: "detail-toggle-note" }, "分からない所は空欄でかまいません。このまままとめへ進めます。"),
+        e('div', null, e(QuestionLabel, { qNum: "1.", title: "どんな場面でしたか。", description: "いつ、どこで、誰と、何を求められていたかなど、書ける範囲で。", htmlFor: "basicScene" }), e(TextAreaField, { data, handleChange, field: "basicScene", rows: 2 })),
+        e('div', null, e(QuestionLabel, { qNum: "2.", title: "考え、気持ち、身体で気づいたことは何ですか。", htmlFor: "basicNotice" }), e(TextAreaField, { data, handleChange, field: "basicNotice", rows: 2 })),
+        e('div', null, e(QuestionLabel, { qNum: "3.", title: "そのとき、何をしましたか。", htmlFor: "basicAction" }), e(TextAreaField, { data, handleChange, field: "basicAction", rows: 2 })),
+        e('div', null, e(QuestionLabel, { qNum: "4.", title: "直後に、何が起きましたか。", htmlFor: "basicImmediate" }), e(TextAreaField, { data, handleChange, field: "basicImmediate", rows: 2 })),
+        e('div', null, e(QuestionLabel, { qNum: "5.", title: "少し後から、何が起きましたか。", htmlFor: "basicLater" }), e(TextAreaField, { data, handleChange, field: "basicLater", rows: 2 })),
+        e('div', { className: "basic-flow-actions" },
+          e('button', { type: "button", onClick: () => { setViewMode('summary'); window.scrollTo(0, 0); }, className: "btn btn-blue" }, e(CheckSquare), "この5項目でまとめへ進む"),
+          e('button', { type: "button", onClick: () => setShowOptionalDetails(value => !value), className: "btn btn-slate", 'aria-expanded': showOptionalDetails }, showOptionalDetails ? "詳しい項目を閉じる" : "もう少し詳しく整理する（任意）")
+        )
       );
 
       const sec0 = e(Section, { title: "0. 今いちばん困っていること", defaultOpen: true },
@@ -795,8 +811,8 @@ Q20: ${data.q20}
         e('div', null, e(QuestionLabel, { qNum: "Q15.", title: "本当は必要だと思っているのに後回しになっていることは何ですか。", htmlFor: "q15" }), e(TextAreaField, { data, handleChange, field: "q15", rows: 2 }))
       );
 
-      const sec6 = e(Section, { title: "6. 問題を広げている背景を整理する" },
-        e('div', null, e(QuestionLabel, { qNum: "Q16.", title: "ここで出ている問題に関係しそうな自分の考え・思考以外の事情はありますか。", htmlFor: "q16" }), e(TextAreaField, { data, handleChange, field: "q16" })),
+      const sec6 = e(Section, { title: "6. 起きやすさに関わっていそうな状況" },
+        e('div', null, e(QuestionLabel, { qNum: "Q16.", title: "体調、時間、場所、周囲の人、求められていたこと、使える道具や助けなど、関係しそうな状況はありますか。", htmlFor: "q16" }), e(TextAreaField, { data, handleChange, field: "q16" })),
         e('div', null, e(QuestionLabel, { qNum: "Q17.", title: "スキルややり方の問題はありますか。", htmlFor: "q17" }), e(TextAreaField, { data, handleChange, field: "q17" }))
       );
 
@@ -837,7 +853,8 @@ Q20: ${data.q20}
       );
 
       const editModeUI = e(React.Fragment, null,
-        infoBox, infoGrid, sec0, sec1, sec2, sec3, sec4, sec5, sec6, sec7, sec8, sec9,
+        infoBox, infoGrid, basicFlow,
+        showOptionalDetails ? e(React.Fragment, null, e('h2', { className: "header-title" }, "もう少し詳しく（すべて任意）"), sec0, sec1, sec2, sec3, sec4, sec5, sec6, sec7, sec8, sec9) : null,
         e('div', { className: "bottom-actions" },
           e('button', { onClick: () => { setViewMode('summary'); window.scrollTo(0, 0); }, className: "btn-large" }, e(CheckSquare), "入力した内容を確認する"),
           e('button', { onClick: () => setShowClearConfirm(true), className: "btn-link" }, e(Trash2), "入力内容をすべて消去する")
@@ -856,6 +873,7 @@ Q20: ${data.q20}
       ];
 
       const summaryModeUI = e('div', { className: "result-container" },
+        e('section', { className: "result-layer" }, e('h2', null, "あなたが入力したこと"), e('p', null, "空欄は空欄のまま表示します。教材側で内容を補いません。")),
         e('div', { className: "result-actions print-hidden" },
           e('div', { className: "result-actions-title" }, e(Share2), "まとめを残す"),
           e('div', { className: "result-btn-group" },
@@ -901,12 +919,19 @@ Q20: ${data.q20}
             )
           ),
           e('div', { className: "result-section" },
-            e('h3', { className: "result-section-title" }, "9. 最後のまとめ"),
+            e('h3', { className: "result-section-title" }, "基本5項目"),
             e('div', { className: "result-summary-box" },
-              e('p', { className: "result-summary-p" }, "私は、", e('span', { className: "result-summary-blank" }, data.q21_1 || '＿＿＿＿'), "という場面で、", e('span', { className: "result-summary-blank" }, data.q21_2 || '＿＿＿＿'), "という考えやしんどさに引っぱられて、", e('span', { className: "result-summary-blank" }, data.q21_3 || '＿＿＿＿'), "を避けやすくなっている。"),
-              e('p', { className: "result-summary-p" }, "それでも、", e('span', { className: "result-summary-blank" }, data.q21_4 || '＿＿＿＿'), "のために、まずは", e('span', { className: "result-summary-blank" }, data.q21_5 || '＿＿＿＿'), "を試してみよう。")
+              [{ label: '場面', value: data.basicScene }, { label: '気づいたこと', value: data.basicNotice }, { label: 'したこと', value: data.basicAction }, { label: '直後', value: data.basicImmediate }, { label: '後から', value: data.basicLater }].map(item => e('p', { key: item.label, className: "result-summary-p" }, e('strong', null, `${item.label}：`), item.value || '未入力'))
             )
           )
+        ),
+        e('section', { className: "result-layer result-layer-view" },
+          e('h2', null, "一つの見方"),
+          e('p', null, "同じ行動でも、場面や直後・後からの結果によって働きが変わることがあります。この一回だけで、あなたの性格や今後を決める結論は出しません。")
+        ),
+        e('section', { className: "result-layer result-layer-next" },
+          e('h2', null, "次に選べること"),
+          e('ul', null, e('li', null, "入力に戻って書き足す"), e('li', null, "今は何も決めず、ここまでにする"), e('li', null, "一人で抱えず、見せる範囲を決めて支援を頼む"))
         )
       );
 
@@ -916,7 +941,7 @@ Q20: ${data.q20}
           e('div', { className: "modal-top-bar" }),
           e(Coffee, { className: "modal-icon-center" }),
           e('h3', { className: "modal-title-center" }, "今日はここまでにしますか？"),
-          e('div', { className: "modal-text-center" }, e('p', null, "入力内容は保存されています。"), e('p', null, "続きは、また余裕のあるときで大丈夫です。")),
+          e('div', { className: "modal-text-center" }, e('p', null, "保存結果は、上部の「ここまで」から確認できます。"), e('p', null, "続きは、また余裕のあるときで大丈夫です。")),
           e('div', { className: "modal-actions-center" },
             e('button', { onClick: handleCloseWindow, className: "btn-modal-dark" }, "このまま閉じる"),
             e('button', { onClick: () => setShowFinishConfirm(false), className: "btn-modal-outline" }, "戻る")
@@ -951,24 +976,8 @@ Q20: ${data.q20}
 
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(e(App));
-    function completeMentalCareFinish() {
-      try {
-        if (typeof saveToStorage === 'function') saveToStorage();
-        if (typeof saveState === 'function') saveState();
-        if (typeof saveAppState === 'function') saveAppState();
-      } catch (err) {
-        console.warn('終了時の保存処理に失敗しました', err);
-      }
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'mental-care-finish-complete' }, window.location.origin);
-      }
-    }
-
-    window.addEventListener('message', (event) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.type !== 'mental-care-finish') return;
-      completeMentalCareFinish();
-    });
 </script>
+<script src="./finish-handshake.js"></script>
+<script>MentalCareFinish.install({ workId: 1, mode: 'persisted', save: () => window.__mentalCareWork1Save(), serialize: () => window.__mentalCareWork1Serialize() });</script>
 </body>
 </html>

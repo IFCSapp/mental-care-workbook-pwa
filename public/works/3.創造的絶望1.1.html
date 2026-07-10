@@ -536,6 +536,9 @@
       weatherAction: '',
       customWeatherAction: '',
 
+      // 全エクササイズ共通の中立な観察結果
+      observedChange: '',
+
       // 共通タイマー
       timeLeft: 0,
       totalTime: 0,
@@ -574,6 +577,9 @@
       if (state.step === 'menu') {
         container.innerHTML = renderMenu();
         attachMenuListeners();
+      } else if (state.step === 'crisis') {
+        container.innerHTML = renderCrisisGuide();
+        attachCrisisGuideListeners();
       } else if (state.exerciseId === 'emotion') {
         if (state.step === 'select') {
           container.innerHTML = renderSelectEmotion();
@@ -584,10 +590,9 @@
         } else if (state.step === 'reflection') {
           container.innerHTML = renderReflectionEmotion();
           attachReflectionEmotionListeners();
-        } else if (state.step === 'result_summary') {
-          container.innerHTML = renderResultSummaryEmotion();
-        } else if (state.step === 'result_detail') {
-          container.innerHTML = renderResultDetailEmotion();
+        } else if (state.step === 'result_summary' || state.step === 'result_detail') {
+          container.innerHTML = renderNeutralResultSummary();
+          attachNeutralResultListeners();
         }
       } else if (state.exerciseId === 'whitebear') {
         if (state.step === 'instruction') {
@@ -599,10 +604,9 @@
         } else if (state.step === 'reflection') {
           container.innerHTML = renderReflectionBear();
           attachReflectionBearListeners();
-        } else if (state.step === 'result_summary') {
-          container.innerHTML = renderResultSummaryBear();
-        } else if (state.step === 'result_detail') {
-          container.innerHTML = renderResultDetailBear();
+        } else if (state.step === 'result_summary' || state.step === 'result_detail') {
+          container.innerHTML = renderNeutralResultSummary();
+          attachNeutralResultListeners();
         }
       } else if (state.exerciseId === 'slider') {
         if (state.step === 'select_emotion') {
@@ -617,10 +621,9 @@
         } else if (state.step === 'reflection') {
           container.innerHTML = renderReflectionSlider();
           attachReflectionSliderListeners();
-        } else if (state.step === 'result_summary') {
-          container.innerHTML = renderResultSummarySlider();
-        } else if (state.step === 'result_detail') {
-          container.innerHTML = renderResultDetailSlider();
+        } else if (state.step === 'result_summary' || state.step === 'result_detail') {
+          container.innerHTML = renderNeutralResultSummary();
+          attachNeutralResultListeners();
         }
       } else if (state.exerciseId === 'strategy') {
         if (state.step === 'select_theme') {
@@ -632,10 +635,9 @@
         } else if (state.step === 'reflection') {
           container.innerHTML = renderReflectionStrategy();
           attachReflectionStrategyListeners();
-        } else if (state.step === 'result_summary') {
-          container.innerHTML = renderResultSummaryStrategy();
-        } else if (state.step === 'result_detail') {
-          container.innerHTML = renderResultDetailStrategy();
+        } else if (state.step === 'result_summary' || state.step === 'result_detail') {
+          container.innerHTML = renderNeutralResultSummary();
+          attachNeutralResultListeners();
         }
       } else if (state.exerciseId === 'weather') {
         if (state.step === 'select_weather') {
@@ -647,12 +649,135 @@
         } else if (state.step === 'question_action') {
           container.innerHTML = renderWeatherQuestionAction();
           attachWeatherQuestionActionListeners();
-        } else if (state.step === 'result_summary') {
-          container.innerHTML = renderResultSummaryWeather();
-        } else if (state.step === 'result_detail') {
-          container.innerHTML = renderResultDetailWeather();
+        } else if (state.step === 'result_summary' || state.step === 'result_detail') {
+          container.innerHTML = renderNeutralResultSummary();
+          attachNeutralResultListeners();
         }
       }
+    }
+
+    function escapeHTML(value) {
+      return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[char]));
+    }
+
+    const neutralChangeOptions = [
+      { value: 'lower', label: '下がった' },
+      { value: 'same', label: 'ほぼ同じ' },
+      { value: 'higher', label: '上がった' },
+      { value: 'fluctuated', label: '行き来した' },
+      { value: 'unknown', label: '分からない' },
+    ];
+
+    function getNeutralResponseDetails() {
+      if (state.exerciseId === 'emotion') {
+        const labels = {
+          moreAware: `余計に「${getDisplayEmotion()}」が意識に上がった`,
+          checking: `「${getDisplayEmotion()}を感じていないか」を確認した`,
+          otherEmotions: '別の感情が出てきた',
+          nothing: '特に何も起きなかった',
+        };
+        const selected = Object.entries(state.experiences).filter(([, value]) => value).map(([key]) => labels[key]);
+        return `扱った気持ち: ${escapeHTML(getDisplayEmotion())}<br>もとの回答: ${escapeHTML(state.intensity || '回答なし')}<br>途中で起きたこと: ${escapeHTML(selected.join('、') || '選択なし')}`;
+      }
+      if (state.exerciseId === 'whitebear') {
+        const labels = { distract: '別のことを考えようとした', suppress: '考えを消そうとした', giveup: 'そのままにした', other: 'その他' };
+        const selected = Object.entries(state.bearActions).filter(([, value]) => value).map(([key]) => labels[key]);
+        return `白くまが浮かんだ回数: ${escapeHTML(state.bearCount || '回答なし')}<br>そのときにしたこと: ${escapeHTML(selected.join('、') || '選択なし')}`;
+      }
+      if (state.exerciseId === 'slider') {
+        const labels = { distraction: '気をそらす・別のことを考える', optingOut: 'その場から離れる・関わるのをやめる', thinking: '理由を分析する・自分に言い聞かせる', substances: '飲食や気晴らしで感覚を変える', other: 'その他' };
+        const selected = Object.entries(state.sliderActions).filter(([, value]) => value).map(([key]) => labels[key]);
+        return `扱った気持ち: ${escapeHTML(getDisplaySliderEmotion())}<br>数値: ${state.sliderInitial} → ${state.sliderFinal}<br>試したこと: ${escapeHTML(selected.join('、') || '選択なし')}<br>直後: ${escapeHTML(state.sliderShortTerm || '回答なし')}<br>後から: ${escapeHTML(state.sliderLongTerm || '回答なし')}`;
+      }
+      if (state.exerciseId === 'strategy') {
+        const labels = { rethink: '考え直す', positive: 'ポジティブに考える', prepare: '準備を整える', distract: '気をそらす', analyze: '理由を分析する', other: state.customStrategy || 'その他' };
+        const selected = Object.entries(state.strategies).filter(([, value]) => value).map(([key]) => labels[key]);
+        return `扱った場面: ${escapeHTML(getDisplayStrategyTheme())}<br>試したこと: ${escapeHTML(selected.join('、') || '選択なし')}<br>試した回数: ${escapeHTML(state.strategyFrequency || '回答なし')}<br>今の様子: ${escapeHTML(state.problemPersists || '回答なし')}`;
+      }
+      const actionText = state.weatherAction === 'その他' ? state.customWeatherAction : state.weatherAction;
+      return `使った例え: ${escapeHTML(getDisplayWeather())}<br>止めようとしたとき: ${escapeHTML(state.weatherStopResult || '回答なし')}<br>行動の候補: ${escapeHTML(actionText || '今回は決めない')}`;
+    }
+
+    function renderNeutralResultSummary() {
+      const options = neutralChangeOptions.map((option) => `
+        <label class="form-label">
+          <input type="radio" name="neutral-change" value="${option.value}" ${state.observedChange === option.value ? 'checked' : ''} class="neutral-change-radio form-radio">
+          <span class="form-text">${option.label}</span>
+        </label>
+      `).join('');
+      const selected = neutralChangeOptions.find((option) => option.value === state.observedChange);
+
+      if (!selected) {
+        return `
+          <div class="section-content animate-fadeIn">
+            <div class="text-center">
+              <h2 class="page-title">今回観察した変化</h2>
+              <p class="page-desc">今回の体験に最も近いものを1つ選べます。どの結果も同じように扱います。</p>
+            </div>
+            <div class="box-panel"><div class="options-list">${options}</div></div>
+            <button onclick="resetToMenu()" class="btn btn-secondary w-full">結果を作らず、ワーク選択に戻る</button>
+          </div>
+        `;
+      }
+
+      return `
+        <div class="section-content animate-fadeIn" data-neutral-summary="${state.exerciseId}">
+          <div class="text-center"><h2 class="page-title">今回観察した変化</h2></div>
+          <div class="box-panel">
+            <h3 class="section-title">あなたが入力・選択したこと</h3>
+            <p class="text-body"><strong data-selected-change="${selected.value}">${selected.label}</strong></p>
+            <p class="text-body text-body-mb">${getNeutralResponseDetails()}</p>
+            <h3 class="section-title section-title-mt">一つの見方</h3>
+            <p class="text-body">この一回から一般的な結論は出しません。この方法が今回・この場面で何を助け、何を難しくしたかは、別の場面では変わることがあります。</p>
+            <details class="citation">
+              <summary>このワークの背景</summary>
+              <p>思考を抑えようとした後の反跳は、研究では平均的に小〜中程度で、対象や測り方によって差があります。</p>
+            </details>
+            <h3 class="section-title section-title-mt">次に選べること</h3>
+            <p class="text-body">別の体験を試す、同じ画面へ戻る、今は何もしない、支援を求めることを選べます。</p>
+          </div>
+          <div class="btn-group-responsive">
+            <button id="neutral-change-again" class="btn btn-secondary btn-responsive-secondary">変化を選び直す</button>
+            <button onclick="resetToMenu()" class="btn btn-primary btn-px-6 btn-responsive-primary">ワーク選択に戻る</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function attachNeutralResultListeners() {
+      document.querySelectorAll('.neutral-change-radio').forEach((input) => {
+        input.addEventListener('change', (event) => {
+          state.observedChange = event.target.value;
+          render();
+        });
+      });
+      const again = document.getElementById('neutral-change-again');
+      if (again) again.addEventListener('click', () => {
+        state.observedChange = '';
+        render();
+      });
+    }
+
+    function renderCrisisGuide() {
+      return `
+        <div class="section-content animate-fadeIn" role="alert">
+          <div class="text-center"><h2 class="page-title">安全の確保を優先してください</h2></div>
+          <div class="box-panel">
+            <p class="text-body text-body-mb">今すぐ自分や誰かの安全が心配なとき、自分を傷つける行動を止めにくいときは、このワークより安全の確保を優先してください。</p>
+            <p class="text-body">近くの人、利用中の支援機関・医療機関、地域の緊急窓口へ連絡してください。日本で救急車が必要なときは119です。</p>
+          </div>
+          <div class="btn-group-responsive">
+            <button id="crisis-close" class="btn btn-secondary btn-responsive-secondary">閉じる</button>
+            <a class="btn btn-primary btn-responsive-primary" href="https://www.mhlw.go.jp/mamorouyokokoro/" target="_blank" rel="noopener noreferrer">相談先を見る</a>
+          </div>
+        </div>
+      `;
+    }
+
+    function attachCrisisGuideListeners() {
+      document.getElementById('crisis-close').addEventListener('click', () => resetToMenu());
     }
 
     // --- 0. メニュー画面 ---
@@ -661,33 +786,33 @@
         <div class="section-content animate-fadeIn">
           <div class="menu-header">
             <h2 class="page-title">コントロールとの関わりを見る</h2>
-            <p class="page-desc">創造的絶望 — 実践するエクササイズを選択してください。</p>
+            <p class="page-desc">短いあいだ、考えや気持ちを弱めようとしたとき、何が起きるかを観察します。結果は人や状況で違います。試さない、途中で止めることも選べます。</p>
           </div>
 
           <div class="menu-grid">
             <button type="button" id="btn-emotion" class="menu-item">
               <span class="menu-item-title">1. 感情のコントロール実験</span>
-              <span class="menu-item-desc">「不安」などをあえて感じないようにする定番のエクササイズです。（所要時間：約1分）</span>
+              <span class="menu-item-desc">強すぎない気持ちを選び、30秒だけ「弱めよう」としたときの変化を見ます。（所要時間：約1分）</span>
             </button>
 
             <button type="button" id="btn-whitebear" class="menu-item">
               <span class="menu-item-title">2. 白くまエクササイズ</span>
-              <span class="menu-item-desc">「思考」すら思い通りにはコントロールできないことを体験するエクササイズです。（所要時間：約2分）</span>
+              <span class="menu-item-desc">ある言葉を考えないようにしたとき、何が起きるかを観察します。（所要時間：約2分）</span>
             </button>
 
             <button type="button" id="btn-slider" class="menu-item">
               <span class="menu-item-title">3. 感情スライダー・エクササイズ</span>
-              <span class="menu-item-desc">感情を「数値化して下げようとする」努力がどのような結果をもたらすかを体験します。（所要時間：約4分）</span>
+              <span class="menu-item-desc">気持ちを数値で記録し、弱めようとした前後の変化を見比べます。（所要時間：約4分）</span>
             </button>
 
             <button type="button" id="btn-strategy" class="menu-item">
               <span class="menu-item-title">4. 感情コントロール作戦会議</span>
-              <span class="menu-item-desc">これまで行ってきた「感情をなくすための努力」が機能しているか検証します。（所要時間：約3分）</span>
+              <span class="menu-item-desc">これまでの工夫が、今回・この場面で何を助け、何を難しくしたかを見ます。（所要時間：約3分）</span>
             </button>
 
             <button type="button" id="btn-weather" class="menu-item col-span-2">
               <span class="menu-item-title">5. 感情を天気として扱う</span>
-              <span class="menu-item-desc">コントロールを手放し、今できる行動を選ぶ感覚を短時間で体験するワークです。（所要時間：約2分）</span>
+              <span class="menu-item-desc">気持ちを天気に例えてみます。この例えが合わなければ使わなくてかまいません。（所要時間：約2分）</span>
             </button>
           </div>
         </div>
@@ -695,11 +820,11 @@
     }
 
     function attachMenuListeners() {
-      document.getElementById('btn-emotion').addEventListener('click', () => { state.exerciseId = 'emotion'; state.step = 'select'; render(); });
-      document.getElementById('btn-whitebear').addEventListener('click', () => { state.exerciseId = 'whitebear'; state.step = 'instruction'; render(); });
-      document.getElementById('btn-slider').addEventListener('click', () => { state.exerciseId = 'slider'; state.step = 'select_emotion'; render(); });
-      document.getElementById('btn-strategy').addEventListener('click', () => { state.exerciseId = 'strategy'; state.step = 'select_theme'; render(); });
-      document.getElementById('btn-weather').addEventListener('click', () => { state.exerciseId = 'weather'; state.step = 'select_weather'; render(); });
+      document.getElementById('btn-emotion').addEventListener('click', () => { state.observedChange = ''; state.exerciseId = 'emotion'; state.step = 'select'; render(); });
+      document.getElementById('btn-whitebear').addEventListener('click', () => { state.observedChange = ''; state.exerciseId = 'whitebear'; state.step = 'instruction'; render(); });
+      document.getElementById('btn-slider').addEventListener('click', () => { state.observedChange = ''; state.exerciseId = 'slider'; state.step = 'select_emotion'; render(); });
+      document.getElementById('btn-strategy').addEventListener('click', () => { state.observedChange = ''; state.exerciseId = 'strategy'; state.step = 'select_theme'; render(); });
+      document.getElementById('btn-weather').addEventListener('click', () => { state.observedChange = ''; state.exerciseId = 'weather'; state.step = 'select_weather'; render(); });
     }
 
     // ==========================================
@@ -1094,6 +1219,7 @@
                 <label class="form-label-start"><input type="checkbox" id="chk-dots-o" ${state.sliderActions.optingOut ? 'checked' : ''} class="form-checkbox"><div class="form-text-block"><span>その場から逃げる・関わるのをやめる</span></div></label>
                 <label class="form-label-start"><input type="checkbox" id="chk-dots-t" ${state.sliderActions.thinking ? 'checked' : ''} class="form-checkbox"><div class="form-text-block"><span>理由を分析する・自分に言い聞かせる</span></div></label>
                 <label class="form-label-start"><input type="checkbox" id="chk-dots-s" ${state.sliderActions.substances ? 'checked' : ''} class="form-checkbox"><div class="form-text-block"><span>飲食や気晴らしで感覚を麻痺させる</span></div></label>
+                <label class="form-label-start"><input type="checkbox" id="chk-immediate-safety" class="form-checkbox"><div class="form-text-block"><span>自分を傷つける行動を止めにくいことがある</span></div></label>
                 <label class="form-label-start"><input type="checkbox" id="chk-dots-other" ${state.sliderActions.other ? 'checked' : ''} class="form-checkbox"><div class="form-text-block"><span>その他</span></div></label>
               </div>
             </div>
@@ -1117,6 +1243,11 @@
       document.getElementById('chk-dots-o').addEventListener('change', (e) => state.sliderActions.optingOut = e.target.checked);
       document.getElementById('chk-dots-t').addEventListener('change', (e) => state.sliderActions.thinking = e.target.checked);
       document.getElementById('chk-dots-s').addEventListener('change', (e) => state.sliderActions.substances = e.target.checked);
+      document.getElementById('chk-immediate-safety').addEventListener('change', (e) => {
+        if (!e.target.checked) return;
+        state.step = 'crisis';
+        render();
+      });
       document.getElementById('chk-dots-other').addEventListener('change', (e) => state.sliderActions.other = e.target.checked);
       const checkReady = () => document.getElementById('result-slider-btn').disabled = !(state.sliderShortTerm !== '' && state.sliderLongTerm !== '');
       document.querySelectorAll('.short-term-radio').forEach(r => r.addEventListener('change', (e) => { state.sliderShortTerm = e.target.value; checkReady(); }));
@@ -1159,7 +1290,7 @@
             <h2 class="page-title">もう少し詳しく見る</h2>
           </div>
           <div class="box-panel-light">
-            <h3 class="section-title">「下がらない」という事実</h3>
+            <h3 class="section-title">開始前と今回の数値</h3>
             <p class="text-body text-body-mb">あなたの感情の数値は、開始前の「${state.sliderInitial}」から「${state.sliderFinal}」に変化しました。</p>
             ${isFailedToDrop ? `
               <div class="alert-info">目標とした「2」まで下がらなかったり、逆に上がってしまったりしたとしても、それはあなたの能力不足ではありません。<strong>「感情は意志の力では直接コントロールしにくい」という起きやすい傾向</strong>が現れただけです。</div>
@@ -1167,14 +1298,14 @@
               <div class="alert-info">今回は数値が下がりましたが、重要なのは「長期的」な結果です。</div>
             `}
             <h3 class="section-title section-title-mt">点と点をつなぐ（Join the D.O.T.S.）</h3>
-            <p class="text-body text-body-mb">不快な感情を下げるために私たちが用いる行動戦略は、頭文字をとって<strong>D.O.T.S.</strong>と呼ばれます。これらは「短期的」には効くように見えても、「長期的」にはうまくいきにくいばかりか、人生の可能性を狭めてしまうことがあります。</p>
+            <p class="text-body text-body-mb">気をそらす、その場を離れる、考え続ける、感覚を変えるといった工夫は、同じ形でも場面や使い方によって働きが変わります。</p>
             <div class="options-list-wide options-list-spaced">
               <div class="dots-item"><span class="dots-title">D</span>istraction（気をそらす）<p class="dots-desc">スマホやテレビなどで気を紛らわせる。根本的な変化にはつながりにくいことがあります。</p></div>
               <div class="dots-item"><span class="dots-title">O</span>pting out（身を引く）<p class="dots-desc">不安を感じる場所に行かない、挑戦をやめる。生活範囲が狭まりやすくなります。</p></div>
               <div class="dots-item"><span class="dots-title">T</span>hinking（思考）<p class="dots-desc">「なぜこうなったのか」と理屈をこねたり、過度に心配したりする。結果として感情に注意が向き続けやすくなります。</p></div>
               <div class="dots-item"><span class="dots-title">S</span>ubstances, Self-harm（物質等）<p class="dots-desc">アルコール、過食などで感覚を麻痺させる。二次的な問題を引き起こすことがあります。</p></div>
             </div>
-            <p class="text-body text-body-strong">感情のスライダーを無理に下げようとする努力（経験的回避）が、長期的に「${state.sliderLongTerm}」という結果を招いているかもしれないという事実に気づくことが、次のステップへ進むための大切な鍵となります。</p>
+            <p class="text-body text-body-strong">本人が選んだ長期的な回答は「${state.sliderLongTerm}」でした。この一回から一般的な結論は出しません。</p>
             <div class="citation">
               <p>出典: Harris, R. (2009). <em>ACT Made Simple: An Easy-To-Read Primer on Acceptance and Commitment Therapy.</em> New Harbinger Publications. <a href="https://www.newharbinger.com/9781684033010/act-made-simple/" target="_blank" rel="noopener noreferrer">Link</a></p>
             </div>
@@ -1359,7 +1490,7 @@
               <li><strong>方略（作戦）自体の限界</strong><br /><span class="list-desc">感情や思考をコントロールして「なくそう」とする作戦は、長期的には機能しにくいという側面があるかもしれません。</span></li>
               <li><strong>別の方向性が必要かもしれない</strong><br /><span class="list-desc">穴に落ちた時、必死に「穴を掘る（コントロールする）」努力を続けても、穴は深くなるばかりです。スコップを置き、別の行動をとる時期が来ているのかもしれません。</span></li>
             </ul>
-            <div class="alert-info alert-info-last">ご自身を責める必要は全くありません。このワークは、これまでの努力が「長期的にはうまくいきにくかったかもしれない」という事実に気づき、新しいアプローチ（受容とコミットメント）へ向かうための大切な第一歩（創造的絶望）です。</div>
+            <div class="alert-info alert-info-last">これまでの工夫は、その場で助けになった面と、負担が増えた面を分けて見られます。答えは場面によって変わります。</div>
             <div class="citation">
               <p>出典: Hayes, S. C., Strosahl, K. D., & Wilson, K. G. (2011). <br><em>Acceptance and Commitment Therapy, Second Edition: The Process and Practice of Mindful Change.</em> Guilford Press.</p>
             </div>
@@ -1451,7 +1582,7 @@
         <div class="section-content animate-fadeIn">
           <div class="text-center">
             <h2 class="page-title page-title-sm">天気のままで、何をする？</h2>
-            <p class="page-desc">天気を止めることはできません。<br>では、<span class="instruction-highlight instruction-highlight-sm">「${getDisplayWeather()}」</span>のままでも、今ここからあなたができる「行動」は何でしょうか？</p>
+            <p class="page-desc">気持ちを天気に例えてみます。この例えが合わなければ使わなくてかまいません。<br>では、<span class="instruction-highlight instruction-highlight-sm">「${getDisplayWeather()}」</span>の中で、今の条件から選べそうなことは何でしょうか？</p>
           </div>
           <div class="box-panel">
             <div class="options-list-wide">${optionsHtml}</div>
@@ -1506,7 +1637,7 @@
           <div class="box-panel-light">
             <h3 class="section-title">今回の体験を整理する</h3>
             <div class="text-body-mb">
-              <p class="text-body">あなたは、「${getDisplayWeather()}」を無理に止めようとすると「${state.weatherStopResult}」という事実に気づき、<br>天気がそのままであっても<strong>「${actionText}」</strong>という行動がとれることを選択しました。</p>
+              <p class="text-body">「${getDisplayWeather()}」を止めようとしたときの回答は「${state.weatherStopResult}」、行動の候補は<strong>「${actionText}」</strong>でした。</p>
             </div>
             
             <h3 class="section-title section-title-mt">この体験で起きやすいこと</h3>
@@ -1514,7 +1645,7 @@
               <li><strong>感情は「天気」のようなもの</strong><br /><span class="list-desc">天気は私たちの意思に関係なく現れ、そして去っていきます。感情も同じような性質を持ちます。コントロールしにくいものを無理に変えようとすることは、雨に向かって「降るな」と怒鳴り続けるようなもので、ただエネルギーを消耗してしまうことがあります。</span></li>
               <li><strong>天気は変えられなくても、行動は選べる</strong><br /><span class="list-desc">雨を止めることはできなくても、「傘をさして歩き出す」ことはできます。感情がどのような状態であっても、私たちが「自分の手足をどう動かすか」という行動は、自分で選び取ることができるかもしれません。</span></li>
             </ul>
-            <div class="alert-info alert-info-last">ACTでは、このように表現することがあります。こう捉えると、すこし違ってみえるかもしれません。<br>あなたは天気そのものではなく、天気が移り変わるのを包み込んでいる「空」のような存在かもしれません。雨の日も、嵐の日も、空そのものが傷つくことはありません。</div>
+            <div class="alert-info alert-info-last">気持ちと、それに気づいている視点を分けて表す一つの例えです。安全が脅かされている状況を我慢する意味ではありません。</div>
             <div class="citation">
               <p>出典1: Harris, R. (2009). <em>ACT Made Simple: An Easy-To-Read Primer on Acceptance and Commitment Therapy.</em> New Harbinger Publications. <a href="https://www.newharbinger.com/9781684033010/act-made-simple/" target="_blank" rel="noopener noreferrer">Link</a></p>
               <p>出典2: Hayes, S. C., Strosahl, K. D., & Wilson, K. G. (2011). <em>Acceptance and Commitment Therapy, Second Edition.</em> Guilford Press. <a href="https://www.guilford.com/books/Acceptance-and-Commitment-Therapy/Hayes-Strosahl-Wilson/9781609189624" target="_blank" rel="noopener noreferrer">Link</a></p>
@@ -1537,9 +1668,9 @@
       if (state.exerciseId === 'whitebear') {
         instructionText = `<span class="instruction-highlight">「絶対に『白くま』を思い浮かべない」</span><br />ようにしてください。`;
       } else if (state.exerciseId === 'slider') {
-        instructionText = `<span class="instruction-highlight">「${getDisplaySliderEmotion()}」</span>の数値を、<br />意志の力だけで<span class="instruction-highlight">「2まで下げよう」</span>と努力してみてください。`;
+        instructionText = `<span class="instruction-highlight">「${getDisplaySliderEmotion()}」</span>を、<br />30秒だけ<span class="instruction-highlight">「少し弱めよう」</span>として、変化を観察してください。`;
       } else {
-        instructionText = `<span class="instruction-highlight">「${getDisplayEmotion()}」</span><br />を感じないようにしてください。`;
+        instructionText = `<span class="instruction-highlight">「${getDisplayEmotion()}」</span><br />を30秒だけ「少し弱めよう」として、変化を観察してください。`;
       }
       
       const progress = ((state.totalTime - state.timeLeft) / state.totalTime) * 100;
@@ -1597,6 +1728,7 @@
       state.sliderEmotion = '不安'; state.customSliderEmotion = ''; state.sliderInitial = 5; state.sliderFinal = 5; state.sliderActions = { distraction: false, optingOut: false, thinking: false, substances: false, other: false }; state.sliderShortTerm = ''; state.sliderLongTerm = '';
       state.strategyTheme = '課題や仕事の前の不安'; state.customStrategyTheme = ''; state.strategies = { rethink: false, positive: false, prepare: false, distract: false, analyze: false, other: false }; state.customStrategy = ''; state.strategyFrequency = ''; state.problemPersists = '';
       state.weatherType = '曇り（モヤモヤ・気が晴れない）'; state.customWeather = ''; state.weatherStopResult = ''; state.weatherAction = ''; state.customWeatherAction = '';
+      state.observedChange = '';
 
       if (timerInterval) clearInterval(timerInterval);
       render();
@@ -1604,24 +1736,8 @@
 
     // 初期描画
     document.addEventListener('DOMContentLoaded', () => { render(); });
-    function completeMentalCareFinish() {
-      try {
-        if (typeof saveToStorage === 'function') saveToStorage();
-        if (typeof saveState === 'function') saveState();
-        if (typeof saveAppState === 'function') saveAppState();
-      } catch (err) {
-        console.warn('終了時の保存処理に失敗しました', err);
-      }
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'mental-care-finish-complete' }, window.location.origin);
-      }
-    }
-
-    window.addEventListener('message', (event) => {
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.type !== 'mental-care-finish') return;
-      completeMentalCareFinish();
-    });
 </script>
+<script src="./finish-handshake.js"></script>
+<script>MentalCareFinish.install({ workId: 3, mode: 'ephemeral' });</script>
 </body>
 </html>

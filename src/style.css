@@ -225,6 +225,8 @@ body {
   border-radius: var(--radius);
   max-width: 460px;
   width: 100%;
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
   padding: 28px 28px 24px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.12);
   text-align: center;
@@ -469,6 +471,161 @@ body {
   line-height: 1.6;
 }
 
+/* ===== 利用境界・保存状態・支援者導線 ===== */
+
+.app-header p { line-height: 1.7; }
+
+.boundary-card,
+.support-card {
+  margin-top: 22px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+
+.boundary-card h2,
+.support-card h2 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--accent-dark);
+  line-height: 1.4;
+}
+
+.boundary-card p,
+.support-card p {
+  margin-top: 10px;
+  font-size: 0.88rem;
+  line-height: 1.7;
+}
+
+.crisis-box {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 2px solid #9b4b45;
+  border-radius: 10px;
+  background: #fff8f6;
+}
+
+.crisis-box a,
+.boundary-copy a,
+.start-safety-details a {
+  color: #315e8a;
+  font-weight: 600;
+  text-underline-offset: 2px;
+}
+
+.crisis-box a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.work-choice-intro {
+  margin-top: 24px;
+  padding-inline: 4px;
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.7;
+}
+
+.work-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.use-with-fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.use-with-fieldset legend {
+  padding: 0 6px;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.use-with-fieldset label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+}
+
+.use-with-fieldset input {
+  width: 20px;
+  height: 20px;
+}
+
+.start-support-boundary,
+.start-safety-details > div {
+  margin: 12px 0;
+  padding: 14px;
+  border-radius: 10px;
+  background: #fff;
+  border: 1px solid var(--border);
+}
+
+.start-safety-details summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+[hidden] { display: none !important; }
+
+.btn-danger {
+  background: #8b3d38;
+  color: #fff;
+  font-weight: 600;
+}
+
+.modal-actions-stack {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.save-status-success,
+.save-status-error {
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.save-status-success { border: 1px solid var(--accent); }
+.save-status-error { border: 2px solid #8b3d38; }
+
+.work-safety-link {
+  min-height: 44px;
+  margin: -4px 0;
+  padding: 4px 10px;
+  border: 0;
+  background: transparent;
+  color: #315e8a;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.work-safety-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-radius: 6px;
+}
+
 /* ===== レスポンシブ微調整 ===== */
 
 @media (max-width: 480px) {
@@ -494,6 +651,10 @@ body {
 
   .backup-actions .btn {
     width: 100%;
+  }
+
+  .modal-actions-stack {
+    grid-template-columns: 1fr;
   }
 
   .modal-content {
