@@ -141,6 +141,27 @@ try {
   const externalReact = reactWorkFiles.some(content => /https?:\/\/[^"']+(react|react-dom)/i.test(content));
   record('React and ReactDOM bundled locally', localReact && !externalReact, { localReact, externalReact });
 
+  // PWA repository contract: keep deploy/base-path files and scope-safe registration intact.
+  const [indexHtml, mainJs, viteConfig, manifestText, swText, pagesWorkflow] = await Promise.all([
+    readFile(path.join(root, 'index.html'), 'utf8'),
+    readFile(path.join(root, 'src/main.js'), 'utf8'),
+    readFile(path.join(root, 'vite.config.js'), 'utf8'),
+    readFile(path.join(root, 'public/manifest.webmanifest'), 'utf8'),
+    readFile(path.join(root, 'public/sw.js'), 'utf8'),
+    readFile(path.join(root, '.github/workflows/pages.yml'), 'utf8'),
+  ]);
+  const manifest = JSON.parse(manifestText);
+  const iconFiles = await Promise.all(['icon.svg', 'icon-192.png', 'icon-512.png'].map(async file => {
+    try { await readFile(path.join(root, 'public', file)); return file; } catch { return null; }
+  }));
+  record('PWA manifest and icons preserved', manifest.start_url === './' && manifest.scope === './' && manifest.display === 'standalone' && iconFiles.every(Boolean), { start_url: manifest.start_url, scope: manifest.scope, display: manifest.display, icons: iconFiles });
+  record('PWA relative base path and service worker registration preserved', viteConfig.includes("base: './'") && indexHtml.includes('href="./manifest.webmanifest"') && mainJs.includes("navigator.serviceWorker.register('./sw.js')"), {});
+  record('service worker remains scope-safe', swText.includes('self.registration.scope') && swText.includes("new URL('index.html', APP_SCOPE)") && swText.includes("event.request.mode === 'navigate'"), {});
+  record('GitHub Pages workflow preserved', pagesWorkflow.includes('branches: [main]') && pagesWorkflow.includes('npm run build') && pagesWorkflow.includes('path: dist') && pagesWorkflow.includes('actions/deploy-pages@v4'), {});
+
+  const work6PwaMarkers = ['btn-watch-landscape', 'enterViewingMode()', 'requestFullscreen', "screen.orientation.lock('landscape')", 'viewing-mode', 'btn-close-viewing-mode'];
+  record('work6 PWA viewing mode and fail-soft landscape entry preserved', work6PwaMarkers.every(marker => allWorkFiles[5].includes(marker)), { markers: work6PwaMarkers });
+
   const finishContracts = allWorkFiles.map((content, index) => ({
     work: index + 1,
     listens: content.includes("event.data?.type !== 'mental-care-finish'"),
@@ -264,6 +285,31 @@ try {
     });
     const expectedPanelWidth = viewport.name.startsWith('landscape') ? 287 : 265;
     record(`work6 ${viewport.name} input-only/enter/focus/safe-area`, after === before + 3 && info.visibleLeaves >= 1 && info.placeholder === '書いて改行で葉に乗せます' && info.enterkeyhint === 'send' && info.focused && info.value === '' && info.visibleInputs === 1 && info.visibleGuides === 0 && info.visibleSubmitButtons === 0 && info.position === 'absolute' && info.panel.top >= 7 && info.panel.rightGap >= 11 && Math.abs(info.panel.width - expectedPanelWidth) <= 1 && info.panel.height <= 70 && info.overflow <= 1, { before, after, info });
+    await page.close();
+  }
+
+  // Work 6 desktop keeps the prior full guide/label/button UI rather than the compact mobile-only presentation.
+  {
+    const page = await browser.newPage({ viewport: views[0] });
+    await page.goto(`${base}/#work/6`);
+    const frame = page.frameLocator('#work-frame');
+    await frame.locator('#btn-start').click();
+    await frame.locator('#btn-prepare-next').click();
+    const desktopUi = await frame.locator('#main-ui-area').evaluate(panel => {
+      const visible = selector => Array.from(document.querySelectorAll(selector)).filter(element => {
+        const style = getComputedStyle(element);
+        const rect = element.getBoundingClientRect();
+        return style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0;
+      }).length;
+      return {
+        position: getComputedStyle(panel).position,
+        labels: visible('.input-label'),
+        hints: visible('.enter-hint'),
+        submitButtons: visible('#btn-add-leaf'),
+        modeButtons: visible('.mode-selector .mode-btn'),
+      };
+    });
+    record('work6 desktop keeps conventional full controls', desktopUi.position === 'static' && desktopUi.labels === 1 && desktopUi.hints === 1 && desktopUi.submitButtons === 1 && desktopUi.modeButtons === 3, desktopUi);
     await page.close();
   }
 

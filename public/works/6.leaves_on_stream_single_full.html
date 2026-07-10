@@ -572,7 +572,7 @@
             .watch-controls,
             .watch-entry-note { display: none; }
         }
-        @media (hover: none) and (pointer: coarse), (max-width: 768px) {
+        @media (hover: none) and (pointer: coarse), (max-width: 768px), (max-height: 599px) and (orientation: landscape) {
             #screen-main #main-guide,
             #screen-main .watch-controls,
             #screen-main .watch-entry-note,
@@ -801,7 +801,7 @@
     input[type="text"] { padding: 0.72rem 0.85rem; }
     @media (max-width: 640px) { .panel { max-width: calc(100vw - 1.5rem); } .main-layout { overflow-x: hidden; } }
 
-    @media (hover: none) and (pointer: coarse), (max-width: 768px) {
+    @media (hover: none) and (pointer: coarse), (max-width: 768px), (max-height: 599px) and (orientation: landscape) {
       #screen-main .main-layout {
         position: relative;
         flex: 1 1 auto;
@@ -840,12 +840,17 @@
       }
       #screen-main #leaf-input {
         min-height: 42px;
+        height: 50px;
         margin: 0;
         font-size: 16px;
         background: rgba(255, 255, 255, 0.9);
       }
       @media (orientation: landscape) and (max-height: 560px) {
-        #screen-main #main-ui-area { width: min(287px, calc(100% - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))); }
+        #screen-main #main-ui-area {
+          width: min(287px, calc(100% - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
+          height: 68px;
+          padding-block: 0 !important;
+        }
       }
     }
 </style>
