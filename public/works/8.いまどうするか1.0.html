@@ -973,6 +973,7 @@
 
           <div class="card" id="print-area">
             <h2 style="text-align: center; border-bottom: 1px solid var(--border-color); padding-bottom: 16px; margin-bottom: 24px;">今できる一歩を選ぶ</h2>
+            <section data-feedback-layer="input">
             <h3 style="color: var(--primary); margin-bottom: 20px;">あなたが入力したこと</h3>
 
             <div class="summary-section">
@@ -1031,13 +1032,14 @@
               <div><span class="summary-label">あると助かる支え:</span> <span id="sum-continuation-support"></span></div>
               <div><span class="summary-label">難しい場合の代わり:</span> <span id="sum-continuation-alternative"></span></div>
             </div>
+            </section>
 
-            <div class="summary-section">
+            <div class="summary-section" data-feedback-layer="view">
               <h3>一つの見方</h3>
               <p>同じ気がかりでも、今の条件、権限、周りの助け、使える時間によって置き場所や選べる行動は変わります。</p>
             </div>
 
-            <div class="summary-section">
+            <div class="summary-section" data-feedback-layer="next">
               <h3>次に選べること</h3>
               <p>試す、休む、頼む、延期する、やらない、条件を変える、今は決めない、のどれも選べます。</p>
             </div>

@@ -599,7 +599,15 @@
         <div class="step-container">
           <h2 class="step-title">${d.title}</h2>
           <p class="step-desc">${d.desc}</p>
-          <div class="feedback-box"><p>${actionSummary}</p></div>
+          <section class="feedback-box" data-feedback-layer="input"><p>${actionSummary}</p></section>
+          <section data-feedback-layer="view">
+            <h3>一つの見方</h3>
+            <p>頭に浮かぶ言葉と少し距離を取る表現も選べます。言葉が消えたかどうかや、この一回の反応だけで結論は出しません。</p>
+          </section>
+          <section data-feedback-layer="next">
+            <h3>次に選べること</h3>
+            <p>同じ表現を使う、別の表現を試す、今は何もしない、支援を頼むことを選べます。</p>
+          </section>
           <p class="notice-text">このワークの入力は保存されません。閉じると消えます。閉じる前に自分でコピーできます。</p>
           <button class="btn btn-main" onclick="resetApp()">${d.btn}</button>
         </div>

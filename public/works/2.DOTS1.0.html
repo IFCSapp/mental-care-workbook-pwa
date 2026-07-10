@@ -781,7 +781,7 @@
         <div class="checkbox-card">
           <div class="flex-center gap-3 mb-2">
             <div class="icon-square">
-              ${type}
+              <span aria-hidden="true">・</span>
             </div>
             <h3 class="title-sm">${title}</h3>
           </div>
@@ -848,7 +848,7 @@
       div.innerHTML = `
         <div class="step-header-box mb-6">
           <h2 class="title-md mb-2">2. どのような工夫をしてきましたか</h2>
-          <p class="text-body">先ほど挙げた「感じたくないもの」に対処するため、これまでに使ってきたご自身なりのやり方をチェックしてみましょう。（D.O.T.S.の整理）</p>
+          <p class="text-body">先ほど挙げた「感じたくないもの」に対処するため、これまでに使ってきたご自身なりのやり方をチェックしてみましょう。</p>
         </div>
 
         <div class="grid-2col items-stretch">
@@ -977,7 +977,6 @@
           if (items.length > 0) {
             const labels = {D: '気をそらす', O: '身を引く・避ける', T: '考えることで何とかしようとする', S: '少し楽にするために使ってきたもの'};
             html += `<div class="mb-3">
-              <span class="dots-key">${key}</span>
               <span class="dots-label">${labels[key]}</span>:
               <span class="dots-value">${escapeHtml(items.join(' / '))}</span>
             </div>`;
@@ -1015,6 +1014,7 @@
 
         <div id="print-content" class="print-area print-card-main">
           <h2 class="print-title border-bottom pb-6 mb-8 text-center">つらさへの対処を振り返る</h2>
+          <div data-feedback-layer="input">
           <h3 class="print-section-title pl-3 mb-4">あなたが入力したこと</h3>
 
           <div class="print-basic-info mb-8">
@@ -1036,7 +1036,7 @@
             </section>
 
             <section class="page-break-inside-avoid">
-              <h3 class="print-section-title pl-3 mb-4">2. これまでのご自身なりの工夫（D.O.T.S.）</h3>
+              <h3 class="print-section-title pl-3 mb-4">2. これまでのご自身なりの工夫</h3>
               <div class="print-box print-border">
                 ${renderDotsSummary()}
                 ${renderContextsSummary()}
@@ -1078,13 +1078,16 @@
               </div>
             </section>
 
-            <section class="page-break-inside-avoid border-top pt-8 mt-8 text-center">
+            </div>
+          </div>
+            <section class="page-break-inside-avoid border-top pt-8 mt-8 text-center" data-feedback-layer="view">
               <h3 class="title-sm mb-4">一つの見方</h3>
               <p class="text-body max-w-2xl mx-auto">同じ工夫でも、場面や使い方で働きが変わります。この記録だけから、良い・悪いの結論は出しません。</p>
+            </section>
+            <section class="page-break-inside-avoid text-center" data-feedback-layer="next">
               <h3 class="title-sm mb-4 mt-8">次に選べること</h3>
               <p class="text-body max-w-2xl mx-auto">助けになった条件を残す、負担が増えた条件では別の方法や環境調整を探す、今は決めない、のどれも選べます。</p>
             </section>
-          </div>
         </div>
 
         <div class="no-print text-center pt-4 pb-8">
@@ -1131,11 +1134,11 @@ ${state.feelings.unwanted}
 [具体的な考え、気持ち、身体感覚など]
 ${state.feelings.details}
 
-■2. これまでのご自身なりの工夫（D.O.T.S.）
-D (気をそらす): ${getArrayText('D')}
-O (身を引く・避ける): ${getArrayText('O')}
-T (考えることで何とかしようとする): ${getArrayText('T')}
-S (少し楽にするために使ってきたもの): ${getArrayText('S')}
+■2. これまでのご自身なりの工夫
+気をそらす: ${getArrayText('D')}
+身を引く・避ける: ${getArrayText('O')}
+考えることで何とかしようとする: ${getArrayText('T')}
+少し楽にするために使ってきたもの: ${getArrayText('S')}
 
 ${getBehaviorContextsText()}
 

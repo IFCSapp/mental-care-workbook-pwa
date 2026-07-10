@@ -873,7 +873,8 @@ Q20: ${data.q20}
       ];
 
       const summaryModeUI = e('div', { className: "result-container" },
-        e('section', { className: "result-layer" }, e('h2', null, "あなたが入力したこと"), e('p', null, "空欄は空欄のまま表示します。教材側で内容を補いません。")),
+        e('section', { className: "result-layer", 'data-feedback-layer': "input" },
+        e('h2', null, "あなたが入力したこと"), e('p', null, "空欄は空欄のまま表示します。教材側で内容を補いません。"),
         e('div', { className: "result-actions print-hidden" },
           e('div', { className: "result-actions-title" }, e(Share2), "まとめを残す"),
           e('div', { className: "result-btn-group" },
@@ -924,12 +925,12 @@ Q20: ${data.q20}
               [{ label: '場面', value: data.basicScene }, { label: '気づいたこと', value: data.basicNotice }, { label: 'したこと', value: data.basicAction }, { label: '直後', value: data.basicImmediate }, { label: '後から', value: data.basicLater }].map(item => e('p', { key: item.label, className: "result-summary-p" }, e('strong', null, `${item.label}：`), item.value || '未入力'))
             )
           )
-        ),
-        e('section', { className: "result-layer result-layer-view" },
+        )),
+        e('section', { className: "result-layer result-layer-view", 'data-feedback-layer': "view" },
           e('h2', null, "一つの見方"),
           e('p', null, "同じ行動でも、場面や直後・後からの結果によって働きが変わることがあります。この一回だけで、あなたの性格や今後を決める結論は出しません。")
         ),
-        e('section', { className: "result-layer result-layer-next" },
+        e('section', { className: "result-layer result-layer-next", 'data-feedback-layer': "next" },
           e('h2', null, "次に選べること"),
           e('ul', null, e('li', null, "入力に戻って書き足す"), e('li', null, "今は何も決めず、ここまでにする"), e('li', null, "一人で抱えず、見せる範囲を決めて支援を頼む"))
         )

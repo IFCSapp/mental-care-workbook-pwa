@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>浮かぶ言葉を眺める｜Leaves on the Stream</title>
+    <title>浮かぶ言葉を眺める</title>
     <style>
         /* =========================================
            基本設定・カラーパレット
@@ -845,6 +845,7 @@
         font-size: 16px;
         background: rgba(255, 255, 255, 0.9);
       }
+      #screen-main #btn-repeat-last { display: none; }
       @media (orientation: landscape) and (max-height: 560px) {
         #screen-main #main-ui-area {
           width: min(287px, calc(100% - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
@@ -883,7 +884,7 @@
             // 文言設定
             texts: {
                 introTitle: "浮かぶ言葉を眺める",
-                introDesc: "Leaves on the Stream — 頭に浮かぶ言葉や気持ちを、葉に乗せて流れていくものとして見ていくワークです。<br><br>・目は開けたままでも大丈夫です。<br>・つらくなったら、いつでも止めて大丈夫です。",
+                introDesc: "頭に浮かぶ言葉や気持ちを、葉に乗せて眺めます。消すことや、うまく流すことが目標ではありません。<br><br>・目は開けたままでも大丈夫です。<br>・同じ言葉を何度乗せても、岸に置いても、途中で止めても大丈夫です。",
                 introTime: "所要時間: 3〜5分程度",
                 
                 prepareTitle: "はじめる前に",
@@ -905,7 +906,7 @@
                 
                 reflectTitle: "少しふりかえる",
                 outroTitle: "あなたが入力したこと",
-                outroDesc: "浮かんだ言葉と、ふりかえりで書いたことを、そのまま持ち帰れます。<br><strong>一つの見方：</strong>言葉を無理に消さず、いったん眺めたり、岸に置いたりする選び方もあります。<br><strong>次に選べること：</strong>今ここに戻る、休む、もう一度眺める、ここで終える、のどれも選べます。"
+                outroDesc: "葉に乗せた言葉と、ふりかえりで書いたことを、そのまま表示します。"
             },
 
             // 動作設定
@@ -997,6 +998,7 @@
                     <input type="text" id="leaf-input" placeholder="書いて改行で葉に乗せます" aria-label="今、頭の中に浮かんでいる言葉を短く書きます。改行で葉に乗せます" autocomplete="off" enterkeyhint="send">
                     <p class="enter-hint" id="leaf-input-hint">書いたら改行キーで葉に乗せます</p>
                     <button id="btn-add-leaf" class="primary" style="width: 100%; margin-right: 0;">葉に乗せて流す</button>
+                    <button id="btn-repeat-last" style="width: 100%; margin: 8px 0 0;" disabled>同じ言葉をもう一度乗せる</button>
                 </div>
 
                 <!-- グラウンディングセクション（入力欄の下に移動） -->
@@ -1029,7 +1031,7 @@
                 <button id="btn-pause-resume" class="mode-btn">少し止める</button>
                 <button id="btn-move-shore" class="mode-btn">岸に置く</button>
                 <button id="btn-restore-shore" class="mode-btn">岸から戻す</button>
-                <button id="btn-clear-leaves" class="mode-btn">すべて消す</button>
+                <button id="btn-clear-leaves" class="mode-btn">画面の葉を片づける</button>
             </div>
             <div style="flex: 1;"></div>
             <button id="btn-finish-main" class="primary">眺め終えてふりかえりへ</button>
@@ -1047,7 +1049,7 @@
             <label for="ref-easy">今日、出やすかった言葉はありましたか</label>
             <input type="text" id="ref-easy">
 
-            <label for="ref-hard">流しにくかったものがあれば、短く書きます</label>
+            <label for="ref-hard">言葉を乗せたとき、どんな動きや感じがありましたか</label>
             <input type="text" id="ref-hard">
 
             <label for="ref-kind">今の自分に、やわらかくかけたい一言</label>
@@ -1068,13 +1070,20 @@
     ========================================= -->
     <section id="screen-outro" class="screen">
         <div class="panel">
-            <h2 id="outro-title"></h2>
-            <p id="outro-desc"></p>
-            
-            <div style="background: rgba(0,0,0,0.05); padding: 16px; border-radius: 8px; margin-bottom: 24px;">
-                <strong>次にする行動：</strong><br>
-                <span id="display-action">（今は決めない）</span>
-            </div>
+            <section data-feedback-layer="input">
+                <h2 id="outro-title"></h2>
+                <p id="outro-desc"></p>
+                <p><strong>葉に乗せた言葉：</strong> <span id="display-leaves">（入力なし）</span></p>
+                <p><strong>次にする行動：</strong> <span id="display-action">（今は決めない）</span></p>
+            </section>
+            <section data-feedback-layer="view">
+                <h3>一つの見方</h3>
+                <p>言葉を無理に消さず、いったん眺めたり、岸に置いたりする選び方もあります。今回の動きだけから、できた・できなかったの結論は出しません。</p>
+            </section>
+            <section data-feedback-layer="next">
+                <h3>次に選べること</h3>
+                <p>今ここに戻る、休む、もう一度眺める、ここで終える、のどれも選べます。</p>
+            </section>
 
             <button id="btn-back-home">最初の画面に戻る</button>
         </div>
@@ -1102,6 +1111,8 @@
                 isViewingMode: false,
                 isInputPanelOpen: false,
                 shoreLeaves: [],
+                authoredLeafTexts: [],
+                lastEnteredText: '',
             },
 
             updateRiverSize() {
@@ -1203,6 +1214,18 @@
                 restoreButton.disabled = count === 0;
             },
 
+            updateRepeatControl() {
+                const button = document.getElementById('btn-repeat-last');
+                if (!button) return;
+                button.disabled = !this.state.lastEnteredText;
+            },
+
+            repeatLastLeaf() {
+                if (!this.state.lastEnteredText) return;
+                this.createLeaf(this.state.lastEnteredText);
+                this.state.authoredLeafTexts.push(this.state.lastEnteredText);
+            },
+
             moveLeavesToShore() {
                 const texts = this.state.activeLeaves
                     .map(item => item.text)
@@ -1272,6 +1295,9 @@
             resetMainInput() {
                 const input = document.getElementById('leaf-input');
                 if (input) input.value = '';
+                this.state.authoredLeafTexts = [];
+                this.state.lastEnteredText = '';
+                this.updateRepeatControl();
             },
 
             resetReflectForm() {
@@ -1773,6 +1799,10 @@
                     if (action) {
                         document.getElementById('display-action').textContent = action;
                     }
+                    const leaves = document.getElementById('display-leaves');
+                    leaves.textContent = this.state.authoredLeafTexts.length
+                        ? this.state.authoredLeafTexts.join('、')
+                        : '（入力なし）';
                     this.showScreen('screen-outro');
                 });
 
@@ -1823,7 +1853,7 @@
                 document.getElementById('btn-move-shore').addEventListener('click', () => this.moveLeavesToShore());
                 document.getElementById('btn-restore-shore').addEventListener('click', () => this.restoreLeavesFromShore());
                 document.getElementById('btn-clear-leaves').addEventListener('click', () => {
-                    if (!window.confirm('川と岸にある言葉をすべて消します。元に戻せません。消しますか？')) return;
+                    if (!window.confirm('画面の川と岸にある葉を片づけます。ふりかえりに表示する入力記録は消えません。続けますか？')) return;
                     this.clearRiverState();
                     this.state.shoreLeaves = [];
                     this.updateShoreControls();
@@ -1831,6 +1861,7 @@
 
                 // 葉に乗せて流す処理 (keypress から keydownへ変更しIME発火防止)
                 document.getElementById('btn-add-leaf').addEventListener('click', () => this.handleAddLeaf());
+                document.getElementById('btn-repeat-last').addEventListener('click', () => this.repeatLastLeaf());
                 document.getElementById('leaf-input').addEventListener('keydown', (e) => {
                     if (e.key === 'Enter' && !e.isComposing) {
                         e.preventDefault();
@@ -2004,8 +2035,15 @@
             handleAddLeaf() {
                 const input = document.getElementById('leaf-input');
                 const text = input.value.trim();
-                
-                this.createLeaf(text || "...");
+                if (!text) {
+                    input.focus();
+                    return;
+                }
+
+                this.state.lastEnteredText = text;
+                this.state.authoredLeafTexts.push(text);
+                this.updateRepeatControl();
+                this.createLeaf(text);
                 input.value = '';
                 if (this.state.isViewingMode) this.closeInputPanel();
                 else input.focus();

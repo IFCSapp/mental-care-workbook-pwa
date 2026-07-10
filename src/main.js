@@ -101,6 +101,7 @@ const WORK_STORAGE_KEYS = [
   ]).filter(Boolean),
 ];
 let backupStatus = null;
+let rejectedBackupFile = null;
 
 try {
   migrateWorkbookStorage(localStorage);
@@ -150,6 +151,18 @@ function getSafeFilePart(value, fallback) {
 
 function downloadJsonFile(filename, payload) {
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function downloadTextFile(filename, text, type = 'text/plain;charset=utf-8') {
+  const blob = new Blob([text], { type });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -210,19 +223,24 @@ function prepareBackupImport(parsed) {
     workIds: PERSISTED_WORK_IDS.filter((id) => entries.some(([key]) => (
       key === WORK_DATA_POLICY[id].storageKey || WORK_DATA_POLICY[id].legacyStorageKeys?.includes(key)
     ))),
+    excludedEphemeralWorkIds: EPHEMERAL_WORK_IDS,
   };
 }
 
 function applyPreparedBackup(prepared) {
   const originals = new Map(prepared.entries.map(([key]) => [key, localStorage.getItem(key)]));
   try {
-    prepared.entries.forEach(([key, value]) => localStorage.setItem(key, value));
+    prepared.entries.forEach(([key, value]) => {
+      localStorage.setItem(key, value);
+      if (localStorage.getItem(key) !== value) throw new Error(`VERIFY_FAILED:${key}`);
+    });
   } catch (error) {
+    prepared.entries.forEach(([key]) => {
+      try { localStorage.removeItem(key); } catch {}
+    });
     originals.forEach((value, key) => {
-      try {
-        if (value === null) localStorage.removeItem(key);
-        else localStorage.setItem(key, value);
-      } catch {}
+      if (value === null) return;
+      try { localStorage.setItem(key, value); } catch {}
     });
     throw error;
   }
@@ -238,6 +256,7 @@ function showBackupImportConfirm(prepared) {
       <div class="modal-body">
         <p>対象: ${prepared.workIds.length ? `work${prepared.workIds.join('・')}` : ''}${hasProfile ? `${prepared.workIds.length ? 'と' : ''}表紙` : ''}</p>
         <p>読み込む記録は${prepared.entries.length}件です。現在の記録${prepared.overwriteCount}件を上書きします。</p>
+        <p>体験型のwork${prepared.excludedEphemeralWorkIds.join('・')}は保存対象ではないため、このファイルには含まれません。</p>
         <p>元のバックアップ形式はv${prepared.sourceSchemaVersion}です。値を保ったままv${DATA_SCHEMA_VERSION}として扱います。</p>
       </div>
       <div class="modal-actions">
@@ -250,6 +269,7 @@ function showBackupImportConfirm(prepared) {
   overlay.querySelector('#import-confirm').addEventListener('click', () => {
     try {
       applyPreparedBackup(prepared);
+      rejectedBackupFile = null;
       backupStatus = { role: 'status', text: `バックアップを読み込みました。対象${prepared.entries.length}件、上書き${prepared.overwriteCount}件です。` };
       close({ restoreFocus: false });
       renderHome();
@@ -266,11 +286,16 @@ function importFullBackupFile(file) {
   const reader = new FileReader();
   reader.onload = (event) => {
     try {
-      const parsed = JSON.parse(event.target.result);
+      const rawText = String(event.target.result || '');
+      const parsed = JSON.parse(rawText);
       showBackupImportConfirm(prepareBackupImport(parsed));
     } catch (err) {
       console.warn('全体バックアップの読み込みに失敗しました', err);
       backupStatus = { role: 'alert', text: 'バックアップを読み込めませんでした。ファイルが壊れているか、対象データの形式が違います。現在の記録は変更していません。' };
+      rejectedBackupFile = {
+        name: `読み込めなかった_${getSafeFilePart(file.name, 'backup')}`,
+        text: String(event.target.result || ''),
+      };
       renderHome();
     }
   };
@@ -301,6 +326,18 @@ const USER_BOUNDARY_HTML = `
 const SUPPORT_BOUNDARY_HTML = `
   <p>この画面は本人のための記入欄です。最初に、どこまで一緒に見るか、誰が入力するか、保存・印刷・共有をどうするかを本人と決めてください。</p>
   <p>空欄・中断・やり直しは本人の選択です。記入量や点数を評価や支援継続の条件にせず、本人の明示的な同意なく内容をコピー・印刷・提出しないでください。</p>
+`;
+
+const SUPPORT_GUIDE_HTML = `
+  <h3>始める前に、本人と決めること</h3>
+  <p>どこまで一緒に見るか、誰が入力するか、保存・印刷・共有をどうするかを、本人と先に決めます。支援者が補助できるのは、本人が希望した範囲の読み上げや入力操作です。</p>
+  <h3>ワーク中に守ること</h3>
+  <p>本人の言葉を支援者の表現へ置き換えたり、正解へ導いたりしません。空欄、中断、戻る、やり直す、支援者に見せないことは本人が選べます。記入量や内容を点数化せず、支援継続の条件にも使いません。</p>
+  <h3>記録と共有</h3>
+  <p>記録型workはこのブラウザ内に保存されます。共用端末では閲覧される可能性があります。本人の明示的な同意なく、画面、印刷物、バックアップをコピー・提出・共有しません。このガイドを開いても本人の保存データは表示も送信もされません。</p>
+  <h3>安全が心配なとき</h3>
+  <p>今すぐの安全が心配なときは、ワークを続けず、所属先の緊急時手順、医療機関、地域の相談先へ切り替えます。</p>
+  ${CRISIS_GUIDE_HTML}
 `;
 
 function openModal({ overlay, initialFocus, onClose }) {
@@ -574,6 +611,20 @@ function showSafetyGuide(work = null) {
   overlay.querySelector('#safety-close').addEventListener('click', () => close());
 }
 
+function showSupportGuide() {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  // The guide is fixed product copy, not user-provided HTML.
+  overlay.innerHTML = `
+    <div class="modal-content modal-content-guide" role="dialog" aria-modal="true" aria-labelledby="support-guide-title" tabindex="-1">
+      <p class="modal-heading" id="support-guide-title">支援者向け 1ページガイド</p>
+      <div class="modal-body boundary-copy supporter-guide-copy">${SUPPORT_GUIDE_HTML}</div>
+      <div class="modal-actions"><button class="btn btn-primary" id="support-guide-close">閉じる</button></div>
+    </div>`;
+  const close = openModal({ overlay, initialFocus: overlay.querySelector('#support-guide-close') });
+  overlay.querySelector('#support-guide-close').addEventListener('click', () => close());
+}
+
 function showStoredDataPolicy() {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
@@ -625,18 +676,12 @@ function renderHome() {
     </div>
     <section class="boundary-card" aria-labelledby="boundary-title">
       <h2 id="boundary-title">使う前に確認してください</h2>
-      ${USER_BOUNDARY_HTML}
-      <div class="crisis-box" id="crisis-guide-home">${CRISIS_GUIDE_HTML}</div>
-    </section>
-    <section class="cover-card" aria-labelledby="cover-title">
-      <div>
-        <h2 id="cover-title">表紙</h2>
-        <p>名前を入れておくと、対応しているワークの名前欄に反映されます。</p>
-      </div>
-      <label class="cover-field" for="cover-name">
-        <span>名前</span>
-        <input id="cover-name" type="text" value="${escapeHtml(profile.name)}" autocomplete="name" placeholder="名前を入力">
-      </label>
+      <p><strong>診断や治療でもありません。緊急相談の代わりでもありません。</strong>書かない、途中でやめる、安全のために離れる・断る・助けを求めることも選べます。</p>
+      <p><a href="#crisis-guide-home" class="inline-safety-link">今すぐの安全が心配なときの相談先</a></p>
+      <details class="boundary-details">
+        <summary>安全と使い方を詳しく読む</summary>
+        <div>${USER_BOUNDARY_HTML}<div class="crisis-box" id="crisis-guide-home">${CRISIS_GUIDE_HTML}</div></div>
+      </details>
     </section>
     <p class="work-choice-intro">順番に全部行う必要はありません。今扱いたいことに近いものを1つ選べます。開いてから戻る、途中でやめる、何も書かないことも選べます。</p>
     <div class="work-grid">
@@ -647,10 +692,20 @@ function renderHome() {
           <span class="work-card-desc">${w.desc}</span>
         </button>`).join('')}
     </div>
+    <section class="cover-card" aria-labelledby="cover-title">
+      <div>
+        <h2 id="cover-title">名前</h2>
+        <p>名前を入れておくと、対応しているワークの名前欄に反映されます。</p>
+      </div>
+      <label class="cover-field" for="cover-name">
+        <span>名前</span>
+        <input id="cover-name" type="text" value="${escapeHtml(profile.name)}" autocomplete="name" placeholder="名前を入力">
+      </label>
+    </section>
     <section class="support-card" aria-labelledby="support-title">
       <h2 id="support-title">支援者と一緒に使う場合</h2>
-      ${SUPPORT_BOUNDARY_HTML}
-      <p>安全が心配なときは、記入より通常の緊急時対応を優先してください。</p>
+      <p>本人の同意、補助する範囲、記録の扱いを始める前に確認します。支援者向けガイドを開いても、本人の保存データは表示されません。</p>
+      <button class="btn btn-ghost" id="show-support-guide">支援者向け1ページガイドを開く</button>
     </section>
     <section class="backup-card" aria-labelledby="backup-title">
       <div>
@@ -666,6 +721,7 @@ function renderHome() {
         <button class="btn btn-danger" id="clear-workbook-data">このブラウザの記録を消す</button>
       </div>
       ${backupStatus ? `<p class="backup-status ${backupStatus.role === 'alert' ? 'backup-status-error' : ''}" role="${backupStatus.role}">${escapeHtml(backupStatus.text)}</p>` : ''}
+      ${rejectedBackupFile ? '<button class="btn btn-ghost" id="download-rejected-backup">読み込めなかったファイルを保存</button>' : ''}
     </section>
     <div class="app-footer">
       <p>このアプリの画面を開くために通信が発生しますが、入力内容をアプリのサーバーへ送る処理はありません。work1・2・5・8の入力は、このブラウザ内に保存されます。work3・4・6・7の入力は保存されず、画面を閉じると消えます。共用端末での閲覧や、ブラウザデータ消去・保存容量・設定による消失に注意してください。</p>
@@ -679,11 +735,15 @@ function renderHome() {
 
   document.getElementById('export-full-backup').addEventListener('click', exportFullBackup);
   document.getElementById('show-stored-data').addEventListener('click', showStoredDataPolicy);
+  document.getElementById('show-support-guide').addEventListener('click', showSupportGuide);
   document.getElementById('clear-workbook-data').addEventListener('click', showClearWorkbookDataConfirm);
   document.getElementById('import-full-backup').addEventListener('change', (event) => {
     const file = event.target.files?.[0];
     if (file) importFullBackupFile(file);
     event.target.value = '';
+  });
+  document.getElementById('download-rejected-backup')?.addEventListener('click', () => {
+    downloadTextFile(rejectedBackupFile.name, rejectedBackupFile.text, 'application/json;charset=utf-8');
   });
 
   document.querySelectorAll('.work-card').forEach(btn => {
@@ -722,6 +782,13 @@ function showConfirm(workId) {
         <details class="start-safety-details">
           <summary>安全と使い方を確認する</summary>
           <div>${USER_BOUNDARY_HTML}${CRISIS_GUIDE_HTML}</div>
+        </details>
+        <details class="work-background-details">
+          <summary>このワークの背景</summary>
+          <div>
+            <p>考えや気持ちを消すことを目標にせず、今の場面で選べる行動の幅を確かめる考え方を背景にしています。これは効果や診断を示す説明ではありません。</p>
+            <p><a href="https://contextualscience.org/about_act" target="_blank" rel="noopener noreferrer">Association for Contextual Behavioral Science「About ACT」</a></p>
+          </div>
         </details>
         <p>書かない、途中でやめる、表紙へ戻ることも選べます。</p>
         ${work.modalNote ? `<p class="modal-note">${work.modalNote}</p>` : ''}
@@ -775,7 +842,6 @@ function renderWork(workId) {
           </button>
           <span class="work-title-bar">
             <span>${work.workName}</span>
-            <small>${work.legacyName}</small>
             <button class="work-safety-link" id="work-safety-guide">安全と使い方</button>
           </span>
           <button class="btn-finish-work" id="finish-work" aria-label="今日はここまで" title="今日はここまで">

@@ -2258,6 +2258,7 @@
         return e("div", { className: "summary-app-wrapper fade-in" },
           e("div", { className: "summary-container" },
 
+            e("section", { 'data-feedback-layer': "input" },
             e("div", { className: "summary-header" },
               e("h2", { className: "summary-title" }, "あなたが入力したこと"),
               e("p", { className: "summary-desc" }, "選んだ領域、言葉、条件、支え、次に選んだことをそのまままとめています。")
@@ -2303,10 +2304,11 @@
                   );
                 })
               )
-            ),
+            )),
 
 
             e("div", { className: "next-steps-block" },
+              e("section", { 'data-feedback-layer': "view" },
               e("h3", { className: "next-steps-title" }, e(Target, { size: 24, className: "icon-stone-light" }), " 一つの見方"),
               e("p", { className: "next-steps-desc" }, "同じ方向を大切にしていても、今の条件や使える支えによって、選べる行動は変わります。"),
 
@@ -2323,10 +2325,12 @@
                 selectedDomains.every(domain => !domainData[domain]?.next_small_step) && e("div", { className: "next-step-fallback" },
                   e("p", { className: "next-step-fallback-text" }, "今は行動を決めずに、条件や支えを見直すことも選べます。")
                 )
-              ),
+              )),
 
-              e("h3", { className: "next-steps-title" }, "次に選べること"),
-              e("p", { className: "next-step-footer" }, "試す、休む、頼む、延期する、やらない、条件を変える。どれを選ぶかは本人が決めます。")
+              e("section", { 'data-feedback-layer': "next" },
+                e("h3", { className: "next-steps-title" }, "次に選べること"),
+                e("p", { className: "next-step-footer" }, "試す、休む、頼む、延期する、やらない、条件を変える。どれを選ぶかは本人が決めます。")
+              )
             ),
 
             // アクションボタン群

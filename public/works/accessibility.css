@@ -39,6 +39,19 @@ input[type="range"]::-moz-range-thumb {
   height: 24px;
 }
 
+/* 本人の入力、限定した見方、次の選択を同じ見た目に混ぜない。 */
+[data-feedback-layer] {
+  border: 1px solid #cbd5e1;
+  border-radius: 14px;
+  padding: 1rem;
+  margin-block: 0.85rem;
+}
+[data-feedback-layer="input"] { background: #ffffff; border-left: 5px solid #3f6f55; }
+[data-feedback-layer="view"] { background: #f3f7fb; border-left: 5px solid #567594; }
+[data-feedback-layer="next"] { background: #f7f5ef; border-left: 5px solid #8a7348; }
+[data-feedback-layer] > :first-child { margin-top: 0; }
+[data-feedback-layer] > :last-child { margin-bottom: 0; }
+
 @media (max-height: 599px) and (orientation: landscape) {
   :where(.panel, .card, .main-card, .content-pad, .section-body, .page-container, .intro-container) {
     padding-block: 0.75rem;

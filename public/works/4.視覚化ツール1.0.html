@@ -582,6 +582,16 @@
     .form-section, #monitor, #active-window, #observer { border-radius: 16px; }
     input[type="text"], textarea { padding: 0.72rem 0.85rem; }
     @media (max-width: 640px) { header, main { padding-inline: 1rem; } .form-section { grid-template-columns: 1fr; } }
+    .finish-check {
+      max-width: 760px;
+      margin: 0 auto 1rem;
+      padding: 1rem;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+    .finish-check[hidden] { display: none; }
+    .finish-check p { margin: 0.5rem 0; line-height: 1.7; }
 </style>
   <link rel="stylesheet" href="./accessibility.css">
 </head>
@@ -662,11 +672,30 @@
         今の条件で選べそうな行動を画面に置く
       </button>
 
+      <button id="btn-review" class="btn-anchor">ここまでを確認</button>
+
       <button id="btn-reset" class="btn-reset">
         はじめから
       </button>
     </div>
   </footer>
+
+  <section id="finish-check" class="finish-check" hidden aria-live="polite">
+    <div data-feedback-layer="input">
+      <h2>あなたが入力したこと</h2>
+      <p><strong>行動指針：</strong><span id="review-value">（入力なし）</span></p>
+      <p><strong>今の条件で選べそうな行動：</strong><span id="review-action">（入力なし）</span></p>
+      <p><strong>浮かんだ思考・感情：</strong><span id="review-notifications">（入力なし）</span></p>
+    </div>
+    <div data-feedback-layer="view">
+      <h2>一つの見方</h2>
+      <p>思考や感情を消さず、周りの感覚や行動の候補と一緒に置く見方もあります。この画面だけから、できた・できなかったの結論は出しません。</p>
+    </div>
+    <div data-feedback-layer="next">
+      <h2>次に選べること</h2>
+      <p>表示を切り替えてもう一度見る、今は行動を決めない、ここで終えることを選べます。</p>
+    </div>
+  </section>
 
   <script>
     let isAnchorOn = false;
@@ -687,6 +716,8 @@
     const btnAnchor = document.getElementById('btn-anchor');
     const btnFocus = document.getElementById('btn-focus');
     const btnReset = document.getElementById('btn-reset');
+    const btnReview = document.getElementById('btn-review');
+    const finishCheck = document.getElementById('finish-check');
     const observer = document.getElementById('observer');
 
     const valueInput = document.getElementById('value-input');
@@ -981,6 +1012,16 @@
       } else {
         observer.style.left = '50%';
       }
+    });
+
+    btnReview.addEventListener('click', () => {
+      document.getElementById('review-value').textContent = valueInput.value.trim() || '（入力なし）';
+      document.getElementById('review-action').textContent = actionInput.value.trim() || '（入力なし）';
+      document.getElementById('review-notifications').textContent = customWords.length ? customWords.join('、') : '（入力なし）';
+      finishCheck.hidden = false;
+      const heading = finishCheck.querySelector('h2');
+      heading.setAttribute('tabindex', '-1');
+      heading.focus();
     });
 
 </script>

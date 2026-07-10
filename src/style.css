@@ -207,6 +207,30 @@ body {
   line-height: 1.5;
 }
 
+.boundary-details,
+.work-background-details { margin-top: 12px; }
+
+.boundary-details summary,
+.work-background-details summary {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  color: #315e8a;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.boundary-details > div,
+.work-background-details > div { padding: 4px 2px 2px; }
+
+.inline-safety-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: #315e8a;
+  font-weight: 600;
+}
+
 /* ===== 確認画面（モーダル） ===== */
 
 .modal-overlay {
@@ -231,6 +255,14 @@ body {
   box-shadow: 0 4px 24px rgba(0,0,0,0.12);
   text-align: center;
 }
+
+.modal-content-guide { max-width: 680px; }
+.supporter-guide-copy h3 {
+  margin: 18px 0 6px;
+  font-size: 0.98rem;
+  color: var(--accent-dark);
+}
+.supporter-guide-copy h3:first-child { margin-top: 0; }
 
 .modal-icon {
   font-size: 1.6rem;
@@ -498,6 +530,8 @@ body {
   font-size: 0.88rem;
   line-height: 1.7;
 }
+
+.support-card .btn { margin-top: 14px; }
 
 .crisis-box {
   margin-top: 16px;

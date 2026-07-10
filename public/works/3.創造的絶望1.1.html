@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>コントロールとの関わりを見る｜創造的絶望</title>
+  <title>コントロールとの関わりを見る</title>
   <style>
     /* -------------------------------------
        1. Variables & Base Styles
@@ -726,17 +726,17 @@
         <div class="section-content animate-fadeIn" data-neutral-summary="${state.exerciseId}">
           <div class="text-center"><h2 class="page-title">今回観察した変化</h2></div>
           <div class="box-panel">
-            <h3 class="section-title">あなたが入力・選択したこと</h3>
+            <section data-feedback-layer="input"><h3 class="section-title">あなたが入力・選択したこと</h3>
             <p class="text-body"><strong data-selected-change="${selected.value}">${selected.label}</strong></p>
-            <p class="text-body text-body-mb">${getNeutralResponseDetails()}</p>
-            <h3 class="section-title section-title-mt">一つの見方</h3>
+            <p class="text-body text-body-mb">${getNeutralResponseDetails()}</p></section>
+            <section data-feedback-layer="view"><h3 class="section-title section-title-mt">一つの見方</h3>
             <p class="text-body">この一回から一般的な結論は出しません。この方法が今回・この場面で何を助け、何を難しくしたかは、別の場面では変わることがあります。</p>
             <details class="citation">
               <summary>このワークの背景</summary>
               <p>思考を抑えようとした後の反跳は、研究では平均的に小〜中程度で、対象や測り方によって差があります。</p>
-            </details>
-            <h3 class="section-title section-title-mt">次に選べること</h3>
-            <p class="text-body">別の体験を試す、同じ画面へ戻る、今は何もしない、支援を求めることを選べます。</p>
+            </details></section>
+            <section data-feedback-layer="next"><h3 class="section-title section-title-mt">次に選べること</h3>
+            <p class="text-body">別の体験を試す、同じ画面へ戻る、今は何もしない、支援を求めることを選べます。</p></section>
           </div>
           <div class="btn-group-responsive">
             <button id="neutral-change-again" class="btn btn-secondary btn-responsive-secondary">変化を選び直す</button>
@@ -1293,17 +1293,17 @@
             <h3 class="section-title">開始前と今回の数値</h3>
             <p class="text-body text-body-mb">あなたの感情の数値は、開始前の「${state.sliderInitial}」から「${state.sliderFinal}」に変化しました。</p>
             ${isFailedToDrop ? `
-              <div class="alert-info">目標とした「2」まで下がらなかったり、逆に上がってしまったりしたとしても、それはあなたの能力不足ではありません。<strong>「感情は意志の力では直接コントロールしにくい」という起きやすい傾向</strong>が現れただけです。</div>
+              <div class="alert-info">目標とした「2」まで下がらなかったり、逆に上がったりしました。これは今回この場面で起きた変化で、あなたの能力を示すものではありません。</div>
             ` : `
-              <div class="alert-info">今回は数値が下がりましたが、重要なのは「長期的」な結果です。</div>
+              <div class="alert-info">今回は数値が下がりました。この一回だけで、同じ方法が別の場面でも同じように働くとは決めません。</div>
             `}
-            <h3 class="section-title section-title-mt">点と点をつなぐ（Join the D.O.T.S.）</h3>
+            <h3 class="section-title section-title-mt">これまでの工夫を場面ごとに見る</h3>
             <p class="text-body text-body-mb">気をそらす、その場を離れる、考え続ける、感覚を変えるといった工夫は、同じ形でも場面や使い方によって働きが変わります。</p>
             <div class="options-list-wide options-list-spaced">
-              <div class="dots-item"><span class="dots-title">D</span>istraction（気をそらす）<p class="dots-desc">スマホやテレビなどで気を紛らわせる。根本的な変化にはつながりにくいことがあります。</p></div>
-              <div class="dots-item"><span class="dots-title">O</span>pting out（身を引く）<p class="dots-desc">不安を感じる場所に行かない、挑戦をやめる。生活範囲が狭まりやすくなります。</p></div>
-              <div class="dots-item"><span class="dots-title">T</span>hinking（思考）<p class="dots-desc">「なぜこうなったのか」と理屈をこねたり、過度に心配したりする。結果として感情に注意が向き続けやすくなります。</p></div>
-              <div class="dots-item"><span class="dots-title">S</span>ubstances, Self-harm（物質等）<p class="dots-desc">アルコール、過食などで感覚を麻痺させる。二次的な問題を引き起こすことがあります。</p></div>
+              <div class="dots-item"><strong>気をそらす</strong><p class="dots-desc">スマホやテレビなどで気を紛らわせた場面を、その場で助かったことと後からの負担の両方から見ます。</p></div>
+              <div class="dots-item"><strong>身を引く</strong><p class="dots-desc">場所から離れたり挑戦を見送ったりした場面を、安全確保や休息も含めて見ます。</p></div>
+              <div class="dots-item"><strong>考え続ける</strong><p class="dots-desc">理由を探したり心配を続けたりした場面で、何が助かり、何が難しくなったかを見ます。</p></div>
+              <div class="dots-item"><strong>感覚を変える</strong><p class="dots-desc">飲食や別の刺激を使った場面を、決めつけずに条件と結果から見ます。</p></div>
             </div>
             <p class="text-body text-body-strong">本人が選んだ長期的な回答は「${state.sliderLongTerm}」でした。この一回から一般的な結論は出しません。</p>
             <div class="citation">
@@ -1485,10 +1485,10 @@
             </div>
             <p class="text-body text-body-mb text-body-strong">これは、<strong>「あなたのやる気が足りなかった」わけではありません。あなたの「努力は十分だった」のです。</strong><br>あなたは既に、十分に、一生懸命に戦ってこられました。</p>
             
-            <h3 class="section-title section-title-mt">この体験で起きやすいこと</h3>
+            <h3 class="section-title section-title-mt">今回の体験を振り返る観点</h3>
             <ul class="list-bullet">
-              <li><strong>方略（作戦）自体の限界</strong><br /><span class="list-desc">感情や思考をコントロールして「なくそう」とする作戦は、長期的には機能しにくいという側面があるかもしれません。</span></li>
-              <li><strong>別の方向性が必要かもしれない</strong><br /><span class="list-desc">穴に落ちた時、必死に「穴を掘る（コントロールする）」努力を続けても、穴は深くなるばかりです。スコップを置き、別の行動をとる時期が来ているのかもしれません。</span></li>
+              <li><strong>その場で助かったこと</strong><br /><span class="list-desc">方法を使った直後に、何が少し楽になったかを見ます。</span></li>
+              <li><strong>後から起きたこと</strong><br /><span class="list-desc">同じ方法を続けたとき、生活や大切にしたいことにどんな影響があったかを見ます。別の方法を選ばないことも含め、次は本人が決めます。</span></li>
             </ul>
             <div class="alert-info alert-info-last">これまでの工夫は、その場で助けになった面と、負担が増えた面を分けて見られます。答えは場面によって変わります。</div>
             <div class="citation">

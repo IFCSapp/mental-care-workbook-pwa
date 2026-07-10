@@ -201,6 +201,14 @@ try {
   record('P1A work5 uses learner-selected support focus instead of importance/execution UI', ['supportFocus', '難しくする条件', '助けになる条件', '使えるとよい支えや資源', '休む、頼む、延期する、やらない'].every(marker => allWorkFiles[4].includes(marker)) && !allWorkFiles[4].includes('全くできていない (0)') && !allWorkFiles[4].includes('十分にできている (10)'), {});
   record('P1A work8 uses condition-based labels and non-numeric continuation checks', ['今の条件で、自分だけでは動かしにくいこと', '今の条件で、人や環境に働きかけられるかもしれないこと', '今の条件で、自分が選べる可能性があること', 'continuation-status', 'continuation-support', 'continuation-alternative'].every(marker => allWorkFiles[7].includes(marker)) && !allWorkFiles[7].includes('id="distress-before"'), {});
 
+  const feedbackLayerContracts = allWorkFiles.map((content, index) => ({
+    workId: index + 1,
+    input: (content.match(/data-feedback-layer["']?\s*[:=]\s*["']input["']/g) || []).length,
+    view: (content.match(/data-feedback-layer["']?\s*[:=]\s*["']view["']/g) || []).length,
+    next: (content.match(/data-feedback-layer["']?\s*[:=]\s*["']next["']/g) || []).length,
+  }));
+  record('P1B all eight works define one input/view/next feedback layer', feedbackLayerContracts.every(item => item.input === 1 && item.view === 1 && item.next === 1), { feedbackLayerContracts });
+
   const { migrateWorkData, migrateStoredEntries, migrateWorkbookStorage } = await import(path.join(root, 'src/work-data-policy.js'));
   const legacyFixtures = {
     1: { q1: '旧work1', untouched: { nested: true } },
@@ -549,6 +557,16 @@ try {
       await frame.locator('#leaf-input').fill(text);
       await frame.locator('#leaf-input').press('Enter');
     }
+    await frame.locator('body').evaluate(() => {
+      App.state.isUserPaused = true;
+      App.updateRiverPausedState();
+      App.state.activeLeaves.forEach((item, index) => {
+        item.isFalling = false;
+        item.x = 40 + index * 55;
+        item.y = 100 + index * 35;
+        item.el.style.transform = `translate(${item.x}px, ${item.y}px)`;
+      });
+    });
     const after = await frame.locator('.leaf').count();
     await frame.locator('body').evaluate(() => new Promise(resolve => {
       const started = performance.now();
@@ -651,6 +669,216 @@ try {
     const upgraded = ['worksheet_auto_save_v1', 'dots_work_state_v3', 'act_worksheet_standalone_data', 'control_map_state_v1']
       .every(key => decoded[key].schemaVersion === 2);
     record('backup schema v2 preserves stored v1 values', downloaded._workbookBackup?.schemaVersion === 2 && preserved && upgraded, { keys: Object.keys(downloaded.storage), schemaVersion: downloaded._workbookBackup?.schemaVersion, preserved, upgraded });
+    await page.close();
+  }
+
+  // P1B three-layer feedback: every work keeps authored/selected content in the input layer.
+  {
+    const sentinel = '本人入力_SENTINEL_73Q';
+    const feedbackEvidence = [];
+    for (let workId = 1; workId <= 8; workId += 1) {
+      const context = await browser.newContext({ viewport: views[0] });
+      if (workId === 5) {
+        await context.addInitScript(({ sentinel }) => {
+          localStorage.setItem('act_worksheet_standalone_data', JSON.stringify({
+            schemaVersion: 2,
+            availableDomains: ['健康'],
+            selectedDomains: ['健康'],
+            domainData: { 健康: { keywords: [sentinel], supportFocus: false, next_small_step: '' } },
+            step: 'summary',
+            currentDomainIndex: 0,
+          }));
+        }, { sentinel });
+      }
+      const page = await context.newPage();
+      await page.goto(`${base}/#work/${workId}`, { waitUntil: 'networkidle' });
+      const frame = frameFor(page);
+      let expected = sentinel;
+      if (workId === 1) {
+        await frame.locator('#basicScene').fill(sentinel);
+        await frame.locator('.header-actions .btn-blue').click();
+      } else if (workId === 2) {
+        await frame.evaluate(({ sentinel }) => { state.basic.staff = sentinel; currentStep = 6; render(); }, { sentinel });
+      } else if (workId === 3) {
+        expected = 'ほぼ同じ';
+        await frame.evaluate(() => { state.exerciseId = 'emotion'; state.step = 'result_summary'; state.observedChange = 'same'; render(); });
+      } else if (workId === 4) {
+        await frame.locator('#value-input').fill(sentinel);
+        await frame.locator('#btn-review').click();
+      } else if (workId === 6) {
+        await frame.evaluate(({ sentinel }) => { App.state.authoredLeafTexts = [sentinel]; App.showScreen('screen-reflect'); }, { sentinel });
+        await frame.locator('#btn-finish-reflect').click();
+      } else if (workId === 7) {
+        await frame.evaluate(({ sentinel }) => { state.currentStep = 5; state.actionText = sentinel; render(); }, { sentinel });
+      } else if (workId === 8) {
+        await frame.evaluate(({ sentinel }) => { state.nextStep.action = sentinel; goToStep(6); }, { sentinel });
+      }
+      const layers = await frame.locator('[data-feedback-layer]').evaluateAll(elements => elements.map(element => ({ layer: element.dataset.feedbackLayer, text: element.innerText })));
+      const inputText = layers.find(item => item.layer === 'input')?.text || '';
+      const leaked = layers.filter(item => item.layer !== 'input').some(item => item.text.includes(expected));
+      feedbackEvidence.push({ workId, expected, layers: layers.map(item => item.layer), inputHasExpected: inputText.includes(expected), leaked });
+      await context.close();
+    }
+    record('P1B all eight runtime summaries preserve authored or selected content only in input layer', feedbackEvidence.every(item => item.layers.join(',') === 'input,view,next' && item.inputHasExpected && !item.leaked), { feedbackEvidence });
+  }
+
+  // Empty paths must never present generated interpretation as learner-authored content.
+  {
+    const emptyEvidence = [];
+    for (let workId = 1; workId <= 8; workId += 1) {
+      const context = await browser.newContext({ viewport: views[0] });
+      if (workId === 5) {
+        await context.addInitScript(() => {
+          localStorage.setItem('act_worksheet_standalone_data', JSON.stringify({ schemaVersion: 2, availableDomains: [], selectedDomains: [], domainData: {}, step: 'summary', currentDomainIndex: 0 }));
+        });
+      }
+      const page = await context.newPage();
+      await page.goto(`${base}/#work/${workId}`, { waitUntil: 'networkidle' });
+      const frame = frameFor(page);
+      if (workId === 1) await frame.locator('.header-actions .btn-blue').click();
+      else if (workId === 2) await frame.evaluate(() => { currentStep = 6; render(); });
+      else if (workId === 3) await frame.evaluate(() => { state.exerciseId = 'emotion'; state.step = 'result_summary'; state.observedChange = ''; render(); });
+      else if (workId === 4) await frame.locator('#btn-review').click();
+      else if (workId === 6) {
+        await frame.evaluate(() => { App.state.authoredLeafTexts = []; App.showScreen('screen-reflect'); });
+        await frame.locator('#btn-finish-reflect').click();
+      } else if (workId === 7) await frame.evaluate(() => { state.currentStep = 5; state.actionText = ''; render(); });
+      else if (workId === 8) await frame.evaluate(() => goToStep(6));
+      const layers = await frame.locator('[data-feedback-layer]').evaluateAll(elements => elements.map(element => ({ layer: element.dataset.feedbackLayer, text: element.innerText })));
+      const inputText = layers.find(item => item.layer === 'input')?.text || '';
+      const generatedMarkers = ['一つの見方', '次に選べること', '同じ行動でも', 'この一回から一般的な結論'];
+      const noGeneratedAttribution = !generatedMarkers.some(marker => inputText.includes(marker));
+      const validEmptyState = workId === 3 ? layers.length === 0 : layers.map(item => item.layer).join(',') === 'input,view,next';
+      emptyEvidence.push({ workId, layers: layers.map(item => item.layer), inputText: inputText.slice(0, 180), noGeneratedAttribution, validEmptyState });
+      await context.close();
+    }
+    record('P1B empty summaries do not attribute generated material to the learner', emptyEvidence.every(item => item.noGeneratedAttribution && item.validEmptyState), { emptyEvidence });
+  }
+
+  // P1B work 6: learner-controlled cleanup, shore roundtrip, repeat and pause.
+  {
+    const page = await browser.newPage({ viewport: views[0] });
+    await page.goto(`${base}/#work/6`, { waitUntil: 'networkidle' });
+    const frame = frameFor(page);
+    await frame.locator('#btn-start').click();
+    await frame.locator('#btn-prepare-next').click();
+    await frame.locator('#leaf-input').fill('同じ言葉の確認');
+    await frame.locator('#leaf-input').press('Enter');
+    await frame.locator('#btn-repeat-last').click();
+    await frame.locator('#btn-pause-resume').click();
+    const paused = await frame.locator('#river').evaluate(element => element.classList.contains('paused'));
+    await frame.locator('#btn-move-shore').click();
+    const shoreCount = await frame.evaluate(() => App.state.shoreLeaves.length);
+    await frame.locator('#btn-restore-shore').click();
+    const restoredCount = await frame.evaluate(() => App.state.activeLeaves.filter(item => item.text === '同じ言葉の確認').length);
+    await page.screenshot({ path: path.join(out, 'p1b-work6-controls-desktop.png') });
+    page.once('dialog', dialog => dialog.accept());
+    await frame.locator('#btn-clear-leaves').click();
+    const cleared = await frame.evaluate(() => ({ active: App.state.activeLeaves.length, shore: App.state.shoreLeaves.length, authored: App.state.authoredLeafTexts }));
+    const labels = await frame.locator('.control-actions').innerText();
+    const intro = await frame.locator('#intro-desc').innerText();
+    record('P1B work6 learner controls repeat, pause, shore restore and screen cleanup', paused && shoreCount === 2 && restoredCount === 2 && cleared.active === 0 && cleared.shore === 0 && cleared.authored.length === 2 && labels.includes('岸から戻す') && labels.includes('画面の葉を片づける') && intro.includes('同じ言葉を何度乗せても') && intro.includes('途中で止めても大丈夫'), { paused, shoreCount, restoredCount, cleared, labels, intro });
+    await page.close();
+  }
+
+  // P2 backup preview, cancel/confirm, malformed files, rejected-file recovery and atomic rollback.
+  {
+    const page = await browser.newPage({ viewport: views[0], acceptDownloads: true });
+    await page.goto(`${base}/#home`, { waitUntil: 'networkidle' });
+    const existing = {
+      mentalCareWorkbookProfile: JSON.stringify({ name: '既存の名前' }),
+      worksheet_auto_save_v1: JSON.stringify({ schemaVersion: 2, basicScene: '既存work1' }),
+      dots_work_state_v3: JSON.stringify({ schemaVersion: 2, basic: { staff: '既存work2' } }),
+    };
+    await page.evaluate(values => { localStorage.clear(); Object.entries(values).forEach(([key, value]) => localStorage.setItem(key, value)); }, existing);
+    await page.reload({ waitUntil: 'networkidle' });
+    const backup = {
+      _workbookBackup: { app: 'mental-care-workbook', scope: 'full-workbook', schemaVersion: 2 },
+      storage: {
+        mentalCareWorkbookProfile: JSON.stringify({ name: '読込後の名前' }),
+        worksheet_auto_save_v1: JSON.stringify({ schemaVersion: 2, basicScene: '読込work1' }),
+        dots_work_state_v3: JSON.stringify({ schemaVersion: 2, basic: { staff: '読込work2' } }),
+      },
+    };
+    const upload = async (name, text) => page.locator('#import-full-backup').setInputFiles({ name, mimeType: 'application/json', buffer: Buffer.from(text) });
+    const beforeCancel = await page.evaluate(() => ({ ...localStorage }));
+    await upload('valid.json', JSON.stringify(backup));
+    const previewText = await page.locator('[role="dialog"]').innerText();
+    await page.screenshot({ path: path.join(out, 'p2-import-preview-desktop.png') });
+    await page.locator('#import-cancel').click();
+    const afterCancel = await page.evaluate(() => ({ ...localStorage }));
+    record('P2 backup preview names target works, overwrite count and excluded experiential works; cancel is immutable', previewText.includes('work1・2') && previewText.includes('表紙') && previewText.includes('現在の記録3件を上書き') && previewText.includes('work3・4・6・7') && JSON.stringify(beforeCancel) === JSON.stringify(afterCancel), { previewText, storageUnchanged: JSON.stringify(beforeCancel) === JSON.stringify(afterCancel) });
+
+    await upload('valid.json', JSON.stringify(backup));
+    await page.locator('#import-confirm').click();
+    await page.locator('[role="status"]').waitFor();
+    const applied = await page.evaluate(() => ({ ...localStorage }));
+    record('P2 backup confirm applies all prepared entries together', JSON.parse(applied.mentalCareWorkbookProfile).name === '読込後の名前' && JSON.parse(applied.worksheet_auto_save_v1).basicScene === '読込work1' && JSON.parse(applied.dots_work_state_v3).basic.staff === '読込work2', { keys: Object.keys(applied), status: await page.locator('[role="status"]').innerText() });
+
+    const invalidFiles = [
+      ['malformed.json', '{broken'],
+      ['wrong-type.json', JSON.stringify({ _workbookBackup: backup._workbookBackup, storage: { worksheet_auto_save_v1: { schemaVersion: 2 } } })],
+      ['partial-corrupt.json', JSON.stringify({ _workbookBackup: backup._workbookBackup, storage: { mentalCareWorkbookProfile: JSON.stringify({ name: '部分' }), worksheet_auto_save_v1: '{broken' } })],
+    ];
+    const invalidEvidence = [];
+    for (const [name, text] of invalidFiles) {
+      const before = await page.evaluate(() => ({ ...localStorage }));
+      await upload(name, text);
+      await page.locator('[role="alert"]').waitFor();
+      const after = await page.evaluate(() => ({ ...localStorage }));
+      invalidEvidence.push({ name, unchanged: JSON.stringify(before) === JSON.stringify(after), alert: await page.locator('[role="alert"]').innerText(), download: await page.locator('#download-rejected-backup').count() === 1 });
+    }
+    const rejectedDownload = page.waitForEvent('download');
+    await page.locator('[role="alert"]').scrollIntoViewIfNeeded();
+    await page.screenshot({ path: path.join(out, 'p2-import-error-desktop.png') });
+    await page.locator('#download-rejected-backup').click();
+    const rejected = await rejectedDownload;
+    await rejected.saveAs(path.join(out, 'rejected-partial-corrupt.json'));
+    record('P2 malformed, type-invalid and partially corrupt backup preserve storage and remain downloadable', invalidEvidence.every(item => item.unchanged && item.alert.includes('現在の記録は変更していません') && item.download), { invalidEvidence, suggestedFilename: rejected.suggestedFilename() });
+
+    await page.evaluate(values => { localStorage.clear(); Object.entries(values).forEach(([key, value]) => localStorage.setItem(key, value)); }, existing);
+    await page.reload({ waitUntil: 'networkidle' });
+    const beforeQuota = await page.evaluate(() => ({ ...localStorage }));
+    await upload('quota.json', JSON.stringify(backup));
+    await page.evaluate(() => {
+      const original = Storage.prototype.setItem;
+      let writes = 0;
+      Storage.prototype.setItem = function setItemWithOneQuotaFailure(key, value) {
+        writes += 1;
+        if (writes === 2) throw new DOMException('quota test', 'QuotaExceededError');
+        return original.call(this, key, value);
+      };
+    });
+    await page.locator('#import-confirm').click();
+    await page.locator('[role="alert"]').waitFor();
+    const afterQuota = await page.evaluate(() => ({ ...localStorage }));
+    record('P2 QuotaExceeded import restores exact existing storage with zero partial writes', JSON.stringify(beforeQuota) === JSON.stringify(afterQuota) && !Object.values(afterQuota).some(value => value.includes('読込')), { unchanged: JSON.stringify(beforeQuota) === JSON.stringify(afterQuota), beforeQuota, afterQuota, alert: await page.locator('[role="alert"]').innerText() });
+    await page.close();
+  }
+
+  // P2 supporter guide and learner-first language boundary.
+  {
+    const page = await browser.newPage({ viewport: views[0] });
+    await page.goto(`${base}/#home`, { waitUntil: 'networkidle' });
+    const privateSentinel = '保存データ_PRIVATE_SENTINEL_9K';
+    await page.evaluate(value => localStorage.setItem('worksheet_auto_save_v1', JSON.stringify({ private: value })), privateSentinel);
+    await page.locator('#show-support-guide').click();
+    const guideText = await page.locator('.supporter-guide-copy').innerText();
+    const bodyText = await page.locator('body').innerText();
+    const guideMarkers = ['本人と先に決めます', '本人が希望した範囲', '点数化せず', '共用端末', 'ワークを続けず', 'コピー・提出・共有しません'];
+    await page.screenshot({ path: path.join(out, 'p2-support-guide-desktop.png') });
+    record('P2 supporter guide covers consent, assistance scope, non-scoring, privacy, crisis switch and sharing without exposing saved data', guideMarkers.every(marker => guideText.includes(marker)) && !bodyText.includes(privateSentinel), { guideMarkers, guideText, privateSentinelVisible: bodyText.includes(privateSentinel) });
+    await page.locator('#support-guide-close').click();
+
+    const forbiddenJargon = ['認知的フュージョン', '脱フュージョン', '心理的柔軟性', '随伴性', '機能分析', 'コミットメント・アクション'];
+    const homeAndCards = await page.locator('#app').innerText();
+    await page.locator('.work-card').first().click();
+    const modalText = await page.locator('[role="dialog"]').innerText();
+    const sourceHref = await page.locator('.work-background-details a').getAttribute('href');
+    await page.locator('.work-background-details summary').click();
+    const backgroundText = await page.locator('.work-background-details').innerText();
+    const jargonHits = forbiddenJargon.filter(term => `${homeAndCards}\n${modalText}`.includes(term));
+    record('P2 learner-led route has zero prohibited jargon and background disclosure has plain definition plus source URL', jargonHits.length === 0 && backgroundText.includes('考えや気持ちを消すことを目標にせず') && sourceHref === 'https://contextualscience.org/about_act', { jargonHits, backgroundText, sourceHref });
     await page.close();
   }
 
