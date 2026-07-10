@@ -198,6 +198,61 @@ function navigate(hash) {
 }
 
 let finishFallbackTimer = null;
+let activeModalCleanup = null;
+
+function openModal({ overlay, initialFocus, onClose }) {
+  if (activeModalCleanup) activeModalCleanup();
+
+  const app = document.getElementById('app');
+  const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  const dialog = overlay.querySelector('[role="dialog"]');
+  const focusableSelector = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+  app?.setAttribute('inert', '');
+  app?.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(overlay);
+
+  const handleKeydown = (event) => {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      cleanup();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+
+    const focusables = Array.from(dialog.querySelectorAll(focusableSelector));
+    if (!focusables.length) {
+      event.preventDefault();
+      dialog.focus();
+      return;
+    }
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+
+  function cleanup({ restoreFocus = true } = {}) {
+    if (!overlay.isConnected) return;
+    document.removeEventListener('keydown', handleKeydown, true);
+    overlay.remove();
+    app?.removeAttribute('inert');
+    app?.removeAttribute('aria-hidden');
+    activeModalCleanup = null;
+    onClose?.();
+    if (restoreFocus && opener?.isConnected) opener.focus();
+  }
+
+  document.addEventListener('keydown', handleKeydown, true);
+  activeModalCleanup = cleanup;
+  requestAnimationFrame(() => (initialFocus || dialog)?.focus());
+  return cleanup;
+}
 
 function clearFinishFallback() {
   if (finishFallbackTimer) {
@@ -215,7 +270,7 @@ function showFinishConfirm() {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.innerHTML = `
-    <div class="modal-content modal-content-finish" role="dialog" aria-modal="true" aria-labelledby="finish-title">
+    <div class="modal-content modal-content-finish" role="dialog" aria-modal="true" aria-labelledby="finish-title" tabindex="-1">
       <span class="modal-icon" aria-hidden="true">☕</span>
       <p class="modal-heading" id="finish-title">今日はここまでにしますか？</p>
       <div class="modal-body">
@@ -229,15 +284,14 @@ function showFinishConfirm() {
     </div>
   `;
 
-  document.body.appendChild(overlay);
+  const close = openModal({
+    overlay,
+    initialFocus: overlay.querySelector('#finish-cancel'),
+  });
 
-  function close() {
-    overlay.remove();
-  }
-
-  document.getElementById('finish-cancel').addEventListener('click', close);
-  document.getElementById('finish-confirm').addEventListener('click', () => {
-    close();
+  overlay.querySelector('#finish-cancel').addEventListener('click', () => close());
+  overlay.querySelector('#finish-confirm').addEventListener('click', () => {
+    close({ restoreFocus: false });
     requestCurrentWorkFinish();
   });
   overlay.addEventListener('click', (e) => {
@@ -343,10 +397,11 @@ function showConfirm(workId) {
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
+  // `work` is selected from the static WORKS constant above, not user-provided HTML.
   overlay.innerHTML = `
-    <div class="modal-content">
-      <span class="modal-icon">🌱</span>
-      <p class="modal-heading">「${work.workName}」</p>
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="confirm-title" tabindex="-1">
+      <span class="modal-icon" aria-hidden="true">🌱</span>
+      <p class="modal-heading" id="confirm-title">「${work.workName}」</p>
       <p class="modal-subtitle">${work.legacyName}</p>
       <div class="modal-body">
         <p>書けるところだけ書いてみてください。</p>
@@ -361,15 +416,14 @@ function showConfirm(workId) {
     </div>
   `;
 
-  document.body.appendChild(overlay);
+  const close = openModal({
+    overlay,
+    initialFocus: overlay.querySelector('#confirm-cancel'),
+  });
 
-  function close() {
-    overlay.remove();
-  }
-
-  document.getElementById('confirm-cancel').addEventListener('click', close);
-  document.getElementById('confirm-start').addEventListener('click', () => {
-    close();
+  overlay.querySelector('#confirm-cancel').addEventListener('click', () => close());
+  overlay.querySelector('#confirm-start').addEventListener('click', () => {
+    close({ restoreFocus: false });
     navigate(`work/${work.id}`);
   });
 
@@ -408,7 +462,7 @@ function renderWork(workId) {
         </div>
       </div>
       <div class="work-frame-wrap">
-        <iframe id="work-frame" src="./works/${work.file}" title="${work.workName}" allow="fullscreen; clipboard-write" sandbox="allow-scripts allow-same-origin allow-forms allow-downloads allow-modals"></iframe>
+        <iframe id="work-frame" src="./works/${work.file}" title="${work.workName}" allow="fullscreen; clipboard-write"></iframe>
       </div>
     </div>
   `;

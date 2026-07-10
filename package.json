@@ -6,11 +6,16 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "test": "node scripts/acceptance-check.mjs",
     "preview": "vite preview",
     "visual-check": "node scripts/visual-check.mjs"
   },
   "devDependencies": {
     "playwright": "^1.61.1",
     "vite": "^6.0.0"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   }
 }

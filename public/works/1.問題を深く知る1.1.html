@@ -387,8 +387,9 @@
     @media (max-width: 640px) { .app-wrapper { padding: 1rem 0.75rem 1.5rem; } .header { align-items: flex-start; gap: 1rem; flex-direction: column; } .content-pad, .section-body { padding: 1.1rem; } }
 </style>
 
-  <script crossorigin="anonymous" src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
-  <script crossorigin="anonymous" src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+  <script src="../vendor/react/react.production.min.js"></script>
+  <script src="../vendor/react/react-dom.production.min.js"></script>
+  <link rel="stylesheet" href="./accessibility.css">
 </head>
 <body>
   <div id="root"></div>
@@ -645,10 +646,10 @@ Q20: ${data.q20}
       };
 
       // --- コンポーネント部品 ---
-      const Section = ({ title, defaultOpen = true, children }) => {
+      const Section = ({ title, defaultOpen = false, children }) => {
         const [isOpen, setIsOpen] = useState(defaultOpen);
         return e('section', { className: "section" },
-          e('button', { onClick: () => setIsOpen(!isOpen), className: "section-btn", type: "button" },
+          e('button', { onClick: () => setIsOpen(!isOpen), className: "section-btn", type: "button", 'aria-expanded': isOpen },
             e('h2', null, title),
             isOpen ? e(ChevronUp) : e(ChevronDown)
           ),
@@ -761,7 +762,7 @@ Q20: ${data.q20}
         e('div', null, e('label', { htmlFor: "info_count", className: "label-title" }, "回数"), e('input', { id: "info_count", type: "text", className: "form-input", value: data.count, onChange: ev => handleChange('count', ev.target.value) }))
       );
 
-      const sec0 = e(Section, { title: "0. 今いちばん困っていること" },
+      const sec0 = e(Section, { title: "0. 今いちばん困っていること", defaultOpen: true },
         e('div', null, e(QuestionLabel, { qNum: "Q1.", title: "今、いちばん困っていることは何ですか。1〜2文で書いてください。", htmlFor: "q1" }), e(TextAreaField, { field: "q1" })),
         e('div', null, e(QuestionLabel, { qNum: "Q2.", title: "それは生活や就労準備にどう影響していますか。", htmlFor: "q2" }), e(TextAreaField, { field: "q2" }))
       );

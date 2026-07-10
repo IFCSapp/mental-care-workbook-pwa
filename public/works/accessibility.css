@@ -1,0 +1,55 @@
+/* Shared accessibility and low-load interaction tokens for all eight bundled works. */
+:where(button, [role="button"], a, label:has(input[type="checkbox"]), label:has(input[type="radio"])) {
+  min-height: 44px;
+}
+
+:where(button, [role="button"], a, input, textarea, select):focus-visible {
+  outline: 3px solid rgba(30, 64, 175, 0.42);
+  outline-offset: 3px;
+}
+
+label:has(input[type="checkbox"]),
+label:has(input[type="radio"]) {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding-block: 0.45rem;
+  cursor: pointer;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: 0 0 auto;
+}
+
+input[type="range"] {
+  min-height: 44px;
+  touch-action: pan-y;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  min-width: 24px;
+  min-height: 24px;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+}
+
+@media (max-height: 599px) and (orientation: landscape) {
+  :where(.panel, .card, .main-card, .content-pad, .section-body, .page-container, .intro-container) {
+    padding-block: 0.75rem;
+  }
+
+  :where(h1, h2, .page-title, .intro-title) {
+    margin-block: 0 0.5rem;
+    line-height: 1.25;
+  }
+
+  :where(.intro, .intro-screen, .screen, .page-wrapper) {
+    padding-block: 0.5rem;
+  }
+}

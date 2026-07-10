@@ -156,6 +156,12 @@
       padding: 1.5rem;
       cursor: pointer;
       transition: all 0.2s;
+      display: block;
+      width: 100%;
+      background: #fff;
+      color: inherit;
+      font: inherit;
+      text-align: left;
     }
     .menu-item:hover {
       border-color: var(--blue-500);
@@ -448,6 +454,7 @@
     textarea, input[type="text"], input[type="range"] { border-radius: 12px; }
     @media (max-width: 640px) { .main-card { padding-inline: 1rem; } .btn-group-responsive { flex-direction: column; } }
 </style>
+  <link rel="stylesheet" href="./accessibility.css">
 </head>
 <body>
   <div class="app-wrapper">
@@ -658,30 +665,30 @@
           </div>
 
           <div class="menu-grid">
-            <div id="btn-emotion" class="menu-item">
-              <h3 class="menu-item-title">1. 感情のコントロール実験</h3>
-              <p class="menu-item-desc">「不安」などをあえて感じないようにする定番のエクササイズです。（所要時間：約1分）</p>
-            </div>
+            <button type="button" id="btn-emotion" class="menu-item">
+              <span class="menu-item-title">1. 感情のコントロール実験</span>
+              <span class="menu-item-desc">「不安」などをあえて感じないようにする定番のエクササイズです。（所要時間：約1分）</span>
+            </button>
 
-            <div id="btn-whitebear" class="menu-item">
-              <h3 class="menu-item-title">2. 白くまエクササイズ</h3>
-              <p class="menu-item-desc">「思考」すら思い通りにはコントロールできないことを体験するエクササイズです。（所要時間：約2分）</p>
-            </div>
-            
-            <div id="btn-slider" class="menu-item">
-              <h3 class="menu-item-title">3. 感情スライダー・エクササイズ</h3>
-              <p class="menu-item-desc">感情を「数値化して下げようとする」努力がどのような結果をもたらすかを体験します。（所要時間：約4分）</p>
-            </div>
+            <button type="button" id="btn-whitebear" class="menu-item">
+              <span class="menu-item-title">2. 白くまエクササイズ</span>
+              <span class="menu-item-desc">「思考」すら思い通りにはコントロールできないことを体験するエクササイズです。（所要時間：約2分）</span>
+            </button>
 
-            <div id="btn-strategy" class="menu-item">
-              <h3 class="menu-item-title">4. 感情コントロール作戦会議</h3>
-              <p class="menu-item-desc">これまで行ってきた「感情をなくすための努力」が機能しているか検証します。（所要時間：約3分）</p>
-            </div>
+            <button type="button" id="btn-slider" class="menu-item">
+              <span class="menu-item-title">3. 感情スライダー・エクササイズ</span>
+              <span class="menu-item-desc">感情を「数値化して下げようとする」努力がどのような結果をもたらすかを体験します。（所要時間：約4分）</span>
+            </button>
 
-            <div id="btn-weather" class="menu-item col-span-2">
-              <h3 class="menu-item-title">5. 感情を天気として扱う</h3>
-              <p class="menu-item-desc">コントロールを手放し、今できる行動を選ぶ感覚を短時間で体験するワークです。（所要時間：約2分）</p>
-            </div>
+            <button type="button" id="btn-strategy" class="menu-item">
+              <span class="menu-item-title">4. 感情コントロール作戦会議</span>
+              <span class="menu-item-desc">これまで行ってきた「感情をなくすための努力」が機能しているか検証します。（所要時間：約3分）</span>
+            </button>
+
+            <button type="button" id="btn-weather" class="menu-item col-span-2">
+              <span class="menu-item-title">5. 感情を天気として扱う</span>
+              <span class="menu-item-desc">コントロールを手放し、今できる行動を選ぶ感覚を短時間で体験するワークです。（所要時間：約2分）</span>
+            </button>
           </div>
         </div>
       `;

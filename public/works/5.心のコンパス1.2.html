@@ -5,10 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>大事にしたい方向を見つける｜心のコンパス</title>
 
-  <!-- React & ReactDOM (動的UI構築用: UMD版 / バージョン固定) -->
-  <!-- ※不一致による実行エラーを防ぐため、integrity属性は実環境での計算・付与をお願いいたします -->
-  <script crossorigin="anonymous" src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
-  <script crossorigin="anonymous" src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+  <!-- React & ReactDOM (ローカル同梱UMD版 / バージョン固定) -->
+  <script src="../vendor/react/react.production.min.js"></script>
+  <script src="../vendor/react/react-dom.production.min.js"></script>
 
   <style>
     /* CSS変数 (テーマカラー・フォント設定) */
@@ -19,8 +18,8 @@
       --emerald-100: #d1fae5;
       --emerald-200: #a7f3d0;
       --emerald-300: #6ee7b7;
-      --emerald-500: #10b981;
-      --emerald-600: #059669;
+      --emerald-500: #047857;
+      --emerald-600: #047857;
       --emerald-700: #047857;
       --emerald-800: #065f46;
       --emerald-900: #064e3b;
@@ -1287,6 +1286,7 @@
     input, textarea { padding: 0.72rem 0.85rem; }
     @media (max-width: 640px) { .app-wrapper { padding: 1rem 0.85rem; } .main-card { padding: 1.25rem; } }
 </style>
+  <link rel="stylesheet" href="./accessibility.css">
 </head>
 <body>
   <div id="root"></div>
