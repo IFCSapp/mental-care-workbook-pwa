@@ -457,6 +457,64 @@
       return content;
     }
 
+    // 入力stateの更新で再生成されないよう、入力を含む部品はAppの外で定義する。
+    const Section = ({ title, defaultOpen = false, children }) => {
+      const [isOpen, setIsOpen] = useState(defaultOpen);
+      return e('section', { className: "section" },
+        e('button', { onClick: () => setIsOpen(!isOpen), className: "section-btn", type: "button", 'aria-expanded': isOpen },
+          e('h2', null, title),
+          isOpen ? e(ChevronUp) : e(ChevronDown)
+        ),
+        isOpen ? e('div', { className: "section-body" }, children) : null
+      );
+    };
+
+    const QuestionLabel = ({ qNum, title, description, htmlFor }) => (
+      e('div', { className: "q-label-wrap" },
+        e('label', { htmlFor: htmlFor, className: "q-label" },
+          e('span', { className: "q-num" }, qNum), title
+        ),
+        description ? e('p', { className: "q-desc" }, description) : null
+      )
+    );
+
+    const TextAreaField = ({ data, handleChange, field, rows = 3, placeholder }) => (
+      e('textarea', {
+        id: field, className: "form-textarea", rows: rows,
+        value: data[field], onChange: (ev) => handleChange(field, ev.target.value),
+        placeholder: placeholder
+      })
+    );
+
+    const CheckboxGroup = ({ data, handleChange, handleCheckboxChange, field, options, otherField }) => (
+      e('fieldset', { className: "cb-group" },
+        e('div', { className: "cb-grid" },
+          ...options.map((option, idx) => {
+            const id = `${field}_${idx}`;
+            return e('div', { key: option, className: "cb-item" },
+              e('input', { id: id, type: "checkbox", className: "cb-input", checked: data[field].includes(option), onChange: () => handleCheckboxChange(field, option) }),
+              e('label', { htmlFor: id, className: "cb-label" }, option)
+            );
+          }),
+          otherField ? e('div', { className: "cb-other" },
+            e('label', { htmlFor: otherField, className: "cb-other-label" }, "その他："),
+            e('input', { id: otherField, type: "text", className: "cb-other-input", value: data[otherField], onChange: (ev) => handleChange(otherField, ev.target.value) })
+          ) : null
+        )
+      )
+    );
+
+    const RangeSlider = ({ data, handleChange, field, minLabel, maxLabel }) => (
+      e('div', { className: "range-wrap" },
+        e('input', { id: field, type: "range", min: "0", max: "10", className: "range-input", value: data[field], onChange: (ev) => handleChange(field, parseInt(ev.target.value)) }),
+        e('div', { className: "range-labels" },
+          e('span', null, `0 (${minLabel})`),
+          e('span', { className: "range-val" }, data[field]),
+          e('span', null, `10 (${maxLabel})`)
+        )
+      )
+    );
+
     function App() {
       const [data, setData] = useState(() => {
         try {
@@ -645,64 +703,6 @@ Q20: ${data.q20}
         ev.target.value = null;
       };
 
-      // --- コンポーネント部品 ---
-      const Section = ({ title, defaultOpen = false, children }) => {
-        const [isOpen, setIsOpen] = useState(defaultOpen);
-        return e('section', { className: "section" },
-          e('button', { onClick: () => setIsOpen(!isOpen), className: "section-btn", type: "button", 'aria-expanded': isOpen },
-            e('h2', null, title),
-            isOpen ? e(ChevronUp) : e(ChevronDown)
-          ),
-          isOpen ? e('div', { className: "section-body" }, children) : null
-        );
-      };
-
-      const QuestionLabel = ({ qNum, title, description, htmlFor }) => (
-        e('div', { className: "q-label-wrap" },
-          e('label', { htmlFor: htmlFor, className: "q-label" },
-            e('span', { className: "q-num" }, qNum), title
-          ),
-          description ? e('p', { className: "q-desc" }, description) : null
-        )
-      );
-
-      const TextAreaField = ({ field, rows = 3, placeholder }) => (
-        e('textarea', {
-          id: field, className: "form-textarea", rows: rows,
-          value: data[field], onChange: (ev) => handleChange(field, ev.target.value),
-          placeholder: placeholder
-        })
-      );
-
-      const CheckboxGroup = ({ field, options, otherField }) => (
-        e('fieldset', { className: "cb-group" },
-          e('div', { className: "cb-grid" },
-            ...options.map((option, idx) => {
-              const id = `${field}_${idx}`;
-              return e('div', { key: option, className: "cb-item" },
-                e('input', { id: id, type: "checkbox", className: "cb-input", checked: data[field].includes(option), onChange: () => handleCheckboxChange(field, option) }),
-                e('label', { htmlFor: id, className: "cb-label" }, option)
-              );
-            }),
-            otherField ? e('div', { className: "cb-other" },
-              e('label', { htmlFor: otherField, className: "cb-other-label" }, "その他："),
-              e('input', { id: otherField, type: "text", className: "cb-other-input", value: data[otherField], onChange: (ev) => handleChange(otherField, ev.target.value) })
-            ) : null
-          )
-        )
-      );
-
-      const RangeSlider = ({ field, minLabel, maxLabel }) => (
-        e('div', { className: "range-wrap" },
-          e('input', { id: field, type: "range", min: "0", max: "10", className: "range-input", value: data[field], onChange: (ev) => handleChange(field, parseInt(ev.target.value)) }),
-          e('div', { className: "range-labels" },
-            e('span', null, `0 (${minLabel})`),
-            e('span', { className: "range-val" }, data[field]),
-            e('span', null, `10 (${maxLabel})`)
-          )
-        )
-      );
-
       const RenderSummaryValue = ({ value }) => {
         if (Array.isArray(value)) return value.length > 0 ? value.join(', ') : e('span', { className: "result-val-empty" }, "未選択");
         return value ? value : e('span', { className: "result-val-empty" }, "未入力");
@@ -763,41 +763,41 @@ Q20: ${data.q20}
       );
 
       const sec0 = e(Section, { title: "0. 今いちばん困っていること", defaultOpen: true },
-        e('div', null, e(QuestionLabel, { qNum: "Q1.", title: "今、いちばん困っていることは何ですか。1〜2文で書いてください。", htmlFor: "q1" }), e(TextAreaField, { field: "q1" })),
-        e('div', null, e(QuestionLabel, { qNum: "Q2.", title: "それは生活や就労準備にどう影響していますか。", htmlFor: "q2" }), e(TextAreaField, { field: "q2" }))
+        e('div', null, e(QuestionLabel, { qNum: "Q1.", title: "今、いちばん困っていることは何ですか。1〜2文で書いてください。", htmlFor: "q1" }), e(TextAreaField, { data, handleChange, field: "q1" })),
+        e('div', null, e(QuestionLabel, { qNum: "Q2.", title: "それは生活や就労準備にどう影響していますか。", htmlFor: "q2" }), e(TextAreaField, { data, handleChange, field: "q2" }))
       );
 
       const sec1 = e(Section, { title: "1. その問題が起きやすい場面を特定する" },
-        e('div', null, e(QuestionLabel, { qNum: "Q3.", title: "あなたの困っていることはどんなときに起きやすいですか。（複数可）" }), e(CheckboxGroup, { field: "q3", options: optionsList.q3, otherField: "q3Other" })),
-        e('div', null, e(QuestionLabel, { qNum: "Q4.", title: "直近で困っていることが起きた時の具体例を1つ書いてください。", htmlFor: "q4" }), e(TextAreaField, { field: "q4" }))
+        e('div', null, e(QuestionLabel, { qNum: "Q3.", title: "あなたの困っていることはどんなときに起きやすいですか。（複数可）" }), e(CheckboxGroup, { data, handleChange, handleCheckboxChange, field: "q3", options: optionsList.q3, otherField: "q3Other" })),
+        e('div', null, e(QuestionLabel, { qNum: "Q4.", title: "直近で困っていることが起きた時の具体例を1つ書いてください。", htmlFor: "q4" }), e(TextAreaField, { data, handleChange, field: "q4" }))
       );
 
       const sec2 = e(Section, { title: "2. 頭の中で何が起きていたか" },
-        e('div', null, e(QuestionLabel, { qNum: "Q5.", title: "そのとき、頭の中ではどんな通知が出ていましたか。", description: "※通知＝頭の中に自動で浮かぶ言葉やイメージのことです。", htmlFor: "q5" }), e(TextAreaField, { field: "q5", rows: 2 })),
-        e('div', null, e(QuestionLabel, { qNum: "Q6.", title: "どのくらいその通知が頭の中を埋めつくしていたか、0点～10点で表現してみてください。", htmlFor: "q6" }), e(RangeSlider, { field: "q6", minLabel: "ほとんどない", maxLabel: "ほとんどすべて" })),
-        e('div', null, e(QuestionLabel, { qNum: "Q7.", title: "他に思い浮かぶ通知はどんなタイプが多いですか。（複数可）" }), e(CheckboxGroup, { field: "q7", options: optionsList.q7, otherField: "q7Other" }))
+        e('div', null, e(QuestionLabel, { qNum: "Q5.", title: "そのとき、頭の中ではどんな通知が出ていましたか。", description: "※通知＝頭の中に自動で浮かぶ言葉やイメージのことです。", htmlFor: "q5" }), e(TextAreaField, { data, handleChange, field: "q5", rows: 2 })),
+        e('div', null, e(QuestionLabel, { qNum: "Q6.", title: "どのくらいその通知が頭の中を埋めつくしていたか、0点～10点で表現してみてください。", htmlFor: "q6" }), e(RangeSlider, { data, handleChange, field: "q6", minLabel: "ほとんどない", maxLabel: "ほとんどすべて" })),
+        e('div', null, e(QuestionLabel, { qNum: "Q7.", title: "他に思い浮かぶ通知はどんなタイプが多いですか。（複数可）" }), e(CheckboxGroup, { data, handleChange, handleCheckboxChange, field: "q7", options: optionsList.q7, otherField: "q7Other" }))
       );
 
       const sec3 = e(Section, { title: "3. 気持ち・身体反応・しんどさ" },
-        e('div', null, e(QuestionLabel, { qNum: "Q8.", title: "困ったことが起きた時、どんな気持ちがありましたか。（複数可）" }), e(CheckboxGroup, { field: "q8", options: optionsList.q8, otherField: "q8Other" })),
-        e('div', null, e(QuestionLabel, { qNum: "Q9.", title: "気持ちとともに、体にはどんな反応が出ていましたか。（複数可）" }), e(CheckboxGroup, { field: "q9", options: optionsList.q9, otherField: "q9Other" })),
-        e('div', null, e(QuestionLabel, { qNum: "Q10.", title: "感じた気持ちを消したくなった強さはどれくらいでしたか。0点～10点で表現してみてください。", htmlFor: "q10" }), e(RangeSlider, { field: "q10", minLabel: "ほとんどない", maxLabel: "とても強い" }))
+        e('div', null, e(QuestionLabel, { qNum: "Q8.", title: "困ったことが起きた時、どんな気持ちがありましたか。（複数可）" }), e(CheckboxGroup, { data, handleChange, handleCheckboxChange, field: "q8", options: optionsList.q8, otherField: "q8Other" })),
+        e('div', null, e(QuestionLabel, { qNum: "Q9.", title: "気持ちとともに、体にはどんな反応が出ていましたか。（複数可）" }), e(CheckboxGroup, { data, handleChange, handleCheckboxChange, field: "q9", options: optionsList.q9, otherField: "q9Other" })),
+        e('div', null, e(QuestionLabel, { qNum: "Q10.", title: "感じた気持ちを消したくなった強さはどれくらいでしたか。0点～10点で表現してみてください。", htmlFor: "q10" }), e(RangeSlider, { data, handleChange, field: "q10", minLabel: "ほとんどない", maxLabel: "とても強い" }))
       );
 
       const sec4 = e(Section, { title: "4. その後、何をしたか" },
-        e('div', null, e(QuestionLabel, { qNum: "Q11.", title: "その困っていることが起きた場面で、あなたは実際にどんな行動をとりましたか。（複数可）" }), e(CheckboxGroup, { field: "q11", options: optionsList.q11, otherField: "q11Other" })),
-        e('div', null, e(QuestionLabel, { qNum: "Q12.", title: "その行動で、その場では何が楽になりましたか。", htmlFor: "q12" }), e(TextAreaField, { field: "q12", rows: 2 })),
-        e('div', null, e(QuestionLabel, { qNum: "Q13.", title: "その行動は、長い目で見ると何にどう影響しましたか。", htmlFor: "q13" }), e(TextAreaField, { field: "q13", rows: 2 }))
+        e('div', null, e(QuestionLabel, { qNum: "Q11.", title: "その困っていることが起きた場面で、あなたは実際にどんな行動をとりましたか。（複数可）" }), e(CheckboxGroup, { data, handleChange, handleCheckboxChange, field: "q11", options: optionsList.q11, otherField: "q11Other" })),
+        e('div', null, e(QuestionLabel, { qNum: "Q12.", title: "その行動で、その場では何が楽になりましたか。", htmlFor: "q12" }), e(TextAreaField, { data, handleChange, field: "q12", rows: 2 })),
+        e('div', null, e(QuestionLabel, { qNum: "Q13.", title: "その行動は、長い目で見ると何にどう影響しましたか。", htmlFor: "q13" }), e(TextAreaField, { data, handleChange, field: "q13", rows: 2 }))
       );
 
       const sec5 = e(Section, { title: "5. 何を避けるようになっているか" },
-        e('div', null, e(QuestionLabel, { qNum: "Q14.", title: "最近、避けることが増えているものは何ですか。（複数可）" }), e(CheckboxGroup, { field: "q14", options: optionsList.q14, otherField: "q14Other" })),
-        e('div', null, e(QuestionLabel, { qNum: "Q15.", title: "本当は必要だと思っているのに後回しになっていることは何ですか。", htmlFor: "q15" }), e(TextAreaField, { field: "q15", rows: 2 }))
+        e('div', null, e(QuestionLabel, { qNum: "Q14.", title: "最近、避けることが増えているものは何ですか。（複数可）" }), e(CheckboxGroup, { data, handleChange, handleCheckboxChange, field: "q14", options: optionsList.q14, otherField: "q14Other" })),
+        e('div', null, e(QuestionLabel, { qNum: "Q15.", title: "本当は必要だと思っているのに後回しになっていることは何ですか。", htmlFor: "q15" }), e(TextAreaField, { data, handleChange, field: "q15", rows: 2 }))
       );
 
       const sec6 = e(Section, { title: "6. 問題を広げている背景を整理する" },
-        e('div', null, e(QuestionLabel, { qNum: "Q16.", title: "ここで出ている問題に関係しそうな自分の考え・思考以外の事情はありますか。", htmlFor: "q16" }), e(TextAreaField, { field: "q16" })),
-        e('div', null, e(QuestionLabel, { qNum: "Q17.", title: "スキルややり方の問題はありますか。", htmlFor: "q17" }), e(TextAreaField, { field: "q17" }))
+        e('div', null, e(QuestionLabel, { qNum: "Q16.", title: "ここで出ている問題に関係しそうな自分の考え・思考以外の事情はありますか。", htmlFor: "q16" }), e(TextAreaField, { data, handleChange, field: "q16" })),
+        e('div', null, e(QuestionLabel, { qNum: "Q17.", title: "スキルややり方の問題はありますか。", htmlFor: "q17" }), e(TextAreaField, { data, handleChange, field: "q17" }))
       );
 
       const sec7 = e(Section, { title: "7. あなたの問題がどれくらい生活に影響が出ているか" },
@@ -819,8 +819,8 @@ Q20: ${data.q20}
       );
 
       const sec8 = e(Section, { title: "8. 本当はどうなりたいか" },
-        e('div', null, e(QuestionLabel, { qNum: "Q19.", title: "このしんどさがあっても、少しでも向かいたいことは何ですか。", htmlFor: "q19" }), e(TextAreaField, { field: "q19" })),
-        e('div', null, e(QuestionLabel, { qNum: "Q20.", title: "その向かい方に近づくために、今できる最小の一歩は何ですか。", htmlFor: "q20" }), e(TextAreaField, { field: "q20" }))
+        e('div', null, e(QuestionLabel, { qNum: "Q19.", title: "このしんどさがあっても、少しでも向かいたいことは何ですか。", htmlFor: "q19" }), e(TextAreaField, { data, handleChange, field: "q19" })),
+        e('div', null, e(QuestionLabel, { qNum: "Q20.", title: "その向かい方に近づくために、今できる最小の一歩は何ですか。", htmlFor: "q20" }), e(TextAreaField, { data, handleChange, field: "q20" }))
       );
 
       const sec9 = e(Section, { title: "9. 最後のまとめ" },

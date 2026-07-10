@@ -170,6 +170,71 @@ try {
   record('all eight works keep finish/save handshake', finishContracts.every(item => item.listens && item.completes), { finishContracts });
   record('work1 staged sections keep only section 0 initially open', allWorkFiles[0].includes('defaultOpen = false') && allWorkFiles[0].includes('title: "0. 今いちばん困っていること", defaultOpen: true'), {});
 
+  // Work 1 regression: input state updates must not remount controls or reset disclosure state.
+  {
+    const page = await browser.newPage({ viewport: views[0] });
+    await page.goto(`${base}/#work/1`, { waitUntil: 'networkidle' });
+    const frame = page.frameLocator('#work-frame');
+    const sectionButtons = frame.locator('.section-btn');
+
+    await sectionButtons.nth(1).click();
+    const q4Text = '二十文字以上を連続して入力しても欄が閉じないことを確認します。';
+    await frame.locator('#q4').click();
+    await page.keyboard.type(q4Text, { delay: 15 });
+    await page.keyboard.press('Enter');
+    await page.keyboard.insertText('日本語IME変換後の二行目');
+    const q4Expected = `${q4Text}\n日本語IME変換後の二行目`;
+    const q4State = await frame.locator('#q4').evaluate(element => ({
+      value: element.value,
+      focused: document.activeElement === element,
+      expanded: element.closest('.section')?.querySelector('.section-btn')?.getAttribute('aria-expanded'),
+    }));
+
+    for (const id of ['#q3_0', '#q3_1', '#q3_2']) await frame.locator(id).click();
+    const checkboxState = await frame.locator('#q3_0').evaluate(() => ({
+      checked: ['q3_0', 'q3_1', 'q3_2'].map(id => document.getElementById(id)?.checked),
+      expanded: document.querySelectorAll('.section-btn')[1]?.getAttribute('aria-expanded'),
+    }));
+
+    await sectionButtons.nth(2).click();
+    await frame.locator('#q6').focus();
+    for (let i = 0; i < 3; i += 1) await page.keyboard.press('ArrowRight');
+    const rangeState = await frame.locator('#q6').evaluate(element => ({
+      value: element.value,
+      focused: document.activeElement === element,
+      expanded: element.closest('.section')?.querySelector('.section-btn')?.getAttribute('aria-expanded'),
+    }));
+
+    await sectionButtons.nth(1).click();
+    await sectionButtons.nth(1).click();
+    const revisitState = await frame.locator('#q4').evaluate(element => ({
+      value: element.value,
+      checked: ['q3_0', 'q3_1', 'q3_2'].map(id => document.getElementById(id)?.checked),
+      expanded: element.closest('.section')?.querySelector('.section-btn')?.getAttribute('aria-expanded'),
+    }));
+
+    record('work1 text/IME/multiline input keeps section open and focus', q4State.value === q4Expected && q4State.focused && q4State.expanded === 'true', { q4State, expectedLength: q4Expected.length });
+    record('work1 checkbox multi-select and range changes keep sections open', checkboxState.checked.every(Boolean) && checkboxState.expanded === 'true' && rangeState.value === '8' && rangeState.focused && rangeState.expanded === 'true', { checkboxState, rangeState });
+    record('work1 values remain after explicit section navigation', revisitState.value === q4Expected && revisitState.checked.every(Boolean) && revisitState.expanded === 'true', { revisitState });
+
+    await page.reload({ waitUntil: 'networkidle' });
+    const reloadedFrame = page.frameLocator('#work-frame');
+    await reloadedFrame.locator('.section-btn').nth(1).click();
+    const reloadState = await reloadedFrame.locator('#q4').evaluate(element => ({
+      value: element.value,
+      checked: ['q3_0', 'q3_1', 'q3_2'].map(id => document.getElementById(id)?.checked),
+    }));
+    await reloadedFrame.locator('.section-btn').nth(2).click();
+    const reloadedRange = await reloadedFrame.locator('#q6').inputValue();
+    record('work1 autosave reload restores text, checkboxes and range', reloadState.value === q4Expected && reloadState.checked.every(Boolean) && reloadedRange === '8', { reloadState, reloadedRange });
+
+    await reloadedFrame.locator('.header-actions .btn-blue').click();
+    const summaryText = await reloadedFrame.locator('.result-container').innerText();
+    const summaryPass = summaryText.includes(q4Text) && ['通所前', '学習を始める前', '課題でつまずいたとき'].every(text => summaryText.includes(text)) && summaryText.includes('8 / 10');
+    record('work1 summary confirmation keeps entered values', summaryPass, { includesQ4: summaryText.includes(q4Text), includesSelections: ['通所前', '学習を始める前', '課題でつまずいたとき'].map(text => summaryText.includes(text)), includesRange: summaryText.includes('8 / 10') });
+    await page.close();
+  }
+
   // P0: both modal types use dialog semantics, trap focus, Escape, inert background and restoration.
   {
     const page = await browser.newPage({ viewport: views[0] });
