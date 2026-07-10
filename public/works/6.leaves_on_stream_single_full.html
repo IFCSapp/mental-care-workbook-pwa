@@ -14,7 +14,7 @@
             --color-panel: rgba(255, 255, 255, 0.85);
             --color-button: #e8ece1;
             --color-button-hover: #d1d8c6;
-            --color-accent: #6b8e73;
+            --color-accent: #4f7258;
             --color-border: #c4cdc0;
             
             --font-family: 'Hiragino Maru Gothic ProN', 'Yu Rounded', 'Yu Gothic', 'Meiryo', sans-serif;
@@ -122,7 +122,13 @@
             font-size: 14px;
             color: var(--color-text);
             margin-bottom: 8px;
-            opacity: 0.8;
+        }
+
+        .enter-hint {
+            margin: 6px 0 10px;
+            color: #344b3b;
+            font-size: 13px;
+            line-height: 1.45;
         }
 
         input[type="text"] {
@@ -573,6 +579,7 @@
             #screen-main .control-bar,
             #screen-main #grounding-section,
             #screen-main #input-container .input-label,
+            #screen-main #input-container .enter-hint,
             #screen-main #btn-add-leaf { display: none !important; }
             #screen-main #main-ui-area { padding-block: 12px; }
             #screen-main #input-container { margin-top: 0; }
@@ -810,7 +817,7 @@
         position: absolute;
         top: calc(14px + env(safe-area-inset-top, 0px));
         right: 14px;
-        width: min(68vw, 270px);
+        width: min(265px, calc(100% - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)));
         min-height: 0;
         max-height: none;
         flex: 0 0 auto;
@@ -838,10 +845,11 @@
         background: rgba(255, 255, 255, 0.9);
       }
       @media (orientation: landscape) and (max-height: 560px) {
-        #screen-main #main-ui-area { width: min(34vw, 300px); }
+        #screen-main #main-ui-area { width: min(287px, calc(100% - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))); }
       }
     }
 </style>
+  <link rel="stylesheet" href="./accessibility.css">
 </head>
 <body>
 
@@ -981,8 +989,9 @@
                 
                 <div id="input-container">
                     <label for="leaf-input" class="input-label">今、頭の中に浮かんでいる言葉を短く書きます</label>
-                    <input type="text" id="leaf-input" placeholder="短く書きます..." autocomplete="off" enterkeyhint="enter">
-                    <button id="btn-add-leaf" class="primary" style="width: 100%; margin-right: 0;">葉に乗せる</button>
+                    <input type="text" id="leaf-input" placeholder="書いて改行で葉に乗せます" aria-label="今、頭の中に浮かんでいる言葉を短く書きます。改行で葉に乗せます" autocomplete="off" enterkeyhint="send">
+                    <p class="enter-hint" id="leaf-input-hint">書いたら改行キーで葉に乗せます</p>
+                    <button id="btn-add-leaf" class="primary" style="width: 100%; margin-right: 0;">葉に乗せて流す</button>
                 </div>
 
                 <!-- グラウンディングセクション（入力欄の下に移動） -->
@@ -1960,8 +1969,8 @@
                 
                 this.createLeaf(text || "...");
                 input.value = '';
-                input.blur();
                 if (this.state.isViewingMode) this.closeInputPanel();
+                else input.focus();
                 const guideEl = document.getElementById('main-guide');
                 if (guideEl && this.state.currentMode !== 'input') {
                     guideEl.textContent = '少しだけ、流れていく様子を眺めます。';

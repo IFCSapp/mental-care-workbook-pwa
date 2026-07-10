@@ -205,7 +205,7 @@ try {
     await page.close();
   }
 
-  // Work 6: short instruction, enterkeyhint, Enter leaf, retained focus and safe right/top placement.
+  // Work 6 mobile/landscape: input-only float, placeholder guidance, Enter leaf, retained focus and safe placement.
   for (const viewport of [views[1], views[2]]) {
     const page = await browser.newPage({ viewport });
     await page.goto(`${base}/#work/6`);
@@ -242,20 +242,28 @@ try {
         const visibleHeight = Math.min(rect.bottom, innerHeight) - Math.max(rect.top, 0);
         return { top: rect.top, left: rect.left, right: rect.right, bottom: rect.bottom, visibleWidth, visibleHeight };
       });
+      const isVisible = candidate => {
+        const style = getComputedStyle(candidate);
+        const rect = candidate.getBoundingClientRect();
+        return style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0;
+      };
       return {
-        hint: document.querySelector('.enter-hint')?.textContent?.trim(),
+        placeholder: element.getAttribute('placeholder'),
         enterkeyhint: element.getAttribute('enterkeyhint'),
         focused: document.activeElement === element,
         value: element.value,
+        visibleInputs: Array.from(document.querySelectorAll('#main-ui-area input')).filter(isVisible).length,
+        visibleGuides: Array.from(document.querySelectorAll('#main-guide, .input-label, .enter-hint')).filter(isVisible).length,
+        visibleSubmitButtons: Array.from(document.querySelectorAll('#btn-add-leaf')).filter(isVisible).length,
         position: getComputedStyle(document.querySelector('.ui-area')).position,
-        panel: { top: panel.top, rightGap: innerWidth - panel.right, width: panel.width },
+        panel: { top: panel.top, rightGap: innerWidth - panel.right, width: panel.width, height: panel.height },
         leaves,
         visibleLeaves: leaves.filter(leaf => leaf.visibleWidth >= 40 && leaf.visibleHeight >= 40).length,
         overflow: Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - innerWidth,
       };
     });
-    const maxPanelWidth = viewport.name.startsWith('landscape') ? 321 : 271;
-    record(`work6 ${viewport.name} enter/focus/safe-area`, after === before + 3 && info.visibleLeaves >= 1 && info.hint === '書いたら改行キーで葉に乗せます' && info.enterkeyhint === 'send' && info.focused && info.value === '' && info.position === 'absolute' && info.panel.top >= 7 && info.panel.rightGap >= 11 && info.panel.width <= maxPanelWidth && info.overflow <= 1, { before, after, info });
+    const expectedPanelWidth = viewport.name.startsWith('landscape') ? 287 : 265;
+    record(`work6 ${viewport.name} input-only/enter/focus/safe-area`, after === before + 3 && info.visibleLeaves >= 1 && info.placeholder === '書いて改行で葉に乗せます' && info.enterkeyhint === 'send' && info.focused && info.value === '' && info.visibleInputs === 1 && info.visibleGuides === 0 && info.visibleSubmitButtons === 0 && info.position === 'absolute' && info.panel.top >= 7 && info.panel.rightGap >= 11 && Math.abs(info.panel.width - expectedPanelWidth) <= 1 && info.panel.height <= 70 && info.overflow <= 1, { before, after, info });
     await page.close();
   }
 
