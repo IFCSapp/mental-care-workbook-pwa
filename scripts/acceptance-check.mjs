@@ -348,7 +348,7 @@ try {
   }
 
   // Work 6 mobile/landscape: input-only float, placeholder guidance, Enter leaf, retained focus and safe placement.
-  // P0-01/02/07/09: policy and supporter choices are visible without writing learner data.
+  // P0-01/02/07/09: policy, safety route and exact save-state labels are visible without writing learner data.
   {
     const page = await browser.newPage({ viewport: views[0] });
     await page.goto(`${base}/#home`);
@@ -374,12 +374,7 @@ try {
       externalLinks: details.querySelectorAll('a[target="_blank"][rel="noopener noreferrer"]').length,
     }));
     await page.screenshot({ path: path.join(out, 'p0-home-safety-details.png') });
-    const before = await page.evaluate(() => ({ ...localStorage }));
-    await page.locator('.work-card').first().click();
-    await page.locator('input[name="use-with"][value="supporter"]').click();
-    const supporterBoundary = await page.locator('#support-boundary-start').innerText();
-    const after = await page.evaluate(() => ({ ...localStorage }));
-    await page.screenshot({ path: path.join(out, 'p0-start-boundary-supporter.png') });
+
     const calmSafetyRoute = collapsedSafety.standaloneLinks === 0
       && collapsedSafety.detailsOpen === false
       && safetyDetails.open
@@ -398,7 +393,7 @@ try {
       { workId: 7, label: 'この画面だけ', mode: 'ephemeral', duration: '3〜7分' },
       { workId: 8, label: '保存される', mode: 'persisted', duration: '10〜20分' },
     ];
-    record('P0-01/P0-02/P0-07/P0-09 home and start boundary runtime', homePolicy.cards === 8 && JSON.stringify(homePolicy.cardStates) === JSON.stringify(expectedCardStates) && homePolicy.text.includes('診断や治療でもありません') && calmSafetyRoute && supporterBoundary.includes('誰が入力するか') && supporterBoundary.includes('本人の明示的な同意なく') && JSON.stringify(before) === JSON.stringify(after), { homePolicy: { ...homePolicy, text: undefined }, expectedCardStates, collapsedSafety, safetyDetails, supporterBoundary, storageUnchanged: JSON.stringify(before) === JSON.stringify(after) });
+    record('P0-01/P0-02/P0-07/P0-09 home policy and safety route runtime', homePolicy.cards === 8 && JSON.stringify(homePolicy.cardStates) === JSON.stringify(expectedCardStates) && homePolicy.text.includes('診断や治療でもありません') && calmSafetyRoute, { homePolicy: { ...homePolicy, text: undefined }, expectedCardStates, collapsedSafety, safetyDetails });
     await page.close();
 
     const saveTagLayoutEvidence = [];
@@ -452,6 +447,88 @@ try {
         && persisted.color !== ephemeral.color;
     });
     record('save-state tags keep exact labels, distinct shapes/colors and collision-free layout in three viewports', tagLayoutPass, { saveTagLayoutEvidence });
+
+    const startModalEvidence = [];
+    for (const view of views) {
+      const modalPage = await browser.newPage({ viewport: view });
+      await modalPage.goto(`${base}/#home`);
+      for (const expected of expectedCardStates) {
+        const card = modalPage.locator(`.work-card[data-work-id="${expected.workId}"]`);
+        const cardTagStyle = await card.locator('.work-save-tag').evaluate((tag) => {
+          const style = getComputedStyle(tag);
+          return {
+            className: tag.className,
+            color: style.color,
+            backgroundColor: style.backgroundColor,
+            borderColor: style.borderColor,
+            borderStyle: style.borderStyle,
+            borderRadius: style.borderRadius,
+          };
+        });
+        const storageBeforeModal = await modalPage.evaluate(() => ({ ...localStorage }));
+        await card.click();
+        const modal = modalPage.locator('[role="dialog"]');
+        await modal.locator('.start-save-state').scrollIntoViewIfNeeded();
+        const modalState = await modal.evaluate((dialog) => {
+          const tag = dialog.querySelector('.work-save-tag');
+          const tagStyle = getComputedStyle(tag);
+          const tagRect = tag.getBoundingClientRect();
+          return {
+            label: tag.textContent.trim(),
+            mode: tag.dataset.saveMode,
+            className: tag.className,
+            color: tagStyle.color,
+            backgroundColor: tagStyle.backgroundColor,
+            borderColor: tagStyle.borderColor,
+            borderStyle: tagStyle.borderStyle,
+            borderRadius: tagStyle.borderRadius,
+            clipped: tag.scrollWidth > tag.clientWidth || tag.scrollHeight > tag.clientHeight,
+            insideViewport: tagRect.left >= 0 && tagRect.right <= window.innerWidth && tagRect.top >= 0 && tagRect.bottom <= window.innerHeight,
+            subtitle: dialog.querySelector('.modal-subtitle')?.textContent.trim(),
+            useWithFieldsets: dialog.querySelectorAll('.use-with-fieldset').length,
+            useWithRadios: dialog.querySelectorAll('input[name="use-with"]').length,
+            duplicateTypeLabels: Array.from(dialog.querySelectorAll('.modal-subtitle')).filter(node => /記録型|体験型/.test(node.textContent)).length,
+            safetyDetails: dialog.querySelectorAll('.start-safety-details').length,
+            backgroundDetails: dialog.querySelectorAll('.work-background-details').length,
+            startButtons: dialog.querySelectorAll('#confirm-start').length,
+            documentWidth: document.documentElement.scrollWidth,
+            viewportWidth: window.innerWidth,
+          };
+        });
+        const storageAfterModal = await modalPage.evaluate(() => ({ ...localStorage }));
+        await modalPage.screenshot({ path: path.join(out, `start-modal-work${expected.workId}-${view.name}.png`) });
+        await modalPage.locator('#confirm-start').click();
+        await modalPage.waitForURL(url => url.hash === `#work/${expected.workId}`);
+        await modalPage.locator('#work-frame').waitFor();
+        startModalEvidence.push({ view: view.name, ...expected, cardTagStyle, modalState, modalStorageUnchanged: JSON.stringify(storageBeforeModal) === JSON.stringify(storageAfterModal), startedRoute: new URL(modalPage.url()).hash });
+        await modalPage.goto(`${base}/#home`);
+      }
+      await modalPage.close();
+    }
+    const startModalPass = startModalEvidence.every((item) => {
+      const { modalState, cardTagStyle } = item;
+      return modalState.label === item.label
+        && modalState.mode === item.mode
+        && modalState.subtitle === `${item.duration}（時間切れはありません）`
+        && modalState.useWithFieldsets === 0
+        && modalState.useWithRadios === 0
+        && modalState.duplicateTypeLabels === 0
+        && modalState.safetyDetails === 1
+        && modalState.backgroundDetails === 1
+        && modalState.startButtons === 1
+        && item.modalStorageUnchanged
+        && !modalState.clipped
+        && modalState.insideViewport
+        && modalState.documentWidth <= modalState.viewportWidth
+        && modalState.className === cardTagStyle.className
+        && modalState.color === cardTagStyle.color
+        && modalState.backgroundColor === cardTagStyle.backgroundColor
+        && modalState.borderColor === cardTagStyle.borderColor
+        && modalState.borderStyle === cardTagStyle.borderStyle
+        && modalState.borderRadius === cardTagStyle.borderRadius
+        && item.startedRoute === `#work/${item.workId}`;
+    });
+    record('all eight start modals show exact save-state tags and start correctly in three viewports', startModalPass && startModalEvidence.length === (views.length * 8), { startModalEvidence });
   }
 
   // P0-03: persisted/ephemeral success, explicit storage failure and timeout branches.

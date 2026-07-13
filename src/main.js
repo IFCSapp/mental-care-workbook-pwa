@@ -769,18 +769,15 @@ function showConfirm(workId) {
     <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="confirm-title" tabindex="-1">
       <span class="modal-icon" aria-hidden="true">🌱</span>
       <p class="modal-heading" id="confirm-title">「${work.workName}」</p>
-      <p class="modal-subtitle">${work.dataLabel}・${work.duration}（時間切れはありません）</p>
+      <p class="modal-subtitle">${work.duration}（時間切れはありません）</p>
       <div class="modal-body">
         <p><strong>このワークで行うこと</strong><br>${work.desc}<br>画面の案内に沿って、起きたことや選べそうなことを1つずつ見ます。</p>
         <p><strong>データ</strong><br>${work.mode === 'persisted'
           ? '入力はこのブラウザ内に保存され、全体バックアップの対象になります。'
           : '入力は保存されません。閉じると消えます。終了前に自分でテキストへ保存できます。'}</p>
-        <fieldset class="use-with-fieldset">
-          <legend>どのように使いますか</legend>
-          <label><input type="radio" name="use-with" value="solo" checked> 一人で使う</label>
-          <label><input type="radio" name="use-with" value="supporter"> 支援者と一緒に使う</label>
-        </fieldset>
-        <div id="support-boundary-start" class="start-support-boundary" hidden>${SUPPORT_BOUNDARY_HTML}</div>
+        <div class="start-save-state" aria-label="保存状態">
+          <span class="work-save-tag work-save-tag--${work.mode}" data-save-mode="${work.mode}">${work.mode === 'persisted' ? '保存される' : 'この画面だけ'}</span>
+        </div>
         <details class="start-safety-details">
           <summary>安全と使い方を確認する</summary>
           <div>${USER_BOUNDARY_HTML}${CRISIS_GUIDE_HTML}</div>
@@ -808,11 +805,6 @@ function showConfirm(workId) {
   });
 
   overlay.querySelector('#confirm-cancel').addEventListener('click', () => close());
-  overlay.querySelectorAll('input[name="use-with"]').forEach((input) => {
-    input.addEventListener('change', () => {
-      overlay.querySelector('#support-boundary-start').hidden = input.value !== 'supporter' || !input.checked;
-    });
-  });
   overlay.querySelector('#confirm-start').addEventListener('click', () => {
     close({ restoreFocus: false });
     navigate(`work/${work.id}`);

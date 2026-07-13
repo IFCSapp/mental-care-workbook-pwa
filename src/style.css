@@ -591,35 +591,12 @@ body {
   font-size: 0.78rem;
 }
 
-.use-with-fieldset {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin: 16px 0;
-  padding: 14px 16px;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-}
-
-.use-with-fieldset legend {
-  padding: 0 6px;
-  font-size: 0.88rem;
-  font-weight: 600;
-}
-
-.use-with-fieldset label {
+.start-save-state {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-height: 44px;
+  margin: 16px 0;
 }
 
-.use-with-fieldset input {
-  width: 20px;
-  height: 20px;
-}
-
-.start-support-boundary,
 .start-safety-details > div {
   margin: 12px 0;
   padding: 14px;
