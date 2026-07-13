@@ -180,7 +180,7 @@ try {
     && [3, 4, 6, 7].every(id => policyJs.includes(`${id}: Object.freeze({ mode: 'ephemeral'`));
   record('P0-02 single work data policy matches persisted and ephemeral works', policyModes && policyJs.includes("storageKey: 'worksheet_auto_save_v1'") && policyJs.includes("storageKey: 'control_map_state_v1'"), {});
 
-  const boundaryMarkers = ['診断や治療でもありません', '危険や暴力、不当な状況にとどまることではありません', '保存される', 'この画面だけ', '本人の明示的な同意なく内容をコピー・印刷・提出しないでください'];
+  const boundaryMarkers = ['診断や治療でもありません', '危険や暴力、不当な状況にとどまることではありません', '保存対象', '入力は保存されません。閉じると消えます。', '本人の明示的な同意なく内容をコピー・印刷・提出しないでください'];
   record('P0-01/P0-07/P0-09 purpose, safety, data and supporter boundaries are visible', boundaryMarkers.every(marker => mainJs.includes(marker)), { boundaryMarkers });
 
   const forbiddenClaims = [/治ります/g, /改善します/g, /効果があります/g, /正しい考え/g, /今回わかった事実/g, /下がらない[」』\s]*という事実/g, /人生(?:の可能性)?を狭め(?:る|て)/g];
@@ -356,8 +356,8 @@ try {
       cards: document.querySelectorAll('.work-card').length,
       cardStates: Array.from(document.querySelectorAll('.work-card')).map((card) => ({
         workId: Number(card.dataset.workId),
-        label: card.querySelector('.work-save-tag')?.textContent.trim(),
-        mode: card.querySelector('.work-save-tag')?.dataset.saveMode,
+        label: card.querySelector('.work-save-tag')?.textContent.trim() ?? null,
+        mode: card.querySelector('.work-save-tag')?.dataset.saveMode ?? null,
         duration: card.querySelector('.work-card-meta')?.textContent.trim(),
       })),
       text: document.body.innerText,
@@ -383,15 +383,16 @@ try {
       && safetyDetails.text.includes('厚生労働省「まもろうよ こころ」で相談先を見る')
       && !safetyDetails.text.includes('救急車')
       && !safetyDetails.text.includes('119');
+    const persistedWorkIds = new Set([1, 2, 5, 8]);
     const expectedCardStates = [
-      { workId: 1, label: '保存される', mode: 'persisted', duration: '15〜30分' },
-      { workId: 2, label: '保存される', mode: 'persisted', duration: '10〜20分' },
-      { workId: 3, label: 'この画面だけ', mode: 'ephemeral', duration: '1〜4分' },
-      { workId: 4, label: 'この画面だけ', mode: 'ephemeral', duration: '5〜10分' },
-      { workId: 5, label: '保存される', mode: 'persisted', duration: '15〜30分' },
-      { workId: 6, label: 'この画面だけ', mode: 'ephemeral', duration: '3〜10分' },
-      { workId: 7, label: 'この画面だけ', mode: 'ephemeral', duration: '3〜7分' },
-      { workId: 8, label: '保存される', mode: 'persisted', duration: '10〜20分' },
+      { workId: 1, label: '保存対象', mode: 'persisted', duration: '15〜30分' },
+      { workId: 2, label: '保存対象', mode: 'persisted', duration: '10〜20分' },
+      { workId: 3, label: null, mode: null, duration: '1〜4分' },
+      { workId: 4, label: null, mode: null, duration: '5〜10分' },
+      { workId: 5, label: '保存対象', mode: 'persisted', duration: '15〜30分' },
+      { workId: 6, label: null, mode: null, duration: '3〜10分' },
+      { workId: 7, label: null, mode: null, duration: '3〜7分' },
+      { workId: 8, label: '保存対象', mode: 'persisted', duration: '10〜20分' },
     ];
     record('P0-01/P0-02/P0-07/P0-09 home policy and safety route runtime', homePolicy.cards === 8 && JSON.stringify(homePolicy.cardStates) === JSON.stringify(expectedCardStates) && homePolicy.text.includes('診断や治療でもありません') && calmSafetyRoute, { homePolicy: { ...homePolicy, text: undefined }, expectedCardStates, collapsedSafety, safetyDetails });
     await page.close();
@@ -407,21 +408,22 @@ try {
           const duration = card.querySelector('.work-card-meta');
           const cardRect = card.getBoundingClientRect();
           const titleRect = title.getBoundingClientRect();
-          const tagRect = tag.getBoundingClientRect();
-          const tagStyle = getComputedStyle(tag);
-          const overlaps = !(titleRect.right <= tagRect.left || titleRect.left >= tagRect.right || titleRect.bottom <= tagRect.top || titleRect.top >= tagRect.bottom);
+          const tagRect = tag?.getBoundingClientRect();
+          const tagStyle = tag ? getComputedStyle(tag) : null;
+          const overlaps = tagRect ? !(titleRect.right <= tagRect.left || titleRect.left >= tagRect.right || titleRect.bottom <= tagRect.top || titleRect.top >= tagRect.bottom) : false;
           return {
             workId: Number(card.dataset.workId),
-            label: tag.textContent.trim(),
-            mode: tag.dataset.saveMode,
+            label: tag?.textContent.trim() ?? null,
+            mode: tag?.dataset.saveMode ?? null,
             duration: duration.textContent.trim(),
+            hasTag: Boolean(tag),
             overlaps,
-            insideCard: tagRect.left >= cardRect.left && tagRect.right <= cardRect.right && tagRect.top >= cardRect.top && tagRect.bottom <= cardRect.bottom,
-            clipped: tag.scrollWidth > tag.clientWidth || tag.scrollHeight > tag.clientHeight,
-            borderRadius: tagStyle.borderRadius,
-            borderStyle: tagStyle.borderStyle,
-            color: tagStyle.color,
-            backgroundColor: tagStyle.backgroundColor,
+            insideCard: !tagRect || (tagRect.left >= cardRect.left && tagRect.right <= cardRect.right && tagRect.top >= cardRect.top && tagRect.bottom <= cardRect.bottom),
+            clipped: tag ? tag.scrollWidth > tag.clientWidth || tag.scrollHeight > tag.clientHeight : false,
+            borderRadius: tagStyle?.borderRadius ?? null,
+            borderStyle: tagStyle?.borderStyle ?? null,
+            color: tagStyle?.color ?? null,
+            backgroundColor: tagStyle?.backgroundColor ?? null,
           };
         });
         return {
@@ -436,17 +438,14 @@ try {
     }
     const tagLayoutPass = saveTagLayoutEvidence.every(({ documentWidth, viewportWidth, cards }) => {
       const exactStates = cards.map(({ workId, label, mode, duration }) => ({ workId, label, mode, duration }));
-      const persisted = cards.find(card => card.mode === 'persisted');
-      const ephemeral = cards.find(card => card.mode === 'ephemeral');
+      const persisted = cards.filter(card => persistedWorkIds.has(card.workId));
+      const ephemeral = cards.filter(card => !persistedWorkIds.has(card.workId));
       return documentWidth <= viewportWidth
         && JSON.stringify(exactStates) === JSON.stringify(expectedCardStates)
-        && cards.every(card => !card.overlaps && card.insideCard && !card.clipped)
-        && persisted.borderRadius !== ephemeral.borderRadius
-        && persisted.borderStyle !== ephemeral.borderStyle
-        && persisted.backgroundColor !== ephemeral.backgroundColor
-        && persisted.color !== ephemeral.color;
+        && persisted.every(card => card.hasTag && !card.overlaps && card.insideCard && !card.clipped)
+        && ephemeral.every(card => !card.hasTag);
     });
-    record('save-state tags keep exact labels, distinct shapes/colors and collision-free layout in three viewports', tagLayoutPass, { saveTagLayoutEvidence });
+    record('persisted save-state tags keep exact labels while ephemeral cards omit tags in three viewports', tagLayoutPass, { saveTagLayoutEvidence });
 
     const startModalEvidence = [];
     for (const view of views) {
@@ -454,7 +453,8 @@ try {
       await modalPage.goto(`${base}/#home`);
       for (const expected of expectedCardStates) {
         const card = modalPage.locator(`.work-card[data-work-id="${expected.workId}"]`);
-        const cardTagStyle = await card.locator('.work-save-tag').evaluate((tag) => {
+        const cardTag = card.locator('.work-save-tag');
+        const cardTagState = await cardTag.count() ? await cardTag.evaluate((tag) => {
           const style = getComputedStyle(tag);
           return {
             className: tag.className,
@@ -464,26 +464,27 @@ try {
             borderStyle: style.borderStyle,
             borderRadius: style.borderRadius,
           };
-        });
+        }) : null;
         const storageBeforeModal = await modalPage.evaluate(() => ({ ...localStorage }));
         await card.click();
         const modal = modalPage.locator('[role="dialog"]');
-        await modal.locator('.start-save-state').scrollIntoViewIfNeeded();
+        if (persistedWorkIds.has(expected.workId)) await modal.locator('.start-save-state').scrollIntoViewIfNeeded();
         const modalState = await modal.evaluate((dialog) => {
           const tag = dialog.querySelector('.work-save-tag');
-          const tagStyle = getComputedStyle(tag);
-          const tagRect = tag.getBoundingClientRect();
+          const tagStyle = tag ? getComputedStyle(tag) : null;
+          const tagRect = tag?.getBoundingClientRect();
           return {
-            label: tag.textContent.trim(),
-            mode: tag.dataset.saveMode,
-            className: tag.className,
-            color: tagStyle.color,
-            backgroundColor: tagStyle.backgroundColor,
-            borderColor: tagStyle.borderColor,
-            borderStyle: tagStyle.borderStyle,
-            borderRadius: tagStyle.borderRadius,
-            clipped: tag.scrollWidth > tag.clientWidth || tag.scrollHeight > tag.clientHeight,
-            insideViewport: tagRect.left >= 0 && tagRect.right <= window.innerWidth && tagRect.top >= 0 && tagRect.bottom <= window.innerHeight,
+            hasTag: Boolean(tag),
+            label: tag?.textContent.trim() ?? null,
+            mode: tag?.dataset.saveMode ?? null,
+            className: tag?.className ?? null,
+            color: tagStyle?.color ?? null,
+            backgroundColor: tagStyle?.backgroundColor ?? null,
+            borderColor: tagStyle?.borderColor ?? null,
+            borderStyle: tagStyle?.borderStyle ?? null,
+            borderRadius: tagStyle?.borderRadius ?? null,
+            clipped: tag ? tag.scrollWidth > tag.clientWidth || tag.scrollHeight > tag.clientHeight : false,
+            insideViewport: !tagRect || (tagRect.left >= 0 && tagRect.right <= window.innerWidth && tagRect.top >= 0 && tagRect.bottom <= window.innerHeight),
             subtitle: dialog.querySelector('.modal-subtitle')?.textContent.trim(),
             useWithFieldsets: dialog.querySelectorAll('.use-with-fieldset').length,
             useWithRadios: dialog.querySelectorAll('input[name="use-with"]').length,
@@ -500,14 +501,26 @@ try {
         await modalPage.locator('#confirm-start').click();
         await modalPage.waitForURL(url => url.hash === `#work/${expected.workId}`);
         await modalPage.locator('#work-frame').waitFor();
-        startModalEvidence.push({ view: view.name, ...expected, cardTagStyle, modalState, modalStorageUnchanged: JSON.stringify(storageBeforeModal) === JSON.stringify(storageAfterModal), startedRoute: new URL(modalPage.url()).hash });
+        startModalEvidence.push({ view: view.name, ...expected, cardTagState, modalState, modalStorageUnchanged: JSON.stringify(storageBeforeModal) === JSON.stringify(storageAfterModal), startedRoute: new URL(modalPage.url()).hash });
         await modalPage.goto(`${base}/#home`);
       }
       await modalPage.close();
     }
     const startModalPass = startModalEvidence.every((item) => {
-      const { modalState, cardTagStyle } = item;
-      return modalState.label === item.label
+      const { modalState, cardTagState } = item;
+      const shouldShowTag = persistedWorkIds.has(item.workId);
+      const tagStatePass = shouldShowTag
+        ? modalState.hasTag
+          && cardTagState !== null
+          && modalState.className === cardTagState.className
+          && modalState.color === cardTagState.color
+          && modalState.backgroundColor === cardTagState.backgroundColor
+          && modalState.borderColor === cardTagState.borderColor
+          && modalState.borderStyle === cardTagState.borderStyle
+          && modalState.borderRadius === cardTagState.borderRadius
+        : !modalState.hasTag && cardTagState === null;
+      return tagStatePass
+        && modalState.label === item.label
         && modalState.mode === item.mode
         && modalState.subtitle === `${item.duration}（時間切れはありません）`
         && modalState.useWithFieldsets === 0
@@ -520,15 +533,9 @@ try {
         && !modalState.clipped
         && modalState.insideViewport
         && modalState.documentWidth <= modalState.viewportWidth
-        && modalState.className === cardTagStyle.className
-        && modalState.color === cardTagStyle.color
-        && modalState.backgroundColor === cardTagStyle.backgroundColor
-        && modalState.borderColor === cardTagStyle.borderColor
-        && modalState.borderStyle === cardTagStyle.borderStyle
-        && modalState.borderRadius === cardTagStyle.borderRadius
         && item.startedRoute === `#work/${item.workId}`;
     });
-    record('all eight start modals show exact save-state tags and start correctly in three viewports', startModalPass && startModalEvidence.length === (views.length * 8), { startModalEvidence });
+    record('persisted start modals show exact save-state tags while ephemeral modals omit tags and all start correctly in three viewports', startModalPass && startModalEvidence.length === (views.length * 8), { startModalEvidence });
   }
 
   // P0-03: persisted/ephemeral success, explicit storage failure and timeout branches.
