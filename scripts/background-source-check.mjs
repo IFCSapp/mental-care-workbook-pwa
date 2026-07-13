@@ -60,7 +60,7 @@ const expectedUrls = {
   ],
 };
 const requiredMarkers = {
-  1: ['Russ Harris', 'Choice Point 2.0', '正式な機能分析そのものとしては扱いません'],
+  1: ['Russ Harris', 'Choice Point 2.0', '場面で何が起き、何をして、その後どうなったかを分けて見て、次の一歩を考える構造を参考にしています。'],
   2: ['Join the DOTS Worksheet', '完全な逐語翻案とは扱いません'],
   3: ['creative hopelessness', 'control strategies', '天気の比喩', '補助研究（白くま課題）'],
   4: ['ACT Made Simple: The Extra Bits', '中央・周辺へのドラッグ', '確認できていません'],

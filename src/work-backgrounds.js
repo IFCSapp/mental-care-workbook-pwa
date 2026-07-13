@@ -7,7 +7,7 @@ export const WORK_BACKGROUNDS = Object.freeze({
       Object.freeze({
         relation: '構造を参考',
         citation: 'Russ Harris / ACT Mindfully「Choice Point 2.0: A Brief Overview」「Using Choice Point 2.0 for Functional Analysis, Motivation, Acceptance」（いずれも2017）',
-        note: '場面で何が起き、何をして、その後どうなったかを分けて見て、次の一歩を考える構造を参考にしています。現行の「通知」という語や自己記入の順序は資料と同一とは確認できず、正式な機能分析そのものとしては扱いません。',
+        note: '場面で何が起き、何をして、その後どうなったかを分けて見て、次の一歩を考える構造を参考にしています。',
         links: Object.freeze([
           Object.freeze({ text: 'ACT Mindfully「Choice Point 2.0: A Brief Overview」（2017）', href: 'https://www.actmindfully.com.au/wp-content/uploads/2018/06/Choice_Point_2.0_A_Brief_Overview_-_Russ_Harris_April_2017.pdf' }),
           Object.freeze({ text: 'ACT Mindfully「Using Choice Point 2.0 for Functional Analysis, Motivation, Acceptance」（2017）', href: 'https://www.actmindfully.com.au/wp-content/uploads/2018/06/Using-The-Choice-Point-2-For-Functional-Analysis-Motivation-Acceptance.pdf' }),

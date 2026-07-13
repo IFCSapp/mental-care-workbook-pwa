@@ -1051,7 +1051,7 @@ try {
     ];
     record('P2 learner-led route keeps plain language and work1 background states ACT Mindfully source relation, boundary and named links', jargonHits.length === 0
       && backgroundText.includes('場面・反応・その後を並べ')
-      && backgroundText.includes('正式な機能分析そのものとしては扱いません')
+      && backgroundText.includes('場面で何が起き、何をして、その後どうなったかを分けて見て、次の一歩を考える構造を参考にしています。')
       && relation === '構造を参考'
       && JSON.stringify(sourceHrefs) === JSON.stringify(expectedWork1Hrefs)
       && externalLinkContract, { jargonHits, backgroundText, sourceHrefs, relation, externalLinkContract });
