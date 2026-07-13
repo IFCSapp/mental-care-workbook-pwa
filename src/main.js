@@ -124,20 +124,13 @@ function escapeHtml(value) {
 function renderWorkBackground(workId) {
   const background = WORK_BACKGROUNDS[workId];
   if (!background) return '';
-  const sources = background.sources.map((source) => `
-    <section class="work-background-source">
-      <p class="work-background-relation"><span>このワークとの関係</span><strong>${escapeHtml(source.relation)}</strong></p>
-      <p class="work-background-citation">${escapeHtml(source.citation)}</p>
-      <p>${escapeHtml(source.note)}</p>
-      ${source.links.length ? `<ul class="work-background-links">${source.links.map((link) => `
-        <li><a href="${escapeHtml(link.href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(link.text)}</a></li>
-      `).join('')}</ul>` : ''}
-    </section>
+  const links = background.links.map((link) => `
+    <li><a href="${escapeHtml(link.href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(link.text)}</a></li>
   `).join('');
   return `
     <p class="work-background-summary">${escapeHtml(background.summary)}</p>
-    ${sources}
-    <p class="work-background-boundary">この表示は、ワークの効果や診断を示すものではありません。</p>
+    <p class="work-background-source-title">参考にした資料</p>
+    <ul class="work-background-links">${links}</ul>
   `;
 }
 

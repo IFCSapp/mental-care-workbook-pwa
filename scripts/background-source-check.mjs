@@ -14,16 +14,6 @@ const views = [
   { name: 'mobile-390x844', width: 390, height: 844 },
   { name: 'landscape-844x390', width: 844, height: 390 },
 ];
-const expectedRelations = {
-  1: ['構造を参考'],
-  2: ['直接の参照あり（DOTS名）／構造を参考'],
-  3: ['構造を参考', '補助研究（白くま課題）'],
-  4: ['構造を参考'],
-  5: ['構造を参考'],
-  6: ['直接の参照あり（Leaves on a Stream名）／実装は構造を参考'],
-  7: ['構造を参考'],
-  8: ['構造を参考'],
-};
 const expectedUrls = {
   1: [
     'https://www.actmindfully.com.au/wp-content/uploads/2018/06/Choice_Point_2.0_A_Brief_Overview_-_Russ_Harris_April_2017.pdf',
@@ -36,7 +26,6 @@ const expectedUrls = {
   3: [
     'https://www.actmindfully.com.au/wp-content/uploads/2025/11/ACT-Made-Simple-The-Extra-Bits-By-Russ-Harris-Textbook-Support-Materials-2024-update.pdf',
     'https://www.actmindfully.com.au/wp-content/uploads/2018/06/Complete_Set_of_Worksheets_Handouts_for_ACT_Questions_and_Answers.pdf',
-    'https://pubmed.ncbi.nlm.nih.gov/3612492/',
   ],
   4: [
     'https://www.actmindfully.com.au/wp-content/uploads/2025/11/ACT-Made-Simple-The-Extra-Bits-By-Russ-Harris-Textbook-Support-Materials-2024-update.pdf',
@@ -59,16 +48,22 @@ const expectedUrls = {
     'https://www.actmindfully.com.au/wp-content/uploads/2018/06/Choice_Point_2.0_A_Brief_Overview_-_Russ_Harris_April_2017.pdf',
   ],
 };
-const requiredMarkers = {
-  1: ['Russ Harris', 'Choice Point 2.0', '場面で何が起き、何をして、その後どうなったかを分けて見て、次の一歩を考える構造を参考にしています。'],
-  2: ['Join the DOTS Worksheet', '完全な逐語翻案とは扱いません'],
-  3: ['creative hopelessness', 'control strategies', '天気の比喩', '補助研究（白くま課題）'],
-  4: ['ACT Made Simple: The Extra Bits', '中央・周辺へのドラッグ', '確認できていません'],
-  5: ['Choice Point 2.0 for Values & Goals', 'Values Checklist', '心のコンパス', '同一であることは確認できていません'],
-  6: ['Leaves on a Stream', '音声資源', '現行UIが同一であることは未確認'],
-  7: ['ACT Questions and Answers', 'よく来る通知', '確認できていません'],
-  8: ['10 Steps for Any Dilemma', '3領域', 'Choice Point、ACT Matrix、Circle of Control', '直接出典は未確認'],
-};
+const forbiddenLearnerFacingTerms = [
+  '未確認',
+  '確認できていません',
+  '確認できず',
+  '同一ではない',
+  '同一とは',
+  '逐語翻案',
+  '直接出典',
+  '直接の参照',
+  '正式な',
+  '年・版未確認',
+  'metadata',
+  '補助研究',
+  'このワークとの関係',
+  '効果や診断を示すものではありません',
+];
 const checks = [];
 const failures = [];
 const record = (name, pass, evidence = {}) => {
@@ -92,16 +87,13 @@ const dataIds = Object.keys(WORK_BACKGROUNDS).map(Number).sort((a, b) => a - b);
 record('background source map is structured for exactly work1-8', JSON.stringify(dataIds) === JSON.stringify([1, 2, 3, 4, 5, 6, 7, 8]), { dataIds });
 for (const workId of dataIds) {
   const background = WORK_BACKGROUNDS[workId];
-  const links = background.sources.flatMap(source => source.links);
-  const relations = background.sources.map(source => source.relation);
-  const citationsComplete = background.sources.every(source => source.citation.trim().length > 20);
+  const links = background.links;
   const linksComplete = links.every(link => /^https:\/\//.test(link.href) && link.text.trim().length > 12 && !/^https?:\/\//.test(link.text));
   const linkUrls = links.map(link => link.href);
   record(`work${workId} static source contract`, background.summary.trim().length > 20
-    && JSON.stringify(relations) === JSON.stringify(expectedRelations[workId])
-    && citationsComplete
+    && background.summary.trim().endsWith('参考にしています。')
     && JSON.stringify(linkUrls) === JSON.stringify(expectedUrls[workId])
-    && linksComplete, { relations, citationsComplete, links, expectedUrls: expectedUrls[workId] });
+    && linksComplete, { summary: background.summary, links, expectedUrls: expectedUrls[workId] });
 }
 
 await rm(out, { recursive: true, force: true });
@@ -136,8 +128,6 @@ try {
       await details.scrollIntoViewIfNeeded();
       const state = await details.evaluate(element => {
         const dialog = element.closest('[role="dialog"]');
-        const relationLabels = Array.from(element.querySelectorAll('.work-background-relation strong')).map(node => node.textContent.trim());
-        const citations = Array.from(element.querySelectorAll('.work-background-citation')).map(node => node.textContent.trim());
         const links = Array.from(element.querySelectorAll('a')).map(link => ({
           href: link.getAttribute('href'),
           text: link.textContent.trim(),
@@ -148,9 +138,10 @@ try {
         return {
           open: element.open,
           text: element.innerText,
-          relationLabels,
-          citations,
           links,
+          summaryCount: element.querySelectorAll('.work-background-summary').length,
+          sourceTitle: element.querySelector('.work-background-source-title')?.textContent.trim(),
+          auditElementCount: element.querySelectorAll('.work-background-relation, .work-background-citation, .work-background-boundary').length,
           documentWidth: document.documentElement.scrollWidth,
           viewportWidth: window.innerWidth,
           dialogInsideHorizontalViewport: rect.left >= 0 && rect.right <= window.innerWidth,
@@ -165,15 +156,17 @@ try {
       await dialog.evaluate(element => { element.scrollTop = element.scrollHeight; });
       const bottomFile = path.join(out, `${view.name}-work-${workId}-bottom.png`);
       await page.screenshot({ path: bottomFile });
-      const markersPresent = requiredMarkers[workId].every(marker => state.text.includes(marker));
-      const relationPass = JSON.stringify(state.relationLabels) === JSON.stringify(expectedRelations[workId]);
-      const citationsPass = state.citations.length === WORK_BACKGROUNDS[workId].sources.length && state.citations.every(text => text.length > 20);
+      const conciseExplanationPass = state.text.includes(WORK_BACKGROUNDS[workId].summary)
+        && state.summaryCount === 1 && state.sourceTitle === '参考にした資料';
+      const forbiddenTermsPresent = forbiddenLearnerFacingTerms.filter(term => state.text.includes(term));
+      const auditMetaAbsent = forbiddenTermsPresent.length === 0 && state.auditElementCount === 0;
       const linksPass = JSON.stringify(state.links.map(link => link.href)) === JSON.stringify(expectedUrls[workId])
+        && JSON.stringify(state.links.map(link => link.text)) === JSON.stringify(WORK_BACKGROUNDS[workId].links.map(link => link.text))
         && state.links.every(link => link.target === '_blank' && link.rel === 'noopener noreferrer' && /^https:\/\//.test(link.href) && link.text.length > 12);
-      const pass = collapsed && state.open && markersPresent && relationPass && citationsPass && linksPass
+      const pass = collapsed && state.open && conciseExplanationPass && auditMetaAbsent && linksPass
         && state.documentWidth <= state.viewportWidth && state.dialogInsideHorizontalViewport && !state.detailsClipped
         && state.startButtonCount === 1 && JSON.stringify(storageBefore) === JSON.stringify(storageAfter);
-      runtimeEvidence.push({ view: view.name, workId, file, bottomFile, collapsed, ...state, text: state.text.slice(0, 600), markersPresent, relationPass, citationsPass, linksPass, storageUnchanged: JSON.stringify(storageBefore) === JSON.stringify(storageAfter), pass });
+      runtimeEvidence.push({ view: view.name, workId, file, bottomFile, collapsed, ...state, text: state.text.slice(0, 600), conciseExplanationPass, forbiddenTermsPresent, auditMetaAbsent, linksPass, storageUnchanged: JSON.stringify(storageBefore) === JSON.stringify(storageAfter), pass });
       await dialog.locator('#confirm-cancel').click();
     }
     await context.close();

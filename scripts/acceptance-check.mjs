@@ -1042,19 +1042,23 @@ try {
     const background = page.locator('.work-background-details');
     const backgroundText = await background.innerText();
     const sourceHrefs = await background.locator('a').evaluateAll(links => links.map(link => link.getAttribute('href')));
-    const relation = await background.locator('.work-background-relation strong').innerText();
+    const sourceTitle = await background.locator('.work-background-source-title').innerText();
+    const auditElementCount = await background.locator('.work-background-relation, .work-background-citation, .work-background-boundary').count();
     const externalLinkContract = await background.locator('a').evaluateAll(links => links.every(link => link.target === '_blank' && link.rel === 'noopener noreferrer'));
     const jargonHits = forbiddenJargon.filter(term => `${homeAndCards}\n${modalText}`.includes(term));
+    const forbiddenBackgroundTerms = ['未確認', '確認できていません', '確認できず', '同一ではない', '同一とは', '逐語翻案', '直接出典', '直接の参照', '正式な', '年・版未確認', 'metadata', '補助研究', 'このワークとの関係', '効果や診断を示すものではありません'];
+    const auditMetaHits = forbiddenBackgroundTerms.filter(term => backgroundText.includes(term));
     const expectedWork1Hrefs = [
       'https://www.actmindfully.com.au/wp-content/uploads/2018/06/Choice_Point_2.0_A_Brief_Overview_-_Russ_Harris_April_2017.pdf',
       'https://www.actmindfully.com.au/wp-content/uploads/2018/06/Using-The-Choice-Point-2-For-Functional-Analysis-Motivation-Acceptance.pdf',
     ];
-    record('P2 learner-led route keeps plain language and work1 background states ACT Mindfully source relation, boundary and named links', jargonHits.length === 0
-      && backgroundText.includes('場面・反応・その後を並べ')
-      && backgroundText.includes('場面で何が起き、何をして、その後どうなったかを分けて見て、次の一歩を考える構造を参考にしています。')
-      && relation === '構造を参考'
+    record('P2 learner-led route keeps plain language and work1 background shows a concise reference sentence with named ACT Mindfully links only', jargonHits.length === 0
+      && backgroundText.includes('場面で何が起き、何をして、その後どうなったかを分けて見て、次の一歩を考えるACTの道具を参考にしています。')
+      && sourceTitle === '参考にした資料'
+      && auditMetaHits.length === 0
+      && auditElementCount === 0
       && JSON.stringify(sourceHrefs) === JSON.stringify(expectedWork1Hrefs)
-      && externalLinkContract, { jargonHits, backgroundText, sourceHrefs, relation, externalLinkContract });
+      && externalLinkContract, { jargonHits, backgroundText, sourceHrefs, sourceTitle, auditMetaHits, auditElementCount, externalLinkContract });
     await page.close();
   }
 
