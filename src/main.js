@@ -632,8 +632,8 @@ function showStoredDataPolicy() {
     <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="stored-data-title" tabindex="-1">
       <p class="modal-heading" id="stored-data-title">保存されるもの</p>
       <div class="modal-body boundary-copy">
-        <p><strong>記録型:</strong> work1・2・5・8の入力は、このブラウザ内に保存され、全体バックアップに含まれます。</p>
-        <p><strong>体験型:</strong> work3・4・6・7の入力は保存されず、画面を閉じると消えます。</p>
+        <p><strong>「保存される」:</strong> この表示があるワークの入力は、このブラウザ内に保存され、全体バックアップに含まれます。</p>
+        <p><strong>「この画面だけ」:</strong> この表示があるワークの入力は保存されず、画面を閉じると消えます。</p>
         <p>表紙で入力した名前も、このブラウザ内に保存されます。</p>
       </div>
       <div class="modal-actions"><button class="btn btn-primary" id="stored-data-close">閉じる</button></div>
@@ -649,7 +649,7 @@ function showClearWorkbookDataConfirm() {
   overlay.innerHTML = `
     <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="clear-data-title" tabindex="-1">
       <p class="modal-heading" id="clear-data-title">このブラウザの記録を消しますか？</p>
-      <div class="modal-body"><p>表紙の名前と、work1・2・5・8の保存記録を消します。この操作は取り消せません。</p></div>
+      <div class="modal-body"><p>表紙の名前と、「保存される」と表示されたワークの記録を消します。この操作は取り消せません。</p></div>
       <div class="modal-actions">
         <button class="btn btn-ghost" id="clear-data-cancel">消さない</button>
         <button class="btn btn-danger" id="clear-data-confirm">記録を消す</button>
@@ -686,8 +686,11 @@ function renderHome() {
     <div class="work-grid">
       ${WORKS.map((w) => `
         <button class="work-card" data-work-id="${w.id}">
-          <span class="work-card-label">${w.label}</span>
-          <span class="work-card-meta"><span class="work-card-subtitle work-data-label">${w.dataLabel}</span><span>${w.duration}</span></span>
+          <span class="work-card-head">
+            <span class="work-card-label">${w.label}</span>
+            <span class="work-save-tag work-save-tag--${w.mode}" data-save-mode="${w.mode}">${w.mode === 'persisted' ? '保存される' : 'この画面だけ'}</span>
+          </span>
+          <span class="work-card-meta"><span>${w.duration}</span></span>
           <span class="work-card-desc">${w.desc}</span>
         </button>`).join('')}
     </div>
@@ -709,7 +712,7 @@ function renderHome() {
     <section class="backup-card" aria-labelledby="backup-title">
       <div>
         <h2 id="backup-title">データ管理</h2>
-        <p>全体バックアップの対象は、表紙と記録型のwork1・2・5・8です。体験型のwork3・4・6・7は含まれません。</p>
+        <p>全体バックアップの対象は、表紙の名前と「保存される」と表示されたワークです。「この画面だけ」は含まれません。</p>
       </div>
       <div class="backup-actions">
         <button class="btn btn-ghost" id="show-stored-data">保存されるものを見る</button>
@@ -723,7 +726,7 @@ function renderHome() {
       ${rejectedBackupFile ? '<button class="btn btn-ghost" id="download-rejected-backup">読み込めなかったファイルを保存</button>' : ''}
     </section>
     <div class="app-footer">
-      <p>このアプリの画面を開くために通信が発生しますが、入力内容をアプリのサーバーへ送る処理はありません。work1・2・5・8の入力は、このブラウザ内に保存されます。work3・4・6・7の入力は保存されず、画面を閉じると消えます。共用端末での閲覧や、ブラウザデータ消去・保存容量・設定による消失に注意してください。</p>
+      <p>このアプリの画面を開くために通信が発生しますが、入力内容をアプリのサーバーへ送る処理はありません。「保存される」はこのブラウザ内に残り、「この画面だけ」は画面を閉じると消えます。共用端末での閲覧や、ブラウザデータ消去・保存容量・設定による消失に注意してください。</p>
     </div>
   `;
 

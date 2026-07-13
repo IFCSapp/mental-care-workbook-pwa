@@ -190,15 +190,43 @@ body {
   font-size: 1rem;
   line-height: 1.4;
   color: var(--text);
+  min-width: 0;
 }
 
-.work-card-subtitle {
-  font-size: 0.78rem;
-  color: var(--accent-dark);
-  background: var(--accent-light);
+.work-card-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  width: 100%;
+}
+
+.work-save-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  white-space: nowrap;
+  padding: 3px 9px;
+  border: 1px solid transparent;
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.work-save-tag--persisted {
+  color: #245f4f;
+  background: #e4f2ed;
+  border-color: #7da99a;
   border-radius: 999px;
-  padding: 2px 8px;
-  line-height: 1.5;
+}
+
+.work-save-tag--ephemeral {
+  color: #725619;
+  background: #fff8e7;
+  border-color: #b79546;
+  border-style: dashed;
+  border-radius: 4px;
 }
 
 .work-card-desc {
@@ -669,6 +697,15 @@ body {
 
   .work-card {
     padding: 16px;
+  }
+
+  .work-card-head {
+    gap: 8px;
+  }
+
+  .work-save-tag {
+    padding-inline: 7px;
+    font-size: 0.72rem;
   }
 
   .backup-actions {

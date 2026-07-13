@@ -180,7 +180,7 @@ try {
     && [3, 4, 6, 7].every(id => policyJs.includes(`${id}: Object.freeze({ mode: 'ephemeral'`));
   record('P0-02 single work data policy matches persisted and ephemeral works', policyModes && policyJs.includes("storageKey: 'worksheet_auto_save_v1'") && policyJs.includes("storageKey: 'control_map_state_v1'"), {});
 
-  const boundaryMarkers = ['診断や治療でもありません', '危険や暴力、不当な状況にとどまることではありません', '記録型', '体験型', 'work1・2・5・8', 'work3・4・6・7', '本人の明示的な同意なく内容をコピー・印刷・提出しないでください'];
+  const boundaryMarkers = ['診断や治療でもありません', '危険や暴力、不当な状況にとどまることではありません', '保存される', 'この画面だけ', '本人の明示的な同意なく内容をコピー・印刷・提出しないでください'];
   record('P0-01/P0-07/P0-09 purpose, safety, data and supporter boundaries are visible', boundaryMarkers.every(marker => mainJs.includes(marker)), { boundaryMarkers });
 
   const forbiddenClaims = [/治ります/g, /改善します/g, /効果があります/g, /正しい考え/g, /今回わかった事実/g, /下がらない[」』\s]*という事実/g, /人生(?:の可能性)?を狭め(?:る|て)/g];
@@ -354,8 +354,12 @@ try {
     await page.goto(`${base}/#home`);
     const homePolicy = await page.evaluate(() => ({
       cards: document.querySelectorAll('.work-card').length,
-      persisted: Array.from(document.querySelectorAll('.work-data-label')).filter(element => element.textContent.includes('記録型')).length,
-      ephemeral: Array.from(document.querySelectorAll('.work-data-label')).filter(element => element.textContent.includes('体験型')).length,
+      cardStates: Array.from(document.querySelectorAll('.work-card')).map((card) => ({
+        workId: Number(card.dataset.workId),
+        label: card.querySelector('.work-save-tag')?.textContent.trim(),
+        mode: card.querySelector('.work-save-tag')?.dataset.saveMode,
+        duration: card.querySelector('.work-card-meta')?.textContent.trim(),
+      })),
       text: document.body.innerText,
     }));
     const collapsedSafety = await page.evaluate(() => ({
@@ -384,8 +388,70 @@ try {
       && safetyDetails.text.includes('厚生労働省「まもろうよ こころ」で相談先を見る')
       && !safetyDetails.text.includes('救急車')
       && !safetyDetails.text.includes('119');
-    record('P0-01/P0-02/P0-07/P0-09 home and start boundary runtime', homePolicy.cards === 8 && homePolicy.persisted === 4 && homePolicy.ephemeral === 4 && homePolicy.text.includes('診断や治療でもありません') && calmSafetyRoute && supporterBoundary.includes('誰が入力するか') && supporterBoundary.includes('本人の明示的な同意なく') && JSON.stringify(before) === JSON.stringify(after), { homePolicy: { ...homePolicy, text: undefined }, collapsedSafety, safetyDetails, supporterBoundary, storageUnchanged: JSON.stringify(before) === JSON.stringify(after) });
+    const expectedCardStates = [
+      { workId: 1, label: '保存される', mode: 'persisted', duration: '15〜30分' },
+      { workId: 2, label: '保存される', mode: 'persisted', duration: '10〜20分' },
+      { workId: 3, label: 'この画面だけ', mode: 'ephemeral', duration: '1〜4分' },
+      { workId: 4, label: 'この画面だけ', mode: 'ephemeral', duration: '5〜10分' },
+      { workId: 5, label: '保存される', mode: 'persisted', duration: '15〜30分' },
+      { workId: 6, label: 'この画面だけ', mode: 'ephemeral', duration: '3〜10分' },
+      { workId: 7, label: 'この画面だけ', mode: 'ephemeral', duration: '3〜7分' },
+      { workId: 8, label: '保存される', mode: 'persisted', duration: '10〜20分' },
+    ];
+    record('P0-01/P0-02/P0-07/P0-09 home and start boundary runtime', homePolicy.cards === 8 && JSON.stringify(homePolicy.cardStates) === JSON.stringify(expectedCardStates) && homePolicy.text.includes('診断や治療でもありません') && calmSafetyRoute && supporterBoundary.includes('誰が入力するか') && supporterBoundary.includes('本人の明示的な同意なく') && JSON.stringify(before) === JSON.stringify(after), { homePolicy: { ...homePolicy, text: undefined }, expectedCardStates, collapsedSafety, safetyDetails, supporterBoundary, storageUnchanged: JSON.stringify(before) === JSON.stringify(after) });
     await page.close();
+
+    const saveTagLayoutEvidence = [];
+    for (const view of views) {
+      const layoutPage = await browser.newPage({ viewport: view });
+      await layoutPage.goto(`${base}/#home`);
+      const layout = await layoutPage.evaluate(() => {
+        const cards = Array.from(document.querySelectorAll('.work-card')).map((card) => {
+          const title = card.querySelector('.work-card-label');
+          const tag = card.querySelector('.work-save-tag');
+          const duration = card.querySelector('.work-card-meta');
+          const cardRect = card.getBoundingClientRect();
+          const titleRect = title.getBoundingClientRect();
+          const tagRect = tag.getBoundingClientRect();
+          const tagStyle = getComputedStyle(tag);
+          const overlaps = !(titleRect.right <= tagRect.left || titleRect.left >= tagRect.right || titleRect.bottom <= tagRect.top || titleRect.top >= tagRect.bottom);
+          return {
+            workId: Number(card.dataset.workId),
+            label: tag.textContent.trim(),
+            mode: tag.dataset.saveMode,
+            duration: duration.textContent.trim(),
+            overlaps,
+            insideCard: tagRect.left >= cardRect.left && tagRect.right <= cardRect.right && tagRect.top >= cardRect.top && tagRect.bottom <= cardRect.bottom,
+            clipped: tag.scrollWidth > tag.clientWidth || tag.scrollHeight > tag.clientHeight,
+            borderRadius: tagStyle.borderRadius,
+            borderStyle: tagStyle.borderStyle,
+            color: tagStyle.color,
+            backgroundColor: tagStyle.backgroundColor,
+          };
+        });
+        return {
+          documentWidth: document.documentElement.scrollWidth,
+          viewportWidth: window.innerWidth,
+          cards,
+        };
+      });
+      await layoutPage.screenshot({ path: path.join(out, `save-tags-${view.name}.png`), fullPage: true });
+      saveTagLayoutEvidence.push({ view, ...layout });
+      await layoutPage.close();
+    }
+    const tagLayoutPass = saveTagLayoutEvidence.every(({ documentWidth, viewportWidth, cards }) => {
+      const exactStates = cards.map(({ workId, label, mode, duration }) => ({ workId, label, mode, duration }));
+      const persisted = cards.find(card => card.mode === 'persisted');
+      const ephemeral = cards.find(card => card.mode === 'ephemeral');
+      return documentWidth <= viewportWidth
+        && JSON.stringify(exactStates) === JSON.stringify(expectedCardStates)
+        && cards.every(card => !card.overlaps && card.insideCard && !card.clipped)
+        && persisted.borderRadius !== ephemeral.borderRadius
+        && persisted.borderStyle !== ephemeral.borderStyle
+        && persisted.backgroundColor !== ephemeral.backgroundColor
+        && persisted.color !== ephemeral.color;
+    });
+    record('save-state tags keep exact labels, distinct shapes/colors and collision-free layout in three viewports', tagLayoutPass, { saveTagLayoutEvidence });
   }
 
   // P0-03: persisted/ephemeral success, explicit storage failure and timeout branches.
