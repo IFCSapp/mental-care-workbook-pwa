@@ -1041,16 +1041,20 @@ try {
     await page.locator('.work-background-details summary').click();
     const background = page.locator('.work-background-details');
     const backgroundText = await background.innerText();
-    const sourceHref = await background.locator('a').getAttribute('href');
+    const sourceHrefs = await background.locator('a').evaluateAll(links => links.map(link => link.getAttribute('href')));
     const relation = await background.locator('.work-background-relation strong').innerText();
     const externalLinkContract = await background.locator('a').evaluateAll(links => links.every(link => link.target === '_blank' && link.rel === 'noopener noreferrer'));
     const jargonHits = forbiddenJargon.filter(term => `${homeAndCards}\n${modalText}`.includes(term));
-    record('P2 learner-led route keeps plain language and work1 background states source relation, boundary and named link', jargonHits.length === 0
+    const expectedWork1Hrefs = [
+      'https://www.actmindfully.com.au/wp-content/uploads/2018/06/Choice_Point_2.0_A_Brief_Overview_-_Russ_Harris_April_2017.pdf',
+      'https://www.actmindfully.com.au/wp-content/uploads/2018/06/Using-The-Choice-Point-2-For-Functional-Analysis-Motivation-Acceptance.pdf',
+    ];
+    record('P2 learner-led route keeps plain language and work1 background states ACT Mindfully source relation, boundary and named links', jargonHits.length === 0
       && backgroundText.includes('場面・反応・その後を並べ')
-      && backgroundText.includes('正式な評価手続ではありません')
-      && relation === '一般理論のみ'
-      && sourceHref === 'https://pmc.ncbi.nlm.nih.gov/articles/PMC1284431/'
-      && externalLinkContract, { jargonHits, backgroundText, sourceHref, relation, externalLinkContract });
+      && backgroundText.includes('正式な機能分析そのものとしては扱いません')
+      && relation === '構造を参考'
+      && JSON.stringify(sourceHrefs) === JSON.stringify(expectedWork1Hrefs)
+      && externalLinkContract, { jargonHits, backgroundText, sourceHrefs, relation, externalLinkContract });
     await page.close();
   }
 
