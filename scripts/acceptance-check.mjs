@@ -358,13 +358,33 @@ try {
       ephemeral: Array.from(document.querySelectorAll('.work-data-label')).filter(element => element.textContent.includes('体験型')).length,
       text: document.body.innerText,
     }));
+    const collapsedSafety = await page.evaluate(() => ({
+      standaloneLinks: document.querySelectorAll('.inline-safety-link').length,
+      detailsOpen: document.querySelector('.boundary-details')?.open,
+    }));
+    await page.locator('.boundary-details summary').click();
+    const safetyDetails = await page.locator('.boundary-details').evaluate((details) => ({
+      open: details.open,
+      text: details.innerText,
+      href: details.querySelector('a')?.getAttribute('href'),
+      externalLinks: details.querySelectorAll('a[target="_blank"][rel="noopener noreferrer"]').length,
+    }));
+    await page.screenshot({ path: path.join(out, 'p0-home-safety-details.png') });
     const before = await page.evaluate(() => ({ ...localStorage }));
     await page.locator('.work-card').first().click();
     await page.locator('input[name="use-with"][value="supporter"]').click();
     const supporterBoundary = await page.locator('#support-boundary-start').innerText();
     const after = await page.evaluate(() => ({ ...localStorage }));
     await page.screenshot({ path: path.join(out, 'p0-start-boundary-supporter.png') });
-    record('P0-01/P0-02/P0-07/P0-09 home and start boundary runtime', homePolicy.cards === 8 && homePolicy.persisted === 4 && homePolicy.ephemeral === 4 && homePolicy.text.includes('診断や治療でもありません') && supporterBoundary.includes('誰が入力するか') && supporterBoundary.includes('本人の明示的な同意なく') && JSON.stringify(before) === JSON.stringify(after), { homePolicy: { ...homePolicy, text: undefined }, supporterBoundary, storageUnchanged: JSON.stringify(before) === JSON.stringify(after) });
+    const calmSafetyRoute = collapsedSafety.standaloneLinks === 0
+      && collapsedSafety.detailsOpen === false
+      && safetyDetails.open
+      && safetyDetails.href === 'https://www.mhlw.go.jp/mamorouyokokoro/'
+      && safetyDetails.externalLinks === 1
+      && safetyDetails.text.includes('厚生労働省「まもろうよ こころ」で相談先を見る')
+      && !safetyDetails.text.includes('救急車')
+      && !safetyDetails.text.includes('119');
+    record('P0-01/P0-02/P0-07/P0-09 home and start boundary runtime', homePolicy.cards === 8 && homePolicy.persisted === 4 && homePolicy.ephemeral === 4 && homePolicy.text.includes('診断や治療でもありません') && calmSafetyRoute && supporterBoundary.includes('誰が入力するか') && supporterBoundary.includes('本人の明示的な同意なく') && JSON.stringify(before) === JSON.stringify(after), { homePolicy: { ...homePolicy, text: undefined }, collapsedSafety, safetyDetails, supporterBoundary, storageUnchanged: JSON.stringify(before) === JSON.stringify(after) });
     await page.close();
   }
 
@@ -491,9 +511,10 @@ try {
     });
     await frame.locator('#chk-immediate-safety').click();
     const crisisText = await frame.locator('[role="alert"]').innerText();
+    const crisisHref = await frame.locator('[role="alert"] a').getAttribute('href');
     await page.waitForTimeout(600);
     await page.screenshot({ path: path.join(out, 'p0-work3-crisis-route.png') });
-    record('P0-08 work3 self-harm choice opens crisis route without detailed input', crisisText.includes('安全の確保を優先') && crisisText.includes('相談先') && crisisText.includes('119') && await frame.locator('#crisis-close').count() === 1, { crisisText });
+    record('P0-08 work3 self-harm choice opens calm crisis route without detailed input', crisisText.includes('安全の確保を優先') && crisisText.includes('相談先') && !crisisText.includes('救急車') && !crisisText.includes('119') && crisisHref === 'https://www.mhlw.go.jp/mamorouyokokoro/' && await frame.locator('#crisis-close').count() === 1, { crisisText, crisisHref });
     await page.close();
   }
 

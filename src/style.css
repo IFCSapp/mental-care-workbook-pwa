@@ -223,14 +223,6 @@ body {
 .boundary-details > div,
 .work-background-details > div { padding: 4px 2px 2px; }
 
-.inline-safety-link {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  color: #315e8a;
-  font-weight: 600;
-}
-
 /* ===== 確認画面（モーダル） ===== */
 
 .modal-overlay {
@@ -536,9 +528,9 @@ body {
 .crisis-box {
   margin-top: 16px;
   padding: 14px 16px;
-  border: 2px solid #9b4b45;
+  border: 1px solid var(--border);
   border-radius: 10px;
-  background: #fff8f6;
+  background: var(--bg-warm);
 }
 
 .crisis-box a,

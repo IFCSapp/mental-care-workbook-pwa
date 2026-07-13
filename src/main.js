@@ -314,7 +314,7 @@ let pendingFinishWorkId = null;
 
 const CRISIS_GUIDE_HTML = `
   <p><strong>今すぐ自分や誰かの安全が心配なとき、自分を傷つける行動を止めにくいときは、このワークより安全の確保を優先してください。</strong></p>
-  <p>近くの人、利用中の支援機関・医療機関、地域の緊急窓口へ連絡してください。日本で救急車が必要なときは119です。</p>
+  <p>近くの人、利用中の支援機関・医療機関、地域の緊急窓口へ連絡してください。</p>
   <p><a href="https://www.mhlw.go.jp/mamorouyokokoro/" target="_blank" rel="noopener noreferrer">厚生労働省「まもろうよ こころ」で相談先を見る</a></p>
 `;
 
@@ -677,10 +677,9 @@ function renderHome() {
     <section class="boundary-card" aria-labelledby="boundary-title">
       <h2 id="boundary-title">使う前に確認してください</h2>
       <p><strong>診断や治療でもありません。緊急相談の代わりでもありません。</strong>書かない、途中でやめる、安全のために離れる・断る・助けを求めることも選べます。</p>
-      <p><a href="#crisis-guide-home" class="inline-safety-link">今すぐの安全が心配なときの相談先</a></p>
       <details class="boundary-details">
         <summary>安全と使い方を詳しく読む</summary>
-        <div>${USER_BOUNDARY_HTML}<div class="crisis-box" id="crisis-guide-home">${CRISIS_GUIDE_HTML}</div></div>
+        <div>${USER_BOUNDARY_HTML}<div class="crisis-box">${CRISIS_GUIDE_HTML}</div></div>
       </details>
     </section>
     <p class="work-choice-intro">順番に全部行う必要はありません。今扱いたいことに近いものを1つ選べます。開いてから戻る、途中でやめる、何も書かないことも選べます。</p>
