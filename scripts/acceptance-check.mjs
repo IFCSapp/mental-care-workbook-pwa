@@ -1038,11 +1038,19 @@ try {
     const homeAndCards = await page.locator('#app').innerText();
     await page.locator('.work-card').first().click();
     const modalText = await page.locator('[role="dialog"]').innerText();
-    const sourceHref = await page.locator('.work-background-details a').getAttribute('href');
     await page.locator('.work-background-details summary').click();
-    const backgroundText = await page.locator('.work-background-details').innerText();
+    const background = page.locator('.work-background-details');
+    const backgroundText = await background.innerText();
+    const sourceHref = await background.locator('a').getAttribute('href');
+    const relation = await background.locator('.work-background-relation strong').innerText();
+    const externalLinkContract = await background.locator('a').evaluateAll(links => links.every(link => link.target === '_blank' && link.rel === 'noopener noreferrer'));
     const jargonHits = forbiddenJargon.filter(term => `${homeAndCards}\n${modalText}`.includes(term));
-    record('P2 learner-led route has zero prohibited jargon and background disclosure has plain definition plus source URL', jargonHits.length === 0 && backgroundText.includes('考えや気持ちを消すことを目標にせず') && sourceHref === 'https://contextualscience.org/about_act', { jargonHits, backgroundText, sourceHref });
+    record('P2 learner-led route keeps plain language and work1 background states source relation, boundary and named link', jargonHits.length === 0
+      && backgroundText.includes('場面・反応・その後を並べ')
+      && backgroundText.includes('正式な評価手続ではありません')
+      && relation === '一般理論のみ'
+      && sourceHref === 'https://pmc.ncbi.nlm.nih.gov/articles/PMC1284431/'
+      && externalLinkContract, { jargonHits, backgroundText, sourceHref, relation, externalLinkContract });
     await page.close();
   }
 

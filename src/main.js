@@ -8,6 +8,7 @@ import {
   migrateStoredEntries,
   migrateWorkbookStorage,
 } from './work-data-policy.js';
+import { WORK_BACKGROUNDS } from './work-backgrounds.js';
 
 const WORKS = [
   {
@@ -118,6 +119,26 @@ function escapeHtml(value) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+function renderWorkBackground(workId) {
+  const background = WORK_BACKGROUNDS[workId];
+  if (!background) return '';
+  const sources = background.sources.map((source) => `
+    <section class="work-background-source">
+      <p class="work-background-relation"><span>このワークとの関係</span><strong>${escapeHtml(source.relation)}</strong></p>
+      <p class="work-background-citation">${escapeHtml(source.citation)}</p>
+      <p>${escapeHtml(source.note)}</p>
+      ${source.links.length ? `<ul class="work-background-links">${source.links.map((link) => `
+        <li><a href="${escapeHtml(link.href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(link.text)}</a></li>
+      `).join('')}</ul>` : ''}
+    </section>
+  `).join('');
+  return `
+    <p class="work-background-summary">${escapeHtml(background.summary)}</p>
+    ${sources}
+    <p class="work-background-boundary">この表示は、ワークの効果や診断を示すものではありません。</p>
+  `;
 }
 
 function loadProfile() {
@@ -784,10 +805,7 @@ function showConfirm(workId) {
         </details>
         <details class="work-background-details">
           <summary>このワークの背景</summary>
-          <div>
-            <p>考えや気持ちを消すことを目標にせず、今の場面で選べる行動の幅を確かめる考え方を背景にしています。これは効果や診断を示す説明ではありません。</p>
-            <p><a href="https://contextualscience.org/about_act" target="_blank" rel="noopener noreferrer">Association for Contextual Behavioral Science「About ACT」</a></p>
-          </div>
+          <div>${renderWorkBackground(work.id)}</div>
         </details>
         <p>書かない、途中でやめる、表紙へ戻ることも選べます。</p>
         ${work.modalNote ? `<p class="modal-note">${work.modalNote}</p>` : ''}

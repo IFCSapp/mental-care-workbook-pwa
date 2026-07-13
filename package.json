@@ -8,6 +8,7 @@
     "build": "vite build",
     "build:release": "node scripts/verify-release-origin.mjs && vite build",
     "test": "node scripts/acceptance-check.mjs",
+    "qa:backgrounds": "node scripts/background-source-check.mjs",
     "preview": "vite preview",
     "visual-check": "node scripts/visual-check.mjs"
   },
