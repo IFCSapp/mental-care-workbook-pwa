@@ -172,8 +172,9 @@ body {
 }
 
 .work-card--persisted {
-  background: #f3f9f7;
-  border-color: #a7c8bd;
+  background: #edf6f2;
+  border-color: #79aa9b;
+  box-shadow: 0 3px 10px rgba(45,104,85,0.12);
 }
 
 .work-card:hover {
@@ -220,10 +221,11 @@ body {
 }
 
 .work-save-tag--persisted {
-  color: #245f4f;
-  background: #e4f2ed;
-  border-color: #7da99a;
+  color: #516f66;
+  background: rgba(255,255,255,0.52);
+  border-color: #b8ccc5;
   border-radius: 999px;
+  font-weight: 600;
 }
 
 .work-save-tag--ephemeral {
@@ -661,6 +663,11 @@ body {
   display: flex;
   align-items: center;
   margin: 16px 0;
+  padding: 12px 14px;
+  background: #edf6f2;
+  border: 1px solid #79aa9b;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(45,104,85,0.10);
 }
 
 .start-safety-details > div {
