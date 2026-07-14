@@ -699,7 +699,7 @@ function renderHome() {
     <p class="work-choice-intro">順番に全部行う必要はありません。今扱いたいことに近いものを1つ選べます。開いてから戻る、途中でやめる、何も書かないことも選べます。</p>
     <div class="work-grid">
       ${WORKS.map((w) => `
-        <button class="work-card" data-work-id="${w.id}">
+        <button class="work-card${w.mode === 'persisted' ? ' work-card--persisted' : ''}" data-work-id="${w.id}">
           <span class="work-card-head">
             <span class="work-card-label">${w.label}</span>
             ${w.mode === 'persisted' ? '<span class="work-save-tag work-save-tag--persisted" data-save-mode="persisted">保存対象</span>' : ''}

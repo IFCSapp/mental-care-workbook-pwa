@@ -171,6 +171,11 @@ body {
   line-height: inherit;
 }
 
+.work-card--persisted {
+  background: #f3f9f7;
+  border-color: #a7c8bd;
+}
+
 .work-card:hover {
   border-color: var(--accent);
   box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
